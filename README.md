@@ -210,7 +210,7 @@ The Grok API node doesn't send the seed to the API at all. The LLM GGUF node pas
 
 ### Model
 
-The default model is **`grok-4.20-0309-reasoning`**. Tested against the API on 2026-10-24:
+The default model is **`grok-4.20-0309-reasoning`**. It's very affordable and has the least censorship of all Grok models. Tested against the API on 2026-10-24:
 
 - It accepts `temperature` and `top_p`.
 - It **rejects** `presence_penalty`, `frequency_penalty` and `reasoning_effort`, so the node has no penalty settings.

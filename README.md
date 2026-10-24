@@ -144,6 +144,7 @@ Every target guide also ends with **an example of a good result**. It is marked 
 | Person | **Name:** written into every prompt exactly as given, so every pose and action is clearly assigned; it can also act as the trigger. **Trigger:** the LoRA's trigger token, written right after the name (leave it empty if the name is the trigger). **Description:** appearance and fixed traits, binding. **Voice:** timbre, pitch, pace, accent. | `person_1` … `person_4`. The voice is used only by MiniMax H3 FL2VA / REF2VA, Wan 2.7 and Wan 3.0, the models with audio. |
 | Style block | **Text:** e.g. a camera look, a lighting mood or a ban list | `style_1`, `style_2`; applied to every result |
 
+- **At a glance:** a selected person turns its field **dark red**, a selected style block turns its field **dark blue**. Fields set to "(none)" look normal. The colour is display only and is not saved in the workflow.
 - **Using persons in your text:** refer to a selected person by name or as "Person 1"…"Person 4". Selected persons always appear in the result, even if the text doesn't mention them.
   - Each person is introduced once as "name, trigger, description".
   - After that, every pose, action, gaze and line of dialogue is attributed to a person by name, with no ambiguous "she" or "the woman" when several persons are present.

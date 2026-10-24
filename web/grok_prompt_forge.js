@@ -9,6 +9,7 @@
 // - "Load from archive..." puts an archived prompt into the text field
 // - Prompt Writer · Show Prompt shows a text with its word / tag / sentence / character
 //   count (display only, never re-runs anything)
+// - selected persons / style blocks get a red / blue field background
 // - the language switch at the top shows the nodes in English or German
 //   (display only, remembered in this browser; see grok_prompt_forge_i18n.js)
 
@@ -328,6 +329,42 @@ function addButton(node, textKey, handler) {
   w.options = { ...(w.options || {}), serialize: false };
   w._grokText = textKey;
   return w;
+}
+
+// ----------------------------------------------- selected persons / styles
+// person_N and style_N get a coloured background while something is selected,
+// the normal one at "(none)". Display only: the colour comes from a getter on
+// the widget, so it follows every change at once and is never saved.
+const SELECTED_COLORS = { person: "#7a2323", style: "#1f3b6e" };
+
+function inheritedGetter(obj, prop) {
+  for (let p = Object.getPrototypeOf(obj); p; p = Object.getPrototypeOf(p)) {
+    const d = Object.getOwnPropertyDescriptor(p, prop);
+    if (d?.get) return d.get;
+  }
+  return null;
+}
+
+function markSelections(node) {
+  for (const [kind, spec] of Object.entries(LIBRARY)) {
+    for (const slot of spec.slots) {
+      const w = widget(node, slot);
+      if (!w || w._grokMarked) continue;
+      const normal = inheritedGetter(w, "background_color");
+      try {
+        Object.defineProperty(w, "background_color", {
+          configurable: true,
+          get() {
+            if (this.value && this.value !== NONE) return SELECTED_COLORS[kind];
+            return normal ? normal.call(this) : window.LiteGraph?.WIDGET_BGCOLOR;
+          },
+        });
+        w._grokMarked = true;
+      } catch (e) {
+        console.debug(`[${TITLE}] could not colour ${slot}:`, e); // colour is optional
+      }
+    }
+  }
 }
 
 // ------------------------------------------------------------------ dialogs
@@ -722,6 +759,7 @@ app.registerExtension({
       if (isGrok) addButton(node, "btnRefreshModels", refreshModels); // the local list is fixed
       addButton(node, "btnLibrary", openLibrary);
       addButton(node, "btnArchive", openArchive);
+      markSelections(node);
       applyLanguage(node);
       return r;
     };

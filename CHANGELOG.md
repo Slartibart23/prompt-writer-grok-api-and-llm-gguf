@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.0 — 2026-10-24
+
+- Selected persons (`person_1` … `person_4`) get a dark red field background, selected style blocks (`style_1`, `style_2`) a dark blue one, on both writer nodes. "(none)" keeps the normal look. This is display only: it is not saved in the workflow and never re-runs a node.
+
 ## 1.0.0 — 2026-10-24
 
 First release of **Prompt Writer – Grok API & LLM GGUF**. It replaces **comfyui-grok-prompt-forge** (last version 3.3.0) under a name that says what it does.

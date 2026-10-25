@@ -16,13 +16,17 @@ Both nodes share everything else:
 - **Your own persons and style blocks:** pick them from a local library and they appear in every prompt, with every action clearly assigned by name.
 - **Prompt archive:** every result can be found and reused later.
 - **Prompt Writer · Show Prompt** displays the result with a word count.
-- **English or German:** the nodes can be shown in either language. Hover over any option for a beginner-friendly explanation.
+- **English or German:** the nodes start in English and can be switched to German. Hover over any option for a beginner-friendly explanation.
 
 ## Screenshots
 
 ![Prompt Writer · Grok API with persons, a style block and Show Prompt](docs/images/nodes_overview.png)
 
-*Prompt Writer · Grok API turns a German idea into a FLUX prompt featuring two persons from the library. Show Prompt displays the result with its counts.*
+*Prompt Writer · Grok API turns a German idea into a FLUX prompt featuring two persons from the library. The filters above the preset list are set to image models and generation. Show Prompt displays the result with its counts.*
+
+![The preset list filtered to video models and generation](docs/images/preset_filter.png)
+
+*With "Filter: type" on Video and "Filter: task" on Generation, the preset list shows only the twelve video generation presets. The search field at the top of the list narrows it further as you type.*
 
 | Persons & style blocks | Prompt archive |
 |---|---|
@@ -94,7 +98,7 @@ The preset only labels the values. The node always runs with the values shown in
 - Type: All, Image, Edit, Video, Captions & tools, or My presets.
 - Task: All, Generation or Caption.
 
-The filters only change which presets the list shows. They never change the selected preset, which stays in the list even when it doesn't match, and they never re-run the node. The choice is kept per node in the workflow.
+The filters only change which presets the list shows. They never change the selected preset, which stays in the list even when it doesn't match, and they never re-run the node. The choice is kept per node in the workflow. Inside the opened list, ComfyUI's search field narrows it further, e.g. type "seedance".
 
 | Preset | What it does |
 |---|---|
@@ -117,7 +121,7 @@ The API presets write prompts for the ComfyUI partner nodes and other API servic
 | Qwen-Image 2.1 | Observer-style paragraph of about 400–500 words that walks through the frame and ends with "The overall composition …" | Official Qwen negative (Chinese). Ignored at CFG 1. |
 | Qwen-Image-Edit 2.1 | Edit instruction that refers to the inputs as `<image1>`…`<image3>`, plus one preservation clause | none (CFG 1) |
 | Z-Image | Long natural-language description; constraints phrased positively | Generic. Only used by Base; Turbo has no CFG. |
-| FLUX (FLUX.2 / FLUX.1) | Subject → action → style → context, 30–80 words | none (FLUX does not support negatives) |
+| FLUX (FLUX.2 [dev] / [klein], FLUX.2 [pro] / [max] / [flex] via API, FLUX.1) | Subject → action → style → context, 30–80 words | none (FLUX does not support negatives) |
 | Illustrious | Danbooru tags, quality tags first | Official Illustrious negative |
 | Pony | `score_9, score_8_up, …` + source and rating tags + short description + tags | Community standard |
 | SDXL | Short sentence + comma phrases, 30–75 words | Community standard |
@@ -186,9 +190,9 @@ Every target guide also ends with **an example of a good result**. It is marked 
   - After that, every pose, action, gaze and line of dialogue is attributed to a person by name, with no ambiguous "she" or "the woman" when several persons are present.
   - Tag models (Pony, Illustrious, SDXL) get the name first, then the trigger, then the description as tags.
 - **`image_n_is_person_n`** (off by default) pairs each person with the image input of the same number: `person_1` = `image_1`, `person_2` = `image_2`, `person_3` = `image_3`, `person_4` = `image_4`.
-  - Load a photo of the person into the matching image input, and the model takes the look from it.
+  - Turn it on and load a photo of the person into the matching image input, and the model takes the look from it.
   - With Qwen-Image-Edit (`<imageN>`), MiniMax H3 REF2VA (`<Picture N>`), Wan 2.7 / 3.0, Seedream and Seedance ("Image N"), Kling and Grok Imagine (`@ImageN`), GPT Image, Nano Banana and FLUX multi-reference, the prompt points at the image instead of describing the face.
-  - Turn it off when the images mean something else, e.g. the first and last frame of H3 FL2VA.
+  - Leave it off when the images mean something else, e.g. the first and last frame of a video or the input images of an edit. Workflows saved before 1.2.0 keep the setting they had (it used to be on by default).
 - **Export / Import** in the dialog moves the library between installs. On import you choose whether names that already exist are replaced or kept.
 - **Archive:** with `archive` on, every result is appended to `ComfyUI/user/grok_prompt_forge/archive.jsonl` together with its input, preset, persons and settings. **📜 Load from archive...** searches it:
   - *Use as text* puts an archived prompt into `text`.

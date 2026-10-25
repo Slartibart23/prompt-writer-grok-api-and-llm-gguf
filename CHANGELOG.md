@@ -12,7 +12,7 @@
 - **Preset filters:** "Filter: type" (All, Image, Edit, Video, Captions & tools, My presets) and "Filter: task" (All, Generation, Caption) above the preset list. Display only: the selected preset is kept, nothing re-runs, and the choice is kept per node in the workflow.
 - `image_n_is_person_n` is now **off** for new nodes. Saved workflows keep their setting.
 - The nodes always start in **English**; German applies until the page is reloaded and is no longer remembered in the browser.
-- Tooltips, the persons' voice note and the README cover the new models.
+- Tooltips, the persons' voice note and the README cover the new models. The screenshots show 1.2.0, plus a new one of the filtered preset list.
 
 ## 1.1.0 — 2026-10-24
 

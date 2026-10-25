@@ -103,8 +103,8 @@ Restart ComfyUI afterwards.
 | Measured on an RTX 5090, Q4_K | Result |
 |---|---|
 | Generation | about 60 tokens/s |
-| "Idea ▸ FLUX" incl. loading the model | about 20 s |
-| "Idea ▸ Qwen-Image 2.1" (≈ 500 words) | about 45 s |
+| "Generation ▸ FLUX" incl. loading the model | about 20 s |
+| "Generation ▸ Qwen-Image 2.1" (≈ 500 words) | about 45 s |
 
 If one prompt takes several minutes, llama.cpp is running on the CPU: see Troubleshooting.
 

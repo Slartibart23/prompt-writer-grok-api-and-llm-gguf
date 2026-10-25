@@ -1,7 +1,7 @@
 [project]
 name = "prompt-writer-grok-api-and-llm-gguf"
-description = "ComfyUI custom nodes that write prompts for image and video models, with the xAI Grok API or a local uncensored Qwen3.8-27B (LLM GGUF): ideas or captions in any language become optimal English prompts for Krea 2, Qwen-Image 2.1, Z-Image, FLUX, Illustrious, Pony, SDXL, Wan and MiniMax H3. Editable task presets, your own persons and style blocks, prompt archive, up to three reference images, standard negative prompts, LoRA caption refinement and image captioning."
-version = "1.1.0"
+description = "ComfyUI custom nodes that write prompts for image and video models, with the xAI Grok API or a local uncensored Qwen3.8-27B (LLM GGUF): ideas or captions in any language become optimal English prompts for Krea 2, Qwen-Image 2.1, Z-Image, FLUX, Illustrious, Pony, SDXL, Wan and MiniMax H3, and for the API models Seedream, Seedance, GPT Image, Nano Banana, Grok Imagine, Flux 3, Kling and Veo. Editable task presets with filters, your own persons and style blocks, prompt archive, up to four reference images, standard negative prompts, LoRA caption refinement and image captioning."
+version = "1.2.0"
 license = { file = "LICENSE" }
 dependencies = ["requests>=2.28", "Pillow>=9.0", "numpy>=1.24", "huggingface_hub>=0.23"]
 

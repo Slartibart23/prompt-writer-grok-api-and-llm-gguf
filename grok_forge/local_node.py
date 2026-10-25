@@ -63,6 +63,7 @@ class LocalPromptForgeGGUF:
         max_side = optional["max_side"]
         optional["max_side"] = (max_side[0], dict(max_side[1], default=1024))
         optional.update(LOCAL_OPTIONS)
+        optional["image_4"] = optional.pop("image_4")  # added in 1.2.0: after everything else
         return {"required": required, "optional": optional}
 
     @classmethod
@@ -78,10 +79,11 @@ class LocalPromptForgeGGUF:
     def forge(self, preset, text, system_prompt, negative_prompt, model, temperature, top_p,
               max_tokens, seed=0, custom_system_prompt=None, image_1=None, image_2=None,
               image_3=None, trigger_word="", min_words=0, max_words=0, max_side=1024,
-              fallback_to_input=True, image_n_is_person_n=True, archive=True, thinking=True,
-              unload_after_run=True, context_length=32768, gpu_layers=-1, top_k=20, **slots):
+              fallback_to_input=True, image_n_is_person_n=False, archive=True, thinking=True,
+              unload_after_run=True, context_length=32768, gpu_layers=-1, top_k=20,
+              image_4=None, **slots):
         job = prepare(text, negative_prompt, system_prompt, custom_system_prompt, trigger_word,
-                      (image_1, image_2, image_3), slots, image_n_is_person_n,
+                      (image_1, image_2, image_3, image_4), slots, image_n_is_person_n,
                       min_words, max_words, log=LOG)
         if job is None:
             return ("", negative_prompt or "")

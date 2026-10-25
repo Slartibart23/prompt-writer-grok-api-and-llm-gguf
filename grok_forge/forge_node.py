@@ -13,7 +13,7 @@ from .builtin_presets import BUILTIN, DEFAULT_PRESET
 
 LOG = "[Prompt Writer · Grok API]"
 NO_TRIGGER = "(none)"
-IMAGE_SLOTS = 3
+IMAGE_SLOTS = 4
 PERSON_SLOTS = 4
 STYLE_SLOTS = 2
 
@@ -24,13 +24,14 @@ PERSON_TOOLTIP = (
     "In your text, refer to the person by name or as 'Person {n}'. (none) = no person.")
 LINK_TOOLTIP = (
     "Pairs each person with the image input of the same number: person_1 = image_1, "
-    "person_2 = image_2, person_3 = image_3 (person_4 has no image input).\n"
+    "person_2 = image_2, person_3 = image_3, person_4 = image_4.\n"
     "On: when you load a photo of the person into the matching image input, the model is "
     "told 'this image shows this person' and takes the look from the photo. With "
-    "Qwen-Image-Edit, MiniMax H3 REF2VA, Wan 2.7/3.0 and FLUX.2 the prompt points at "
-    "the image (e.g. <image1>) instead of describing the face.\n"
-    "Off: images and persons are unrelated - use this when the images mean something "
-    "else, e.g. first and last frame for MiniMax H3 FL2VA.")
+    "Qwen-Image-Edit, MiniMax H3 REF2VA, Wan 2.7/3.0, Seedream, Seedance, Kling, Grok "
+    "Imagine, GPT Image, Nano Banana and FLUX the prompt points at the image (e.g. "
+    "<image1>, Image 1, @Image1) instead of describing the face.\n"
+    "Off (default): images and persons are unrelated - e.g. when the images are "
+    "first and last frame or edit inputs.")
 STYLE_TOOLTIP = (
     "Style block {n} from your library (button '👤 Persons & styles...'): a saved "
     "text such as a camera look, a lighting mood or a ban list. It is applied to "
@@ -110,7 +111,8 @@ def persons_rule(persons, image_slots, link_images):
         if entry["voice"]:
             lines.append(f"- Voice: {entry['voice']} - use it as this person's voice "
                          "description only if the target model generates audio (MiniMax "
-                         "H3, Wan 2.7, Wan 3.0); otherwise ignore it.")
+                         "H3, Wan 2.7, Wan 3.0, Seedance 1.5 / 2.0 / 2.5, Kling 3.0 / 2.6, "
+                         "Veo 3.1, Grok Imagine Video); otherwise ignore it.")
         if link_images and slot in image_slots:
             lines.append(f"- Image {slot} shows this person. Refer to the image with the "
                          "target model's reference syntax (e.g. <image{n}>, <Picture {n}>, "
@@ -150,16 +152,25 @@ def _selected(kwargs):
     return persons, styles
 
 IMAGE_TOOLTIP = (
-    "Optional reference image {n} of 3. The model sees it as 'Image {n}'. Connect a "
+    "Optional reference image {n} of 4. The model sees it as 'Image {n}'. Connect a "
     "single image, not a batch (only the first image of a batch is used).\n"
     "How the presets use the images:\n"
     "- Caption > Describe image: image_1 is the image to caption.\n"
     "- Qwen-Image-Edit: image_1..3 are the edit's input images (Picture 1..3), "
-    "in the same order as in your edit workflow.\n"
+    "in the same order as in your edit workflow (Qwen takes at most 3).\n"
+    "- Seedream Edit: image_1..4 are the edit's input images (Image 1..4), in the "
+    "same order as in the Seedream node.\n"
     "- MiniMax H3 FL2VA: image_1 = first frame, image_2 = last frame.\n"
-    "- MiniMax H3 REF2VA: image_1..3 = reference pictures (people, places, "
+    "- MiniMax H3 REF2VA: image_1..4 = reference pictures (people, places, "
     "objects, style).\n"
-    "- Wan image-to-video: image_1 = start frame.\n"
+    "- Seedance Reference: image_1..4 = reference images (Image 1..4), in the same "
+    "order as in the Seedance node.\n"
+    "- Kling Omni and Grok Imagine reference-to-video: image_1..4 = @Image1..4, in "
+    "the same order as in the video node.\n"
+    "- Image-to-video (Wan, Seedance, Kling, Veo, Grok Imagine): image_1 = start "
+    "frame (image_2 = last frame for first-last-frame video).\n"
+    "- GPT Image, Nano Banana, Grok Imagine Image, Flux 3: image_1..4 = input images "
+    "for editing or as references.\n"
     "- Every other preset: optional visual context the model may take details from.\n"
     "- With person_{n} set and image_n_is_person_n on: image_{n} is a photo of that "
     "person.\n"
@@ -186,7 +197,7 @@ class GrokPromptForge:
                 "the system_prompt field - it always wins over the preset. "
                 "Leave unconnected (or empty) to use the preset."}),
         }
-        for n in range(1, IMAGE_SLOTS + 1):
+        for n in range(1, IMAGE_SLOTS):  # the last one was added later and sits at the end
             optional[f"image_{n}"] = ("IMAGE", {"tooltip": IMAGE_TOOLTIP.format(n=n)})
         optional.update({
             "trigger_word": ("STRING", {"default": "", "tooltip":
@@ -226,12 +237,14 @@ class GrokPromptForge:
         for n in range(1, PERSON_SLOTS + 1):
             optional[f"person_{n}"] = (person_names, {"default": library.NONE,
                                                        "tooltip": PERSON_TOOLTIP.format(n=n)})
-        optional["image_n_is_person_n"] = ("BOOLEAN", {"default": True, "tooltip": LINK_TOOLTIP})
+        optional["image_n_is_person_n"] = ("BOOLEAN", {"default": False, "tooltip": LINK_TOOLTIP})
         style_names = library.names("style")
         for n in range(1, STYLE_SLOTS + 1):
             optional[f"style_{n}"] = (style_names, {"default": library.NONE,
                                                      "tooltip": STYLE_TOOLTIP.format(n=n)})
         optional["archive"] = ("BOOLEAN", {"default": True, "tooltip": ARCHIVE_TOOLTIP})
+        # Added in 1.2.0, again at the end: image_1..3 keep their input slots.
+        optional[f"image_{IMAGE_SLOTS}"] = ("IMAGE", {"tooltip": IMAGE_TOOLTIP.format(n=IMAGE_SLOTS)})
         return {
             "required": {
                 "preset": (presets.names(), {"default": DEFAULT_PRESET, "tooltip":
@@ -239,7 +252,8 @@ class GrokPromptForge:
                     "negative_prompt, temperature, top_p and max_tokens with values "
                     "tuned for it. Change them freely and keep them with "
                     "'Save preset as...' under a name of your own.\n"
-                    "Idea > ...: expand a short idea into a full prompt for that model.\n"
+                    "Generation > ...: expand a short idea or keywords into a full "
+                    "prompt for that model.\n"
                     "Caption > ...: rewrite an existing caption faithfully (no new "
                     "content) into that model's prompt style.\n"
                     "Input may be in any language; the output is always English."}),
@@ -305,10 +319,10 @@ class GrokPromptForge:
               image_2=None, image_3=None, trigger_word="", min_words=0, max_words=0,
               max_side=1536, api_key="",
               api_key_file=DEFAULT_KEY_FILE, base_url=DEFAULT_BASE_URL,
-              fallback_to_input=True, timeout_seconds=180, image_n_is_person_n=True,
-              archive=True, **slots):
+              fallback_to_input=True, timeout_seconds=180, image_n_is_person_n=False,
+              archive=True, image_4=None, **slots):
         job = prepare(text, negative_prompt, system_prompt, custom_system_prompt, trigger_word,
-                      (image_1, image_2, image_3), slots, image_n_is_person_n,
+                      (image_1, image_2, image_3, image_4), slots, image_n_is_person_n,
                       min_words, max_words)
         if job is None:
             return ("", negative_prompt or "")

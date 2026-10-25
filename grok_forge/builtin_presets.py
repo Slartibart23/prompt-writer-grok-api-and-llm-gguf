@@ -2,7 +2,10 @@
 
 Each preset carries the system prompt, the standard negative prompt of the
 target model and sampling settings for grok-4.20-0309-reasoning (which accepts
-temperature and top_p only). The target-model guides follow the official model
+temperature and top_p only). API models (Seedream, Seedance, GPT Image, Nano
+Banana, Grok Imagine, Flux 3, Kling, Veo) follow their makers' prompt guides
+(BytePlus ModelArk, OpenAI cookbook, Google Cloud / Gemini docs, docs.x.ai,
+docs.bfl.ml, Kling blog). The other target-model guides follow the official model
 repos and prompt-enhancer system prompts (Krea 2 docs/expansion.txt, Qwen-Image
 2.1 PE-T2I / PE-I2I, Z-Image PE, BFL FLUX.2 prompting guide, Wan2.2
 system_prompt.py, Alibaba Model Studio video guide, MiniMax H3 prompt guides)
@@ -10,7 +13,8 @@ and established community practice for the SDXL family. Sampling values follow
 what those prompt enhancers use: about 0.7-0.8 for creative expansion, 0.1-0.4
 for faithful rewrites and edit instructions.
 
-Preset names: "Idea ▸ <target>" expands a short idea, "Caption ▸ <target>"
+Preset names: "Generation ▸ <target>" expands a short idea (called "Idea ▸"
+before 1.2.0, see presets.LEGACY_PREFIX), "Caption ▸ <target>"
 rewrites an existing caption faithfully.
 """
 
@@ -55,6 +59,30 @@ NEG_SDXL = ("lowres, worst quality, low quality, blurry, jpeg artifacts, waterma
 NEG_WAN = ("色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，"
            "低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，"
            "毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走")
+
+# ByteDance Seedream (image) and Seedance (video) run through APIs (ComfyUI partner
+# nodes, BytePlus ModelArk, Venice ...) that take no negative prompt. The guides
+# follow the BytePlus ModelArk prompt guides: "Seedream 4.0-4.5 prompt guide",
+# "Seedream 5.0 pro / flash tutorial", "Dreamina Seedance 2.5 prompt guide",
+# "Dreamina Seedance 2.0 series prompt guide" and "Seedance-1.5-pro prompt guide".
+SEEDREAM_GUIDE = """- Coherent natural language in full sentences: subject + action + environment, then style, colour, lighting and composition where they matter. Never a keyword list ("A girl in a long dress walks under a parasol along a tree-lined path, in the style of a Monet oil painting", not "girl, parasol, trees, oil painting").
+- Concise and precise beats stacked ornate adjectives: usually 40-150 words. For complex scenes describe each element concretely (position, count, colour, material, text) - but never more than 600 words, or details get lost.
+- If the image has a purpose, name it with the type of image (poster, logo, product shot, infographic, storyboard frame, phone wallpaper, UI screen, sticker): Seedream designs for the use case.
+- Style: use precise style words ("children's picture-book illustration", "35mm film photograph", "flat vector illustration") and honour the medium the user names. Photorealistic unless another style is asked for.
+- Text in the image: in double quotes, verbatim, with placement, size and style (the title "BLUE TIDE" in bold rounded letters at the top).
+- Aspect ratio or shape may be stated in plain words when the user gives one ("a vertical phone wallpaper", "a wide 16:9 banner") - Seedream reads it.
+- Several images: only when the user asks for a set or series, say so with the number and what differs per image ("a series of four images showing the same courtyard in spring, summer, autumn and winter").
+- Reference images: if images are attached and the user wants their content, call them "Image 1", "Image 2" ... by number, say what to take from each (character design, style, product, outfit) and then describe the new scene.
+- Seedream has no negative prompt: phrase constraints positively or as one short plain sentence ("no other text in the image").
+- No quality boosters (masterpiece, best quality, 8k), no weights, no tag syntax."""
+
+SEEDANCE_SHARED = """- Actions: concrete and tied to body parts, with speed and force ("slowly raises her right hand", "pushes hard off the ground"). Prefer slow, continuous, natural movements and write the transition between two actions. Show emotions as visible physical details (lowered head, trembling shoulders, a smile she cannot hold back) instead of words like "very sad"; avoid extreme words such as "fanatical" or "extremely shocked".
+- Camera: standard terms work directly - shot size (extreme wide, wide, medium, medium close-up, close-up), movement (push in, pull out, pan, tilt, track, follow, orbit, handheld, aerial, FPV, dolly zoom, one continuous take) and angle (low angle, overhead, first-person). Explain a niche term in a few words.
+- The same person or object keeps the same name or label in every sentence; never switch to an ambiguous "he" or "she" when two people are on screen.
+- On-screen text only when asked: in double quotes, common words, with timing and position.
+- No real celebrities' names (they are blocked in review); describe the look instead."""
+
+SEEDANCE_I2V = """Start frame attached (image-to-video, the API's first_frame): describe only what happens from that frame on - motion, camera, sound, dialogue; refer to visible things briefly ("the woman", "the red car") and do not re-describe their appearance or the style. With a first AND a last frame (image_1, image_2): describe the path from the first state to the last state."""
 
 TARGETS = [
     {
@@ -119,8 +147,8 @@ TARGETS = [
     },
     {
         "label": "FLUX",
-        "about": "FLUX.2 [dev] / [klein] and FLUX.1 [dev] (natural language, 30-80 words). "
-                 "FLUX does not support negative prompts.",
+        "about": "FLUX.2 [dev] / [klein], FLUX.2 [pro] / [max] / [flex] via API and FLUX.1 [dev] "
+                 "(natural language, 30-80 words). FLUX does not support negative prompts.",
         "negative": "",
         "idea": (0.7, 0.95), "caption": (0.2, 1.0), "max_tokens": 8192,
         "guide": """- Natural language, ordered subject -> action -> style -> context. The most important elements come first: earlier words carry more weight.
@@ -130,7 +158,107 @@ TARGETS = [
 - Text: in double quotes with placement and font. Give explicit text for signs, labels and screens that would naturally carry text, otherwise FLUX renders gibberish.
 - FLUX has no negative prompt: phrase everything positively ("sharp focus throughout", "empty street").
 - No tag lists, no quality boosters (masterpiece, 8k).
-- If several images are attached as references (FLUX.2 multi-reference), state each one's role ("the person from image 1, the outfit from image 2").""",
+- If several images are attached as references (FLUX.2 multi-reference), state each one's role ("the person from image 1, the outfit from image 2").
+- The FLUX.2 API models also accept a JSON prompt; write prose unless the user asks for JSON.""",
+    },
+    {
+        "label": "Seedream 5.0",
+        "about": "ByteDance Seedream 5.0 Pro / Flash / Lite via API (natural language, 40-150 "
+                 "words, text in many languages). No negative prompt.",
+        "negative": "",
+        "idea": (0.7, 0.95), "caption": (0.3, 1.0), "max_tokens": 8192,
+        "guide": SEEDREAM_GUIDE + """
+- Seedream 5.0 renders text in many languages (English, Chinese, German, French, Spanish, Japanese, Korean ...): keep text to be rendered in its original language and script.
+- Knowledge content (diagrams, formulas, infographics, maps, recipes): use precise technical terms and state the layout and visual format.""",
+    },
+    {
+        "label": "Seedream 4.5 / 4.0",
+        "about": "ByteDance Seedream 4.5 and 4.0 via API (natural language, 40-150 words). "
+                 "No negative prompt.",
+        "negative": "",
+        "idea": (0.7, 0.95), "caption": (0.3, 1.0), "max_tokens": 8192,
+        "guide": SEEDREAM_GUIDE + """
+- Text renders most reliably in English or Chinese; keep other text short.""",
+    },
+    {
+        "label": "Seedream Edit",
+        "kind": "edit",
+        "about": "ByteDance Seedream 4.0 / 4.5 / 5.0 editing and multi-image input via API "
+                 "(edit instruction, Image 1..4). Connect the input images to image_1..image_4 "
+                 "in the same order as in the Seedream node. No negative prompt.",
+        "negative": "",
+        "idea": (0.3, 1.0), "caption": (0.2, 1.0), "max_tokens": 8192,
+        "guide": """- Write a concise, unambiguous edit INSTRUCTION, not a description of the whole image. Start with the operation: Add, Remove, Replace, Change, Turn, Dress, Apply the style ... Usually 15-60 words; more only for several changes.
+- Name each target precisely ("the tallest panda", "the woman on the left", "the red mug on the table"). Never a vague "that one" or "it".
+- Say in one short clause what stays unchanged ("keeping her pose and expression unchanged"). Do not re-describe the parts that stay.
+- Several input images: call them "Image 1", "Image 2" ... in the order they are connected and say what comes from each ("Dress the woman in Image 1 in the outfit from Image 2", "Apply the style of Image 3 to Image 1"). With a single input image say "the image".
+- Marks drawn on the image (a red area, arrows, boxes, doodles): refer to them by colour, shape and position ("insert a sofa where the blue area is marked") and add "remove all marks" when they must not stay.
+- Coordinates (Seedream 5.0 Pro / Flash): if the user gives them, keep them unchanged as <bbox>x1 y1 x2 y2</bbox> or <point>x y</point> with values from 0 to 1000.
+- New or changed text: the exact text in double quotes.
+- A NEW image built from a reference (character, style or product taken from the input) instead of an edit: first say what to take from the reference image, then describe the new scene fully.
+- No aspect ratio unless the user asks for one; no negative-prompt lists.""",
+    },
+    {
+        "label": "GPT Image",
+        "about": "OpenAI GPT Image 2 / 2.5 (flare, sunburst) and 1.5 via API: generation and "
+                 "editing with input images. No negative prompt; size and quality are node "
+                 "settings.",
+        "negative": "",
+        "idea": (0.7, 0.95), "caption": (0.3, 1.0), "max_tokens": 8192,
+        "guide": """- State the intended use first (product ad, poster, UI mock-up, infographic, editorial photo): it sets the level of polish. Then: scene and background -> subject -> key details -> constraints.
+- Simple images: a few clear sentences. Complex images: short labelled lines, e.g. "Scene: ...", "Subject: ...", "Details: ...", "Text: ...", "Constraints: ..." - easier for the model to follow than one long block.
+- Be concrete about materials, textures and medium; write "photorealistic" for a photographic look. Give framing, viewpoint, lighting and the placement of elements ("logo in the top right corner"). For people: scale in the frame, gaze, and how they interact with objects. Camera specs only set the overall look.
+- Text in the image: the exact words in double quotes, with font style, size, colour and placement, followed by "exact text, verbatim, no extra characters". Spell unusual words letter by letter.
+- Input images (generation from references or editing): first index them - "Image 1: the product photo. Image 2: the style reference." - then say how they combine and what goes where.
+- Editing: say "Change only ..." and name the change precisely, then list what stays unchanged (face, pose, hair, colours, lighting, layout, camera angle, other objects). Virtual try-on: keep face, body, pose, hair and expression; change only the garments.
+- There is no negative prompt: write exclusions as one short line ("No watermark, no extra text, no logos.").
+- Transparent background (cut-outs, stickers, icons): say "on a transparent background".
+- No image size or resolution in the prompt - they are set on the node.""",
+    },
+    {
+        "label": "Nano Banana",
+        "about": "Google Nano Banana (Gemini 2.5 Flash Image), Nano Banana Pro (Gemini 3 Pro "
+                 "Image), Nano Banana 2 / 2.1 and Lite via API: generation and editing with "
+                 "input images. No negative prompt.",
+        "negative": "",
+        "idea": (0.7, 0.95), "caption": (0.3, 1.0), "max_tokens": 8192,
+        "guide": """- Describe the scene as a narrative paragraph, never as a keyword list. Formula: subject + action + location and context + composition + style.
+- Begin with a strong verb that names the operation: "Create a photorealistic ...", "Design a logo for ...", "Edit the first image: ...", "Combine the person from the first image with ...".
+- Name the purpose when there is one (logo, product mock-up, infographic, storyboard panel, sticker). Be specific about materials and colours ("a navy blue tweed jacket", not "a jacket"). Camera, lens, lighting and film vocabulary works ("85mm portrait, golden hour backlight, 1980s colour film").
+- Input images: there is no special syntax - give each image its role in plain words ("use the first image for the pose and the second image for the art style"). Pattern: references + how they relate + the new scene. Up to 14 images; keep it to a few people (Pro holds about 6 reliably).
+- Editing: one clear change per instruction; name the element exactly and say that everything else stays the same (face, lighting, composition, crop). For inpainting say to preserve lighting and composition.
+- Text in the image: the exact words in double quotes, with font style ("bold white sans-serif"), colour and position. Translation of text in an image: name the source and target language and what stays unchanged. Pro renders text best.
+- Phrase everything positively ("an empty, quiet street" rather than "no cars").
+- Aspect ratio only when the user gives one, in plain words ("a vertical 9:16 poster"); edits keep the input image's ratio.
+- Diagrams and factual images: ask for "accurate" content and use precise terms.""",
+    },
+    {
+        "label": "Grok Imagine Image",
+        "about": "xAI Grok Imagine image (grok-imagine-image 2.0, quality / pro) via API: "
+                 "generation and editing with up to 5 input images. No negative prompt.",
+        "negative": "",
+        "idea": (0.7, 0.95), "caption": (0.3, 1.0), "max_tokens": 8192,
+        "guide": """- Prose that describes ONE finished picture, about 4-6 sentences - not a list of instructions.
+- Section order (keep it the same for every prompt of a series): 1. one opening sentence with the subject, its form, what it stands or rests on, and the setting; 2. details and the focal point; 3. art direction (medium, style); 4. light; 5. colour; 6. composition - camera angle and framing (repeat the viewing angle here).
+- Name every element concretely, with count, material and viewing angle. Describe each texture once, on the surface it belongs to, so it does not spread to other objects. Ask for light that keeps the subject readable.
+- Describe what should be there; do not write avoid-lists - the model tends to ignore them or draw the excluded things. A negation only for a count or one specific object, paired with the positive target ("a bare desk with only a lamp"). Never ask to avoid defects (dust, fringing).
+- Text in the image: the exact words in double quotes with placement.
+- Editing (input images attached and the user wants changes): lead with the one to three changes, then one sentence that keeps subject, angle, crop and the placement of props. Do not write a full new description and do not open with "keep everything". Point at the specific area to change instead of vague wishes ("more realistic").
+- Several input images (up to 5): refer to them as "the first image", "the second image" ... in the order they are connected; the result takes the first image's aspect ratio.""",
+    },
+    {
+        "label": "Flux 3",
+        "about": "Black Forest Labs Flux 3 image via API: generation and editing with up to 10 "
+                 "images; the model expands prompts itself. No negative prompt.",
+        "negative": "",
+        "idea": (0.7, 0.95), "caption": (0.3, 1.0), "max_tokens": 8192,
+        "guide": """- Connected sentences, in this order: medium or image type -> subject and action -> setting -> light -> framing and lens. Flux 3 expands prompts itself: start lean and add detail only where the user wants control. 30-100 words.
+- No quality tags or filler ("masterpiece", "highly detailed") and no sentence that describes nothing visible. Plain positions work ("on the far right", "in the lower third").
+- No negatives: describe the wanted state ("an empty promenade", not "no crowds").
+- Text in the image: the exact words in double quotes with capitalisation and punctuation, plus placement and type (weight, case, colour). A font may be named as a comparison ("reminiscent of Helvetica"). Line breaks inside the text as \\n.
+- Hex colours work when tied to one named object ("a sofa in #2E4A62").
+- Input images: refer to them as "image 1", "image 2" ... by position, or by what they show. Name the target precisely enough that only one element matches, and say what stays unchanged ("keep composition, lighting and background exactly unchanged"). Combining: "the person from image 1 wears the jacket from image 2 in the kitchen from image 3".
+- Aspect ratio only when the user gives one (it counts while the node's ratio is auto); edits follow the first image.""",
     },
     {
         "label": "Illustrious",
@@ -267,12 +395,12 @@ Rules:
     {
         "label": "MiniMax H3 REF2VA",
         "kind": "h3",
-        "about": "MiniMax H3 full-reference video+audio: image_1..image_3 = reference "
-                 "pictures (<Picture 1..3>). Mention reference videos or audio in the text. "
+        "about": "MiniMax H3 full-reference video+audio: image_1..image_4 = reference "
+                 "pictures (<Picture 1..4>). Mention reference videos or audio in the text. "
                  "H3 uses no negative prompt.",
         "negative": "",
         "idea": (0.6, 0.95), "caption": (0.35, 1.0), "max_tokens": 12288,
-        "guide": """The attached images are the reference pictures <Picture 1>, <Picture 2>, <Picture 3> (by their image number). Reference videos (<Video N>) or audio (<Audio N>) exist only if the user's text mentions them. Duration: use the length the user gives; otherwise 6.00 seconds.
+        "guide": """The attached images are the reference pictures <Picture 1>, <Picture 2>, <Picture 3>, <Picture 4> (by their image number). Reference videos (<Video N>) or audio (<Audio N>) exist only if the user's text mentions them. Duration: use the length the user gives; otherwise 6.00 seconds.
 
 Exact output format - six sections in this order, each label on its own line followed by its content, one blank line between sections:
 
@@ -305,6 +433,149 @@ Rules:
 - Speakers: <Subject N> (S1) for referenced subjects who speak, otherwise a stable voice description plus (Sx). IDs are assigned in order of the first vocal event and reused. Spoken words inside <d>[Language] ...</d>, verbatim in the original language.
 - On-screen text in double quotes, verbatim.
 - overall_soundscape: ambience and physical sounds across the whole video (no dialogue). non_diegetic_music: instrumentation, tempo, dynamics, or N/A.""",
+    },
+    {
+        "label": "Seedance 2.5",
+        "kind": "video",
+        "about": "ByteDance Seedance 2.5 via API (4-30 s, native audio and dialogue in 10+ "
+                 "languages, timestamps). For image-to-video connect the first frame to image_1 "
+                 "(image_2 = last frame). No negative prompt.",
+        "negative": "",
+        "idea": (0.75, 0.95), "caption": (0.4, 1.0), "max_tokens": 10240,
+        "guide": """- Structure, in this order:
+  1. One summary sentence: subject + location + event + genre or style + camera.
+  2. The plot as a timeline with integer-second timestamps that cover the whole clip without gaps ("0s-3s: ...", "3s-8s: ..."), or as "Shot 1: ...", "Shot 2: ..." when there are cuts. Each segment: what is seen, the action, the camera, dialogue and sound.
+  3. One closing paragraph with what stays the same throughout: look and style, camera behaviour, environment, sound and atmosphere.
+- Duration: use the length the user gives (4-30 s); otherwise plan for 10 s. Give each segment only as much action as fits - roughly one clear beat per 3-5 seconds. Do not use timestamps for fast repetitions ("nods three times per second").
+- Transitions: name the moment and the method ("at 5s, a quick whip pan to the left").
+""" + SEEDANCE_SHARED + """
+- Dialogue: Seedance 2.5 speaks 10+ languages natively. Give each speaker a short voice description once (gender, age, timbre, pace, accent), then write lines as: <Name>'s line (<emotion>): "<words>" - verbatim in the original language. Do not repeat the words of a line elsewhere in the prompt; that can produce subtitles.
+- Sound: ambience, action sounds and music in plain words. Negations work only for subtitles and audio: "No subtitles.", "No BGM.", "No dialogue." Everything else positively.
+- Close with style and quality words when they help ("cinematic, natural lighting, rich details, stable smooth motion").
+
+""" + SEEDANCE_I2V + """ The node sets the frame roles, so the prompt does not need to say "Image 1 is the first frame".
+- About 100-300 words for 5-15 s; up to about 500 for 30 s.""",
+    },
+    {
+        "label": "Seedance 2.0",
+        "kind": "video",
+        "about": "ByteDance Seedance 2.0 / 2.0 Fast / 2.0 Mini via API (4-15 s, native audio, "
+                 "shots without timestamps). For image-to-video connect the first frame to "
+                 "image_1 (image_2 = last frame). No negative prompt.",
+        "negative": "",
+        "idea": (0.75, 0.95), "caption": (0.4, 1.0), "max_tokens": 8192,
+        "guide": """- Formula: precise subject + action details + scene and environment + lighting and colour tone + camera movement + visual style + image quality + constraints. First who does what, then where and in what atmosphere, then how it is shot, then style, quality and constraints.
+- Simple clips: one continuous shot in a few sentences. Several events or cuts: a storyboard in playback order, "Shot 1: ...", "Shot 2: ...", "Shot 3: ..." - each with camera or transition, the subject's action and expression, position or space, and sound. NO timestamps or seconds: Seedance 2.0 does not follow them.
+- Only ONE camera movement per shot (do not push, pan and orbit at once).
+- Duration: use the length the user gives (4-15 s); otherwise plan for 5 s with one to three shots.
+""" + SEEDANCE_SHARED + """
+- Sound symbols: spoken lines in curly braces - She says {How did the exam go?}; sound effects in angle brackets - <a dog barks in the distance>; music in round brackets - (soft piano in the background). Subtitles only when asked, in 【】. Keep one language per conversation; for a language other than English or Chinese name it: says in Japanese {こんにちは}. Give each speaker a short voice description (gender, age, timbre, pace).
+- End with constraints: "No subtitles, no text, no watermark, no logo." plus, with people, "faces stay stable without deformation, natural smooth motion".
+
+""" + SEEDANCE_I2V + """
+- About 80-250 words.""",
+    },
+    {
+        "label": "Seedance 1.5 / 1.0 Pro",
+        "kind": "video",
+        "about": "ByteDance Seedance 1.5 Pro (audio, dialogue) and 1.0 Pro / Pro Fast (no audio) "
+                 "via API (about 4-12 s). For image-to-video connect the first frame to image_1. "
+                 "No negative prompt.",
+        "negative": "",
+        "idea": (0.75, 0.95), "caption": (0.4, 1.0), "max_tokens": 8192,
+        "guide": """- Formula: subject + movement + environment + camera movement + aesthetic description + sound (sound only for 1.5 Pro).
+- Clear, constrained descriptions: who, doing what, in what order. Use degree and order words ("slowly", "first ... then ... finally"). Describe the subject by stable features and keep that wording ("the man in the trench coat") through the whole prompt.
+- Camera in standard terms (slow push-in, lateral slide, tracking shot, fixed camera, aerial shot). Cuts in plain prose: "The shot cuts to a close-up of ..."; for dialogue use shot / reverse shot.
+- Duration: use the length the user gives; otherwise plan for 5 s with one main action.
+- Seedance 1.5 Pro dialogue: say how each line is spoken, then the words in double quotes, verbatim in the original language: In a calm emotional state, with an even tone and a slow pace, she says: "...". For several speakers name the language once and write one line per speaker - "English dialogue:" then Man: "..." / Woman: "...". Supported languages: English, Chinese (and dialects), Japanese, Korean, Spanish, Indonesian. Voice-over: A deep, calm male voice says: "...".
+- Seedance 1.5 Pro sound: describe sound effects and the background music (instruments, mood, tempo) when they matter; it adds fitting music on its own otherwise.
+- Seedance 1.0 Pro has no audio: if the user names 1.0, leave out sound and dialogue.
+- No real celebrities' names; on-screen text only when asked, in double quotes.
+
+""" + SEEDANCE_I2V + """
+- About 40-150 words.""",
+    },
+    {
+        "label": "Seedance Reference",
+        "kind": "video",
+        "about": "ByteDance Seedance 2.5 / 2.0 reference-to-video via API: image_1..image_4 = "
+                 "reference images (Image 1..4) in the same order as in the Seedance node. "
+                 "Mention reference videos or audio (Video 1, Audio 1) in the text. No negative "
+                 "prompt.",
+        "negative": "",
+        "idea": (0.7, 0.95), "caption": (0.4, 1.0), "max_tokens": 10240,
+        "guide": """The attached images are the reference images "Image 1", "Image 2" ... by their image number - the same order in which they are connected to the Seedance node. Reference videos ("Video 1" ...) and audio clips ("Audio 1" ...) exist only if the user's text mentions them.
+
+- Begin with the asset bindings, one sentence per reference, saying what it is and exactly what to take from it: "Image 1 is Mara, the woman with short silver hair and a black leather jacket - use her face and outfit." / "Image 2 is the rooftop location - use the place and its neon light." / "Use the camera movement of Video 1." / "Audio 1 is Mara's voice timbre." Never use asset IDs or file names, only Image N / Video N / Audio N.
+- Then one summary sentence (subject + location + event + style + camera), then the plot as "Shot 1: ...", "Shot 2: ..." in playback order. For Seedance 2.5 timestamps also work ("0s-4s: ..."); Seedance 2.0 ignores them.
+- Each time a referenced subject appears, use its same name or label ("Mara (Image 1)"). Describe only what the reference does not show - action, expression, position, camera, sound - never re-describe the face. When a reference is exact, simply say to follow it ("strictly follow the actions and camera movement of Video 1").
+- Task words decide the mode: reference generation is the default ("Refer to ..."). Editing an input video: "Strictly edit Video 1: replace ... with ..., keep the rest unchanged" - never "refer to Video 1" for edits. Extension: "Extend Video 1 forward / backward: ..." or "Continue Video 1: ...". Keyframes: "Use Images 1 to 4 in order as keyframes." First / last frame: "Image 1 is the first frame, Image 2 is the last frame."
+- Keep it to about five people at most; more becomes unstable.
+""" + SEEDANCE_SHARED + """
+- Dialogue: give the voice (from Audio N or as a short description), then the line verbatim in the original language: Mara's line (cold, quiet): "Last job." Sound in plain words; "No subtitles." / "No BGM." work as negations.
+- End with: "The characters' faces and outfits stay consistent with their reference images throughout; no duplicate characters." plus style and quality words.
+- About 100-300 words.""",
+    },
+    {
+        "label": "Kling 3.0",
+        "kind": "video",
+        "about": "Kling 3.0 / O3 Omni via API (3-15 s, native audio, up to 6 shots, references "
+                 "@Image1..), also Kling 2.6 (audio) and 2.5 Turbo. For image-to-video connect the "
+                 "start frame to image_1 (image_2 = end frame). The negative prompt is used by the "
+                 "3.0 / 2.x text- and image-to-video nodes; Omni has none.",
+        "negative": "blur, distortion, low quality",
+        "idea": (0.75, 0.95), "caption": (0.4, 1.0), "max_tokens": 10240,
+        "guide": """- Order: subject -> action -> setting -> camera language -> lighting -> mood. Open with the scene, the characters and the style; define each subject early and keep exactly the same wording for it in every shot.
+- Describe visible motion and concrete visual details; every sentence must be something the camera can see or hear.
+- Duration: use the length the user gives (3-15 s); otherwise plan for 5 s.
+- Single shot unless the user wants cuts or the story needs them. Multi-shot (Kling 3.0 / O3, at most 6 shots): one shot per line - "[Shot 1: Wide shot, 3s] ...", "[Shot 2: Close-up, 2s] ..." - with durations of at least 1 s that add up to the whole clip. Each shot adds a new beat: framing, camera angle, action or dialogue, camera move. Close with one line of global style notes.
+- Dialogue (3.0, O3, 2.6): attach each line to a named speaker with delivery and language, after the action that leads to it - Vendor (warm tone, English): "Best soup in the city." Use unique labels, never pronouns, for speakers. English and Chinese speech work best.
+- Sound: one "Ambient: ..." line with ambience and sound effects; music in plain words. Kling 2.5 Turbo has no audio - leave sound and dialogue out if the user names it.
+- Reference images (Omni / O3 reference-to-video, Kling 3.0 image nodes): refer to them as @Image1, @Image2 ... in the order they are connected (the ComfyUI Kling nodes turn them into Kling's <<<image_1>>> tags), a reference video as @Video1. Give each reference one clear role ("@Image1 is the explorer, @Image2 is the temple").
+- Start frame (image-to-video): the image is the anchor - describe only how the scene evolves. Start and end frame: describe the path from one to the other.
+- On-screen text: exact short words in double quotes with placement and the surface they are on.
+- Kling 2.6 and 2.5 Turbo: shorter prompts, one shot.
+- No real people's names. Stay well under 2500 characters.
+- About 50-200 words.""",
+    },
+    {
+        "label": "Veo 3.1",
+        "kind": "video",
+        "about": "Google Veo 3.1 / 3.1 Fast / 3.1 Lite via API (4, 6 or 8 s, native audio and "
+                 "dialogue). For image-to-video connect the first frame to image_1 (image_2 = "
+                 "last frame). The negative prompt goes to the node's negative_prompt field.",
+        "negative": "subtitles, captions, watermark, text overlay, blurry footage, distorted faces, "
+                    "extra limbs",
+        "idea": (0.75, 0.95), "caption": (0.4, 1.0), "max_tokens": 8192,
+        "guide": """- Formula: cinematography + subject + action + context + style and ambiance. Write full sentences with cause and effect; name the shot, the camera movement and the lens or look ("low-angle tracking shot", "shallow depth of field", "weathered documentary look"). Not every element is needed every time.
+- Write in English (dialogue may stay in its original language).
+- A clip is 4, 6 or 8 s: one scene with one or two beats. Cuts inside the clip only when asked, as timestamp segments - "[00:00-00:03] Medium shot ...", "[00:03-00:06] Reverse shot ..." - covering the clip.
+- Dialogue: in double quotes with a clear speaker - A woman in a red coat says, "We have to leave now." Keep lines short enough to be spoken in the clip, and end with a beat of action rather than speech in the last second.
+- Sound in separate sentences: "SFX: thunder cracks in the distance." / "Ambient noise: the quiet hum of a starship bridge." Music in plain words; for no music say "ambient sound only".
+- Start frame (image-to-video): describe what happens from that frame on - motion, camera, sound; do not re-describe the look. With a last frame: describe the transition between the two.
+- Reference images (Veo 3.1 and Fast, 8 s, up to 3 - not Lite): no tags; name each by its role in plain words ("using the provided images of the detective, the woman and the office ...").
+- Describe what should be seen positively; unwanted things belong in the negative prompt as a plain list of nouns (no "no" or "don't").
+- No real people's names.
+- About 60-150 words.""",
+    },
+    {
+        "label": "Grok Imagine Video",
+        "kind": "video",
+        "about": "xAI Grok Imagine video (grok-imagine-video, 1.5, 1.5 Lite) via API (1-15 s, "
+                 "audio with lip sync, references @Image1..). For image-to-video connect the first "
+                 "frame to image_1. No negative prompt.",
+        "negative": "",
+        "idea": (0.75, 0.95), "caption": (0.4, 1.0), "max_tokens": 8192,
+        "guide": """- Natural language that describes ONE continuous shot: subject, action, setting, camera movement, lighting and sound. There is no multi-shot syntax; keep to one or two beats.
+- Grok Imagine 1.5 and 1.5 Lite first render a frame from the prompt and then animate it: make the first sentence a clear picture of the opening image, then describe the motion.
+- Duration: use the length the user gives (1-15 s); otherwise plan for 8 s.
+- Start frame (image-to-video): the image is the first frame - describe only what happens next (motion, camera, pacing, sound); do not re-describe the look.
+- Reference images (reference-to-video): refer to them as @Image1, @Image2 ... in the order they are connected (the ComfyUI Grok nodes turn them into Grok's <IMAGE_0> tags), voices as @Audio1 ... Give each image one clear role, keep the cast small and props static.
+- Dialogue: speaker plus the line in double quotes - The woman from @Image1 says softly: "You came back." Audio is generated by default: describe ambience and sound effects in plain words.
+- Video edit: say exactly what changes and what must stay the same.
+- No negative prompt: phrase everything positively. Keep the prompt compact - very long prompts are rejected.
+- No real people's names.
+- About 40-120 words.""",
     },
 ]
 
@@ -367,6 +638,20 @@ WORDS = {
     "Wan 3.0": "80-250 words (Alibaba gives no number)",
     "MiniMax H3 FL2VA": "120-250 words for integrated_multimodal_description (H3 gives no number)",
     "MiniMax H3 REF2VA": "350-500 words for detailed_description (official H3 guide)",
+    "Seedream 5.0": "40-150 words, never more than 600 (BytePlus: concise and precise beats stacked adjectives)",
+    "Seedream 4.5 / 4.0": "40-150 words, never more than 600 (BytePlus: concise and precise beats stacked adjectives)",
+    "Seedream Edit": "15-60 words (BytePlus: concise, unambiguous edit instructions)",
+    "GPT Image": "50-200 words (OpenAI gives no limit; long, structured prompts work)",
+    "Nano Banana": "60-200 words (Google gives no number; detailed narrative paragraphs)",
+    "Grok Imagine Image": "60-120 words, about 4-6 sentences (xAI image prompting guide)",
+    "Flux 3": "30-100 words (BFL: start lean, add detail only where you want control)",
+    "Seedance 2.5": "100-300 words for 5-15 s, up to about 500 for 30 s (BytePlus gives no number)",
+    "Seedance 2.0": "80-250 words (BytePlus gives no number)",
+    "Seedance 1.5 / 1.0 Pro": "40-150 words (BytePlus gives no number)",
+    "Seedance Reference": "100-300 words (BytePlus gives no number)",
+    "Kling 3.0": "50-200 words, under 2500 characters (Kling gives no word count)",
+    "Veo 3.1": "60-150 words (Google gives no number; examples are a few sentences)",
+    "Grok Imagine Video": "40-120 words (xAI gives no number; very long prompts are rejected)",
 }
 
 # One example result per target, appended to the guide: smaller (local) models
@@ -486,6 +771,125 @@ EXAMPLES = {
         "Pages rustling, the creak of the wooden floor and rain on the shop window.\n\n"
         "non_diegetic_music:\n"
         "A slow solo piano with long pauses, fading out at the end."),
+    "Seedream 5.0": (
+        "A vertical poster for a summer jazz festival by the sea. A saxophonist in a white linen "
+        "suit plays on a small wooden stage at sunset, the orange sky mirrored in the calm water "
+        "behind him and strings of warm bulbs swaying above a dancing crowd. Flat retro "
+        "screen-print illustration in coral, teal and cream with a fine paper grain. At the top, "
+        "the title \"BLUE TIDE JAZZ\" in bold rounded letters; at the bottom, \"12-14 July · "
+        "Harbour Stage\" in small white capitals."),
+    "Seedream 4.5 / 4.0": (
+        "A tiny ramen stall in a narrow alley at night, seen from the street at eye level. An "
+        "elderly cook in a white headband ladles broth into a red bowl while two office workers "
+        "in loosened ties sit on stools at the counter. Steam rises into the light of a paper "
+        "lantern that reads \"RAMEN\". Wet cobblestones reflect the warm glow, and a cat sleeps on "
+        "a crate by the door. Realistic photograph, soft warm light, shallow depth of field."),
+    "Seedream Edit": (
+        "Dress the woman in Image 1 in the green wool coat from Image 2, matching its collar, "
+        "buttons and length, and hang the brown leather bag from Image 3 on her left shoulder; "
+        "keep her face, hairstyle, pose and the street background unchanged."),
+    "GPT Image": (
+        "Product ad for a craft coffee brand.\n"
+        "Scene: a sunlit kitchen counter of pale oak, a window with soft morning light on the left.\n"
+        "Subject: a matte black coffee bag standing upright, a ceramic cup of black coffee beside "
+        "it with a thin curl of steam.\n"
+        "Details: scattered roasted beans, a brass scoop, fine paper texture on the bag; "
+        "photorealistic, shallow depth of field, eye-level.\n"
+        "Text: on the bag, \"NORTH ROAST\" in bold white sans-serif capitals, centred - exact text, "
+        "verbatim, no extra characters.\n"
+        "Constraints: no watermark, no other text, no logos."),
+    "Nano Banana": (
+        "Create a photorealistic close-up of an elderly watchmaker at his cluttered workbench, "
+        "leaning over an open pocket watch with a jeweller's loupe in his right eye and fine "
+        "tweezers lifting a tiny brass gear. Warm light from a green-shaded desk lamp falls across "
+        "his hands and the scattered springs, while the shop behind him fades into soft shadow "
+        "with rows of wall clocks. Shot on an 85mm lens at eye level, shallow depth of field, rich "
+        "film-like colour with deep greens and warm brass tones."),
+    "Grok Imagine Image": (
+        "A red vintage scooter stands on its kickstand on a narrow cobbled street in a hillside "
+        "town at midday. Its chrome mirrors and cracked leather seat catch the light, and a wicker "
+        "basket of lemons is strapped to the rear rack. Realistic travel photograph. Hard midday "
+        "sun casts short, crisp shadows across the stones and keeps the scooter clearly readable. "
+        "Warm palette of red, ochre and pale yellow walls. Low three-quarter view from the left, "
+        "the scooter centred in the lower half of the frame."),
+    "Flux 3": (
+        "Editorial photograph of a ceramic teapot on a bleached oak table beside a window, "
+        "afternoon light falling in from the left and casting a long soft shadow. A small paper "
+        "tag tied to the handle reads \"OPEN LATE\" in bold black sans-serif capitals. Framed "
+        "slightly from above with an 85mm lens, shallow depth of field."),
+    "Kling 3.0": (
+        "A rainy night market lined with neon signs, cinematic realism; a street vendor in a "
+        "yellow raincoat and a hungry delivery rider.\n"
+        "[Shot 1: Wide shot, 3s] The vendor in the yellow raincoat stirs a steaming pot under a "
+        "dripping awning while scooters splash past; slow truck right.\n"
+        "[Shot 2: Medium shot, 3s] The delivery rider in a black helmet stops at the stall and "
+        "lifts his visor. Rider (tired, English): \"Anything still hot?\"\n"
+        "[Shot 3: Close-up, 4s] The vendor in the yellow raincoat ladles soup into a bowl and "
+        "smiles. Vendor (warm tone, English): \"Best soup in the city.\" Slow push-in.\n"
+        "Wet reflections, warm and magenta neon light, shallow depth of field. Ambient: rain on "
+        "tarpaulin, sizzling oil, distant traffic."),
+    "Veo 3.1": (
+        "Low-angle tracking shot: a lighthouse keeper in a heavy wool coat climbs a spiral iron "
+        "staircase at dusk, a lantern swinging in his hand and throwing warm light across the "
+        "curved stone walls. He stops at a narrow window, wipes the fogged glass with his sleeve "
+        "and looks out at dark waves rolling in. He says quietly, \"The storm is early.\" Shallow "
+        "depth of field, weathered documentary look, cold blue light outside against the warm "
+        "lantern glow. SFX: boots ringing on iron steps. Ambient noise: wind whistling through "
+        "the tower."),
+    "Grok Imagine Video": (
+        "A woman in a long grey coat stands on a rain-soaked rooftop at night, city lights glowing "
+        "behind her. She slowly turns towards the camera, rain dripping from her hair, as the "
+        "camera pushes in. Neon signs reflect in the puddles at her feet. She says softly, \"You "
+        "came back.\" Steady light rain, distant thunder and the hum of the city."),
+    "Seedance 2.5": (
+        "Realistic coastal drama on a windy harbour pier at dusk: an old fisherman teaches his "
+        "granddaughter to tie a knot, handheld medium shots.\n"
+        "0s-4s: Medium shot. The fisherman, in his seventies with a grey beard and a yellow oilskin "
+        "jacket, sits on an upturned crate and slowly loops a thick rope around his fingers; the "
+        "girl, about eight, in a red raincoat, leans in to watch. Gulls cry, waves slap against the "
+        "pilings.\n"
+        "4s-8s: Close-up of their hands. The girl copies the loop, pulls too hard and the rope "
+        "slips; she laughs. The fisherman's line (warm, amused, low raspy voice): \"Gently. The sea "
+        "is never in a hurry.\"\n"
+        "8s-12s: The camera pulls back slowly to a wide shot as she holds up a finished knot and he "
+        "nods, smiling, fishing boats rocking in the grey water behind them.\n"
+        "Slight handheld sway throughout, natural colours, soft overcast light, rich details. Wind "
+        "and harbour sounds only, no BGM. No subtitles."),
+    "Seedance 2.0": (
+        "A young barista in a black apron prepares a latte for an elderly regular in a small "
+        "sunlit café. Shot 1: Medium shot, fixed camera. She slowly pours steamed milk into the "
+        "cup, tilting it gently as a leaf pattern forms; morning light falls across the counter. "
+        "<the hiss of the steam wand> Shot 2: Cut to a medium close-up of the old man in a tweed "
+        "cap. He leans forward, his eyes crinkling, and says in a warm, slow voice {You remembered "
+        "the cinnamon}. Shot 3: Close-up of the barista; the camera pushes in slowly as she lowers "
+        "her eyes, the corners of her mouth rising, and slides the cup towards him. (soft acoustic "
+        "guitar in the background) Warm tones, natural light, cinematic texture, rich details. "
+        "Faces stay stable without deformation, natural smooth motion. No subtitles, no text, no "
+        "watermark, no logo."),
+    "Seedance 1.5 / 1.0 Pro": (
+        "In a cramped vintage record shop on a rainy afternoon, a tall man in his forties with a "
+        "grey scarf slowly flips through a crate of records while the young owner with short pink "
+        "hair watches from the counter. The camera makes a slow lateral slide along the shelves. "
+        "The man pulls out a record, holds it up and says, surprised and delighted, at a quick "
+        "pace: \"I've been looking for this one for twenty years!\" The owner smiles and replies "
+        "calmly: \"Then it was waiting for you.\" Rain patters on the window and a record crackles "
+        "softly in the background."),
+    "Seedance Reference": (
+        "Image 1 is Mara, the woman with short silver hair and a black leather jacket - use her "
+        "face and outfit. Image 2 is the rooftop location - use the place and its neon light. "
+        "Audio 1 is Mara's voice timbre.\n"
+        "Mara hands her old partner a sealed envelope on a rain-wet rooftop at night; tense neon "
+        "thriller, slow camera.\n"
+        "Shot 1: Wide shot of the rooftop from Image 2, slow push-in. Mara (Image 1) walks to the "
+        "edge, rain glinting in the neon light, and stops beside a man in a grey trench coat who "
+        "stands with his back to the camera.\n"
+        "Shot 2: Medium close-up of Mara. She pulls an envelope from her jacket and holds it out "
+        "without looking at him. Mara's line (cold, quiet, the voice of Audio 1): \"Last job. Then "
+        "we're even.\"\n"
+        "Shot 3: Close-up of the envelope changing hands; the camera holds still as distant "
+        "sirens rise.\n"
+        "Mara's face and outfit stay consistent with Image 1 throughout; no duplicate characters. "
+        "Rain and distant traffic, a low synth drone. No subtitles."),
 }
 
 # German texts for the node's language switch (web/grok_prompt_forge_i18n.js).
@@ -504,6 +908,20 @@ WORDS_DE = {
     "Wan 3.0": "80-250 Wörter (Alibaba nennt keine Zahl)",
     "MiniMax H3 FL2VA": "120-250 Wörter für integrated_multimodal_description (H3 nennt keine Zahl)",
     "MiniMax H3 REF2VA": "350-500 Wörter für detailed_description (offizieller H3-Leitfaden)",
+    "Seedream 5.0": "40-150 Wörter, nie mehr als 600 (BytePlus: knapp und genau statt gehäufter Adjektive)",
+    "Seedream 4.5 / 4.0": "40-150 Wörter, nie mehr als 600 (BytePlus: knapp und genau statt gehäufter Adjektive)",
+    "Seedream Edit": "15-60 Wörter (BytePlus: knappe, eindeutige Edit-Anweisungen)",
+    "GPT Image": "50-200 Wörter (OpenAI nennt keine Grenze; lange, gegliederte Prompts funktionieren)",
+    "Nano Banana": "60-200 Wörter (Google nennt keine Zahl; ausführliche erzählende Absätze)",
+    "Grok Imagine Image": "60-120 Wörter, etwa 4-6 Sätze (xAI-Leitfaden für Bild-Prompts)",
+    "Flux 3": "30-100 Wörter (BFL: knapp beginnen, Details nur, wo du steuern willst)",
+    "Seedance 2.5": "100-300 Wörter für 5-15 s, bis etwa 500 für 30 s (BytePlus nennt keine Zahl)",
+    "Seedance 2.0": "80-250 Wörter (BytePlus nennt keine Zahl)",
+    "Seedance 1.5 / 1.0 Pro": "40-150 Wörter (BytePlus nennt keine Zahl)",
+    "Seedance Reference": "100-300 Wörter (BytePlus nennt keine Zahl)",
+    "Kling 3.0": "50-200 Wörter, unter 2500 Zeichen (Kling nennt keine Wortzahl)",
+    "Veo 3.1": "60-150 Wörter (Google nennt keine Zahl; Beispiele sind wenige Sätze)",
+    "Grok Imagine Video": "40-120 Wörter (xAI nennt keine Zahl; sehr lange Prompts werden abgelehnt)",
 }
 ABOUT_DE = {
     "Krea 2": "Krea 2 Raw / Turbo und Fine-Tunes (natürliche Sprache, 60-200 Wörter). Der "
@@ -516,8 +934,18 @@ ABOUT_DE = {
                            "image_1..image_3 anschließen. Kein Negativprompt (CFG 1).",
     "Z-Image": "Z-Image Turbo / Base (lange Beschreibung in natürlicher Sprache). Turbo hat "
                "keinen Negativprompt; er wirkt nur bei Base mit CFG 3-5.",
-    "FLUX": "FLUX.2 [dev] / [klein] und FLUX.1 [dev] (natürliche Sprache, 30-80 Wörter). FLUX "
-            "unterstützt keine Negativprompts.",
+    "FLUX": "FLUX.2 [dev] / [klein], FLUX.2 [pro] / [max] / [flex] über API und FLUX.1 [dev] "
+            "(natürliche Sprache, 30-80 Wörter). FLUX unterstützt keine Negativprompts.",
+    "GPT Image": "OpenAI GPT Image 2 / 2.5 (flare, sunburst) und 1.5 über API: Erzeugen und "
+                 "Bearbeiten mit Eingangsbildern. Kein Negativprompt; Größe und Qualität stellt "
+                 "der Node ein.",
+    "Nano Banana": "Google Nano Banana (Gemini 2.5 Flash Image), Nano Banana Pro (Gemini 3 Pro "
+                   "Image), Nano Banana 2 / 2.1 und Lite über API: Erzeugen und Bearbeiten mit "
+                   "Eingangsbildern. Kein Negativprompt.",
+    "Grok Imagine Image": "xAI Grok Imagine Bild (grok-imagine-image 2.0, quality / pro) über API: "
+                          "Erzeugen und Bearbeiten mit bis zu 5 Eingangsbildern. Kein Negativprompt.",
+    "Flux 3": "Black Forest Labs Flux 3 Bild über API: Erzeugen und Bearbeiten mit bis zu 10 "
+              "Bildern; das Modell erweitert Prompts selbst. Kein Negativprompt.",
     "Illustrious": "Illustrious XL und NoobAI-artige Modelle (Danbooru-Tags, ~20-40 Tags).",
     "Pony": "Pony Diffusion V6 XL und Pony-basierte Modelle (Score-Tags + kurze Beschreibung "
             "+ Tags). Der Workflow braucht CLIP skip 2.",
@@ -533,9 +961,39 @@ ABOUT_DE = {
     "MiniMax H3 FL2VA": "MiniMax H3 Start-/Endbild zu Video+Ton: image_1 = Startbild, image_2 "
                         "= Endbild. Die Cliplänge in den Text schreiben (Standard 6 s). H3 "
                         "nutzt keinen Negativprompt.",
-    "MiniMax H3 REF2VA": "MiniMax H3 Voll-Referenz Video+Ton: image_1..image_3 = "
-                         "Referenzbilder (<Picture 1..3>). Referenzvideos oder -ton im Text "
+    "MiniMax H3 REF2VA": "MiniMax H3 Voll-Referenz Video+Ton: image_1..image_4 = "
+                         "Referenzbilder (<Picture 1..4>). Referenzvideos oder -ton im Text "
                          "erwähnen. H3 nutzt keinen Negativprompt.",
+    "Seedream 5.0": "ByteDance Seedream 5.0 Pro / Flash / Lite über API (natürliche Sprache, 40-150 "
+                    "Wörter, Text in vielen Sprachen). Kein Negativprompt.",
+    "Seedream 4.5 / 4.0": "ByteDance Seedream 4.5 und 4.0 über API (natürliche Sprache, 40-150 "
+                          "Wörter). Kein Negativprompt.",
+    "Seedream Edit": "ByteDance-Seedream-4.0-/4.5-/5.0-Bearbeitung und Mehrbild-Eingabe über API "
+                     "(Edit-Anweisung, Image 1..4). Die Eingangsbilder in derselben Reihenfolge wie "
+                     "im Seedream-Node an image_1..image_4 anschließen. Kein Negativprompt.",
+    "Seedance 2.5": "ByteDance Seedance 2.5 über API (4-30 s, eigener Ton und Dialog in 10+ "
+                    "Sprachen, Zeitangaben). Für Bild-zu-Video das Startbild an image_1 anschließen "
+                    "(image_2 = Endbild). Kein Negativprompt.",
+    "Seedance 2.0": "ByteDance Seedance 2.0 / 2.0 Fast / 2.0 Mini über API (4-15 s, eigener Ton, "
+                    "Einstellungen ohne Zeitangaben). Für Bild-zu-Video das Startbild an image_1 "
+                    "anschließen (image_2 = Endbild). Kein Negativprompt.",
+    "Seedance 1.5 / 1.0 Pro": "ByteDance Seedance 1.5 Pro (Ton, Dialog) und 1.0 Pro / Pro Fast "
+                              "(ohne Ton) über API (etwa 4-12 s). Für Bild-zu-Video das Startbild "
+                              "an image_1 anschließen. Kein Negativprompt.",
+    "Seedance Reference": "ByteDance Seedance 2.5 / 2.0 Referenz-zu-Video über API: image_1..image_4 "
+                          "= Referenzbilder (Image 1..4) in derselben Reihenfolge wie im "
+                          "Seedance-Node. Referenzvideos oder -ton (Video 1, Audio 1) im Text "
+                          "erwähnen. Kein Negativprompt.",
+    "Kling 3.0": "Kling 3.0 / O3 Omni über API (3-15 s, eigener Ton, bis zu 6 Einstellungen, "
+                 "Referenzen @Image1..), auch Kling 2.6 (Ton) und 2.5 Turbo. Für Bild-zu-Video das "
+                 "Startbild an image_1 anschließen (image_2 = Endbild). Der Negativprompt gilt für "
+                 "die Text-/Bild-zu-Video-Nodes von 3.0 / 2.x; Omni hat keinen.",
+    "Veo 3.1": "Google Veo 3.1 / 3.1 Fast / 3.1 Lite über API (4, 6 oder 8 s, eigener Ton und "
+               "Dialog). Für Bild-zu-Video das Startbild an image_1 anschließen (image_2 = Endbild). "
+               "Der Negativprompt gehört in das Feld negative_prompt des Nodes.",
+    "Grok Imagine Video": "xAI Grok Imagine Video (grok-imagine-video, 1.5, 1.5 Lite) über API "
+                          "(1-15 s, Ton mit Lippensynchronität, Referenzen @Image1..). Für "
+                          "Bild-zu-Video das Startbild an image_1 anschließen. Kein Negativprompt.",
 }
 
 
@@ -552,8 +1010,13 @@ Recast the prompt: swap the persons, keep everything else.
 """ + COMMON
 
 
+# Preset groups for the filter on the node (web/grok_prompt_forge.js); the
+# user's own presets show up as "own".
+GROUPS = {"image": "image", "tags": "image", "edit": "edit", "video": "video", "h3": "video"}
+
+
 def _preset(description, system_prompt, negative, temperature, top_p, max_tokens, words="",
-            description_de="", words_de=""):
+            description_de="", words_de="", group="tools"):
     return {
         "description": description,
         "system_prompt": system_prompt,
@@ -564,6 +1027,7 @@ def _preset(description, system_prompt, negative, temperature, top_p, max_tokens
         "words": words,
         "description_de": description_de,
         "words_de": words_de,
+        "group": group,
     }
 
 
@@ -630,7 +1094,7 @@ def _build():
             "Person 1'.",
             "keine feste Spanne - behält die Länge des Original-Prompts"),
     }
-    for task, prefix in (("idea", "Idea"), ("caption", "Caption")):
+    for task, prefix in (("idea", "Generation"), ("caption", "Caption")):
         for t in TARGETS:
             temperature, top_p = t[task]
             what = ("Expand a short idea" if task == "idea"
@@ -642,9 +1106,9 @@ def _build():
                 _model_prompt(t, task), t["negative"], temperature, top_p, t["max_tokens"],
                 WORDS[t["label"]],
                 f"{what_de} zu einem Prompt für {ABOUT_DE[t['label']]}",
-                WORDS_DE[t["label"]])
+                WORDS_DE[t["label"]], GROUPS[t.get("kind", "image")])
     return presets
 
 
 BUILTIN = _build()
-DEFAULT_PRESET = "Idea ▸ Krea 2"
+DEFAULT_PRESET = "Generation ▸ Krea 2"

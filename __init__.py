@@ -10,7 +10,7 @@ from .grok_forge.loader_nodes import GrokSystemPromptLoader, GrokTextFileLoader
 from .grok_forge.local_node import LocalPromptForgeGGUF
 from .grok_forge.show_node import GrokShowPrompt
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 NODE_CLASS_MAPPINGS = {
     "GrokPromptForge": GrokPromptForge,

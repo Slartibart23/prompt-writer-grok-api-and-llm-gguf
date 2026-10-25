@@ -80,7 +80,7 @@ class BuiltinPresetTests(unittest.TestCase):
 
     def test_every_target_preset_recommends_a_length(self):
         for name, p in builtin_presets.BUILTIN.items():
-            if name.startswith(("Idea ▸", "Caption ▸ ")) and "LoRA" not in name and "Describe" not in name:
+            if name.startswith(("Generation ▸", "Caption ▸ ")) and "LoRA" not in name and "Describe" not in name:
                 self.assertRegex(p["words"], r"\d", name)
 
     def test_every_preset_has_german_texts(self):
@@ -95,11 +95,30 @@ class BuiltinPresetTests(unittest.TestCase):
         names = " ".join(builtin_presets.BUILTIN)
         for target in ("Krea 2", "Qwen-Image 2.1", "Qwen-Image-Edit 2.1", "Z-Image", "FLUX",
                        "Illustrious", "Pony", "SDXL", "Wan 2.2", "Wan 2.7", "Wan 3.0",
-                       "MiniMax H3 FL2VA", "MiniMax H3 REF2VA"):
-            self.assertIn(f"Idea ▸ {target}", names)
+                       "MiniMax H3 FL2VA", "MiniMax H3 REF2VA", "Seedream 5.0",
+                       "Seedream 4.5 / 4.0", "Seedream Edit", "Seedance 2.5", "Seedance 2.0",
+                       "Seedance 1.5 / 1.0 Pro", "Seedance Reference", "GPT Image", "Nano Banana",
+                       "Grok Imagine Image", "Flux 3", "Kling 3.0", "Veo 3.1",
+                       "Grok Imagine Video"):
+            self.assertIn(f"Generation ▸ {target}", names)
             self.assertIn(f"Caption ▸ {target}", names)
         self.assertIn("Caption ▸ LoRA training caption", names)
         self.assertIn("Caption ▸ Describe image", names)
+
+    def test_every_preset_has_a_filter_group(self):
+        groups = {p["group"] for p in builtin_presets.BUILTIN.values()}
+        self.assertEqual(groups, {"image", "edit", "video", "tools"})
+        self.assertEqual(builtin_presets.BUILTIN["Generation ▸ Seedream Edit"]["group"], "edit")
+        self.assertEqual(builtin_presets.BUILTIN["Caption ▸ Kling 3.0"]["group"], "video")
+        self.assertEqual(builtin_presets.BUILTIN["Caption ▸ Describe image"]["group"], "tools")
+        # the group reaches the browser, also for a saved override of a built-in preset
+        user = presets.all_presets()
+        self.assertTrue(all(p["group"] for p in user if p["builtin"]))
+
+    def test_api_models_without_negative_prompt(self):
+        for target in ("Seedream 5.0", "Seedance 2.5", "GPT Image", "Nano Banana", "Flux 3",
+                       "Grok Imagine Video"):
+            self.assertEqual(builtin_presets.BUILTIN[f"Generation ▸ {target}"]["negative_prompt"], "")
 
     def test_everything_neutral(self):
         # names that must never ship, rot13-encoded so they don't ship here either
@@ -152,6 +171,21 @@ class PresetStoreTests(unittest.TestCase):
         self.assertEqual(presets.names().count(name), 1)
         presets.delete(name)
         self.assertEqual(presets.get(name)["system_prompt"], original)
+
+    def test_values_saved_under_the_old_idea_name_carry_over(self):
+        with open(os.path.join(api.user_dir(), "presets.json"), "w", encoding="utf-8") as f:
+            json.dump({"version": 1, "presets": {
+                "Idea ▸ FLUX": {"system_prompt": "old flux"},
+                "Idea ▸ Krea 2": {"system_prompt": "old krea"},
+                "Generation ▸ Krea 2": {"system_prompt": "new krea"},
+                "Idea ▸ my own": {"system_prompt": "mine"}}}, f)
+        self.assertEqual(presets.get("Generation ▸ FLUX")["system_prompt"], "old flux")
+        self.assertTrue(presets.get("Generation ▸ FLUX")["overridden"])
+        self.assertEqual(presets.get("Generation ▸ Krea 2")["system_prompt"], "new krea")
+        self.assertIsNone(presets.get("Idea ▸ FLUX"))
+        self.assertEqual(presets.get("Idea ▸ my own")["system_prompt"], "mine")  # own name kept
+        self.assertTrue(presets.delete("Generation ▸ FLUX"))  # also removes the old entry
+        self.assertFalse(presets.get("Generation ▸ FLUX")["overridden"])
 
     def test_empty_name_rejected(self):
         with self.assertRaises(ValueError):
@@ -219,12 +253,12 @@ class ForgeNodeTests(unittest.TestCase):
 
     def test_images_keep_slot_numbers(self):
         img = np.zeros((2, 8, 8, 3), dtype=np.float32)
-        _, post = self.run_node(image_1=img, image_3=img)
+        _, post = self.run_node(image_1=img, image_3=img, image_4=img)
         content = post.call_args.kwargs["json"]["messages"][1]["content"]
         texts = [c["text"] for c in content if c["type"] == "text"]
-        self.assertEqual(texts[0], "Attached images: Image 1, Image 3.")
-        self.assertIn("Image 3:", texts)
-        self.assertEqual(sum(c["type"] == "image_url" for c in content), 2)
+        self.assertEqual(texts[0], "Attached images: Image 1, Image 3, Image 4.")
+        self.assertIn("Image 4:", texts)
+        self.assertEqual(sum(c["type"] == "image_url" for c in content), 3)
         self.assertTrue(texts[-1].endswith("eine Katze im Regen"))
 
     def test_image_without_text(self):
@@ -261,7 +295,7 @@ class ForgeNodeTests(unittest.TestCase):
         self.assertEqual(spec["required"]["preset"][0], presets.names())
         self.assertEqual(spec["required"]["model"][1]["default"], "grok-4.20-0309-reasoning")
         self.assertEqual(spec["required"]["model"][0][0], "grok-4.20-0309-reasoning")
-        for n in (1, 2, 3):
+        for n in (1, 2, 3, 4):
             self.assertEqual(spec["optional"][f"image_{n}"][0], "IMAGE")
         for f in ("min_words", "max_words"):
             self.assertEqual(spec["optional"][f][1]["default"], 0)
@@ -276,7 +310,7 @@ class ForgeNodeTests(unittest.TestCase):
         self.assertEqual(order[:len(v310)], v310)
         self.assertEqual(order[len(v310):], ["person_1", "person_2", "person_3", "person_4",
                                              "image_n_is_person_n", "style_1", "style_2",
-                                             "archive"])
+                                             "archive", "image_4"])
         self.assertTrue(forge_node.GrokPromptForge.VALIDATE_INPUTS(
             "unknown", "unknown", person_1="Nobody", style_2="Gone"))
 
@@ -352,11 +386,16 @@ class PersonRuleTests(unittest.TestCase):
 
     def test_image_link_follows_slots_and_switch(self):
         img = np.zeros((1, 8, 8, 3), dtype=np.float32)
-        system = self.system_of(person_1="Alice", person_2="Bob", image_1=img)
+        system = self.system_of(person_1="Alice", person_2="Bob", image_1=img,
+                                image_n_is_person_n=True)
         self.assertIn("Image 1 shows this person", system)
         self.assertNotIn("Image 2 shows", system)
         system = self.system_of(person_1="Alice", image_1=img, image_n_is_person_n=False)
         self.assertNotIn("shows this person", system)
+        system = self.system_of(person_4="Bob", image_4=img, image_n_is_person_n=True)
+        self.assertIn("Image 4 shows this person", system)  # person 4 has an image now
+        spec = forge_node.GrokPromptForge.INPUT_TYPES()
+        self.assertFalse(spec["optional"]["image_n_is_person_n"][1]["default"])  # off for new nodes
 
     def test_name_that_is_the_trigger_is_not_repeated(self):
         library.save("person", "Zed", {"trigger": "zed", "description": "tall"})
@@ -461,8 +500,8 @@ class LocalModelTests(unittest.TestCase):
             open(os.path.join(d, name), "wb").close()
 
     def run_node(self, **kw):
-        p = presets.get("Idea ▸ FLUX")
-        args = dict(preset="Idea ▸ FLUX", text="ein Fuchs im Wald", system_prompt=p["system_prompt"],
+        p = presets.get("Generation ▸ FLUX")
+        args = dict(preset="Generation ▸ FLUX", text="ein Fuchs im Wald", system_prompt=p["system_prompt"],
                     negative_prompt="", model=self.entry["label"], temperature=0.7, top_p=0.95,
                     max_tokens=8192, fallback_to_input=False)
         args.update(kw)
@@ -550,11 +589,11 @@ class LocalModelTests(unittest.TestCase):
         with mock.patch.dict(sys.modules, {"llama_cpp": None}):
             with self.assertRaisesRegex(RuntimeError, "LOCAL_GGUF.md"):
                 local_node.LocalPromptForgeGGUF().forge(
-                    preset="Idea ▸ FLUX", text="x", system_prompt="S", negative_prompt="",
+                    preset="Generation ▸ FLUX", text="x", system_prompt="S", negative_prompt="",
                     model=self.entry["label"], temperature=0.7, top_p=0.95, max_tokens=512,
                     fallback_to_input=False)
             out = local_node.LocalPromptForgeGGUF().forge(
-                preset="Idea ▸ FLUX", text="x", system_prompt="S", negative_prompt="N",
+                preset="Generation ▸ FLUX", text="x", system_prompt="S", negative_prompt="N",
                 model=self.entry["label"], temperature=0.7, top_p=0.95, max_tokens=512)
             self.assertEqual(out, ("x", "N"))  # fallback_to_input keeps batch runs alive
 
@@ -565,7 +604,8 @@ class LocalModelTests(unittest.TestCase):
             self.assertNotIn(gone, names)
         for new in ("thinking", "unload_after_run", "context_length", "gpu_layers", "top_k"):
             self.assertIn(new, spec["optional"])
-        self.assertEqual(names[-5:], list(local_node.LOCAL_OPTIONS))
+        # image_4 (1.2.0) comes after the local options, so their saved values keep their place
+        self.assertEqual(names[-6:], [*local_node.LOCAL_OPTIONS, "image_4"])
         self.assertEqual(spec["required"]["model"][0], local_models.model_labels())
         self.assertTrue(local_node.LocalPromptForgeGGUF.VALIDATE_INPUTS("x", "y", person_1="z"))
 

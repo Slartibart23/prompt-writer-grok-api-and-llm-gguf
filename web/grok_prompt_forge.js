@@ -10,8 +10,9 @@
 // - Prompt Writer · Show Prompt shows a text with its word / tag / sentence / character
 //   count (display only, never re-runs anything)
 // - selected persons / style blocks get a red / blue field background
+// - two filter boxes above "preset" narrow its list by type and task (display only)
 // - the language switch at the top shows the nodes in English or German
-//   (display only, remembered in this browser; see grok_prompt_forge_i18n.js)
+//   (display only, English after every page load; see grok_prompt_forge_i18n.js)
 
 import { LANGUAGES, LOCAL_TEXT_DE, NODE_TEXT_DE, SHOW_TEXT_DE, STRINGS } from "./grok_prompt_forge_i18n.js";
 
@@ -32,16 +33,10 @@ const WORD_FIELDS = ["min_words", "max_words"];
 const TITLE = "Prompt Writer";
 const CUSTOM = "Custom system prompt"; // built-in preset name, see builtin_presets.py
 const LANG_WIDGET = "grok_language";
-const LANG_KEY = "grokPromptForge.language";
 
 // ----------------------------------------------------------------- language
-let lang = (() => {
-  try {
-    return localStorage.getItem(LANG_KEY) === "de" ? "de" : "en";
-  } catch {
-    return "en";
-  }
-})();
+// Every page load starts in English; German lasts until the page is reloaded.
+let lang = "en";
 
 function t(key, ...args) {
   const value = STRINGS[lang][key] ?? STRINGS.en[key];
@@ -119,17 +114,15 @@ function translateNode(node) {
     else if (slot.label === text.label) slot.label = undefined;
   }
   if (isShow) renderShown(node);
-  else showWordHint(node);
+  else {
+    showFilters(node);
+    showWordHint(node);
+  }
   node.setDirtyCanvas?.(true, true);
 }
 
 function setLanguage(value) {
   lang = value === "de" ? "de" : "en";
-  try {
-    localStorage.setItem(LANG_KEY, lang);
-  } catch {
-    // private window or blocked storage: the switch still works for this page
-  }
   for (const node of allNodes()) {
     const w = widget(node, LANG_WIDGET);
     if (w) w.value = LANGUAGES[lang];
@@ -243,13 +236,91 @@ async function applyPreset(node, name, announce = false) {
   }
 }
 
-// Show the new preset list on every Prompt Writer · Grok API node; each keeps its value.
+// ------------------------------------------------------------ preset filter
+// Two selection boxes above "preset" narrow its list by type and task. Display
+// only: the choice lives in node.properties (saved with the workflow, never sent
+// with the prompt) and the selected preset always stays in the list.
+const FILTERS = {
+  group: { widget: "grok_filter_group", label: "filterType", tip: "filterTypeTip",
+           keys: ["all", "image", "edit", "video", "tools", "own"] },
+  task: { widget: "grok_filter_task", label: "filterTask", tip: "filterTaskTip",
+          keys: ["all", "generation", "caption"] },
+};
+const optionKey = (key) => `opt_${key}`;
+const presetGroup = (p) => (p.builtin ? p.group || "tools" : "own");
+const presetTask = (p) => (p.name.startsWith("Generation ▸") ? "generation"
+  : p.name.startsWith("Caption ▸") ? "caption" : "other");
+
+// Up to 1.1.0 "Generation ▸ X" was called "Idea ▸ X": a loaded workflow shows the
+// new name. Only the label changes - the values in the node's fields stay.
+const LEGACY = ["Idea ▸ ", "Generation ▸ "];
+function renameLegacyPreset(node, list) {
+  const w = widget(node, "preset");
+  if (!w || typeof w.value !== "string" || !w.value.startsWith(LEGACY[0])) return;
+  const renamed = LEGACY[1] + w.value.slice(LEGACY[0].length);
+  if (list.some((p) => p.name === renamed)) w.value = renamed;
+}
+
+function filterValue(node, which) {
+  const value = node.properties?.presetFilter?.[which];
+  return FILTERS[which].keys.includes(value) ? value : "all";
+}
+
+function presetChoices(node, list) {
+  const group = filterValue(node, "group");
+  const task = filterValue(node, "task");
+  const names = list
+    .filter((p) => (group === "all" || presetGroup(p) === group) && (task === "all" || presetTask(p) === task))
+    .map((p) => p.name);
+  const current = widget(node, "preset")?.value;
+  return current === undefined || names.includes(current) ? names : [current, ...names];
+}
+
+// Shows the filter boxes in the current language with the node's current choice.
+function showFilters(node) {
+  for (const [which, spec] of Object.entries(FILTERS)) {
+    const w = widget(node, spec.widget);
+    if (!w) continue;
+    w.options.values = spec.keys.map((k) => t(optionKey(k)));
+    w.value = t(optionKey(filterValue(node, which)));
+  }
+}
+
+function addFilters(node) {
+  const presetWidget = widget(node, "preset");
+  if (!presetWidget) return;
+  for (const [which, spec] of Object.entries(FILTERS)) {
+    const w = node.addWidget("combo", spec.widget, t(optionKey("all")), (value) => {
+      // the shown value is translated: find its key in either language
+      const key = spec.keys.find((k) => Object.values(STRINGS).some((s) => s[optionKey(k)] === value)) ?? "all";
+      node.properties ??= {};
+      node.properties.presetFilter = { ...node.properties.presetFilter, [which]: key };
+      refreshPresetChoices(node);
+    }, { values: [], serialize: false });
+    w.serialize = false;
+    w._grokText = spec.label;
+    w._grokTip = spec.tip;
+    node.widgets.splice(node.widgets.indexOf(w), 1);
+    node.widgets.splice(node.widgets.indexOf(presetWidget), 0, w);
+  }
+  showFilters(node);
+}
+
+async function refreshPresetChoices(node) {
+  const w = widget(node, "preset");
+  const list = await loadPresets();
+  if (!w || !list.length) return;
+  renameLegacyPreset(node, list);
+  w.options.values = presetChoices(node, list);
+  node.setDirtyCanvas?.(true, true);
+}
+
+// Show the new preset list on every Prompt Writer node; each keeps its value and filter.
 function updatePresetLists(list) {
-  const names = list.map((p) => p.name);
   for (const node of forgeNodes()) {
     const w = widget(node, "preset");
     if (!w) continue;
-    w.options.values = names.includes(w.value) ? names : [w.value, ...names];
+    w.options.values = presetChoices(node, list);
     node.setDirtyCanvas?.(true, true);
   }
 }
@@ -274,9 +345,8 @@ async function savePreset(node) {
   const data = await resp.json();
   if (!resp.ok) return toast("error", t("presetNotSaved"), data.error);
   presetsPromise = Promise.resolve(data.presets);
-  updatePresetLists(data.presets);
   widget(node, "preset").value = name;
-  node.setDirtyCanvas?.(true, true);
+  updatePresetLists(data.presets); // after the value: it stays in the list whatever the filter
   toast("success", t("presetSaved"), name);
 }
 
@@ -754,6 +824,7 @@ app.registerExtension({
         };
       }
       addLanguageSwitch(node);
+      addFilters(node);
       addButton(node, "btnSavePreset", savePreset);
       addButton(node, "btnDeletePreset", deletePreset);
       if (isGrok) addButton(node, "btnRefreshModels", refreshModels); // the local list is fixed
@@ -761,6 +832,7 @@ app.registerExtension({
       addButton(node, "btnArchive", openArchive);
       markSelections(node);
       applyLanguage(node);
+      refreshPresetChoices(node);
       return r;
     };
 
@@ -768,6 +840,7 @@ app.registerExtension({
     nodeType.prototype.onConfigure = function () {
       const r = onConfigure?.apply(this, arguments);
       applyLanguage(this); // also refreshes the word hint: a loaded workflow may use another preset
+      refreshPresetChoices(this); // the filter saved with the workflow
       return r;
     };
   },

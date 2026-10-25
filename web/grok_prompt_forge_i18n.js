@@ -9,15 +9,24 @@ export const LANGUAGES = { en: "English", de: "Deutsch" };
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
 const IMAGE_DE = (n) =>
-  `Optionales Referenzbild ${n} von 3. Das Modell sieht es als 'Image ${n}'. Ein einzelnes Bild ` +
+  `Optionales Referenzbild ${n} von 4. Das Modell sieht es als 'Image ${n}'. Ein einzelnes Bild ` +
   "anschließen, keinen Batch (von einem Batch wird nur das erste Bild genutzt).\n" +
   "So nutzen die Auswahlen die Bilder:\n" +
   "- Caption > Describe image: image_1 ist das zu beschreibende Bild.\n" +
   "- Qwen-Image-Edit: image_1..3 sind die Eingangsbilder des Edits, in derselben " +
-  "Reihenfolge wie im Edit-Workflow.\n" +
+  "Reihenfolge wie im Edit-Workflow (Qwen nimmt höchstens 3).\n" +
+  "- Seedream Edit: image_1..4 sind die Eingangsbilder des Edits (Image 1..4), in derselben " +
+  "Reihenfolge wie im Seedream-Node.\n" +
   "- MiniMax H3 FL2VA: image_1 = Startbild, image_2 = Endbild.\n" +
-  "- MiniMax H3 REF2VA: image_1..3 = Referenzbilder (Personen, Orte, Objekte, Stil).\n" +
-  "- Wan Bild-zu-Video: image_1 = Startbild.\n" +
+  "- MiniMax H3 REF2VA: image_1..4 = Referenzbilder (Personen, Orte, Objekte, Stil).\n" +
+  "- Seedance Reference: image_1..4 = Referenzbilder (Image 1..4), in derselben Reihenfolge " +
+  "wie im Seedance-Node.\n" +
+  "- Kling Omni und Grok Imagine Referenz-zu-Video: image_1..4 = @Image1..4, in derselben " +
+  "Reihenfolge wie im Video-Node.\n" +
+  "- Bild-zu-Video (Wan, Seedance, Kling, Veo, Grok Imagine): image_1 = Startbild (image_2 = " +
+  "Endbild bei Start-/Endbild-Video).\n" +
+  "- GPT Image, Nano Banana, Grok Imagine Image, Flux 3: image_1..4 = Eingangsbilder zum " +
+  "Bearbeiten oder als Referenz.\n" +
   "- Alle anderen Auswahlen: optionaler visueller Kontext, aus dem das Modell Details übernimmt.\n" +
   `- Mit gesetzter person_${n} und 'Bild N = Person N' an: image_${n} ist ein Foto dieser Person.\n` +
   "Bilder kosten zusätzliche Tokens; max. Bildseite steuert die Upload-Größe.";
@@ -45,7 +54,8 @@ export const NODE_TEXT_DE = {
     "Die Aufgabe. Eine Auswahl füllt Systemprompt, Negativprompt, Temperatur, top_p und " +
     "max. Tokens mit passenden Werten. Ändere sie frei und speichere sie mit 'Auswahl " +
     "speichern als...' unter eigenem Namen.\n" +
-    "Idea > ...: eine kurze Idee zu einem vollständigen Prompt für dieses Modell ausbauen.\n" +
+    "Generation > ...: eine kurze Idee oder Stichworte zu einem vollständigen Prompt für " +
+    "dieses Modell ausbauen.\n" +
     "Caption > ...: eine vorhandene Caption treu (ohne neue Inhalte) in den Prompt-Stil " +
     "dieses Modells umschreiben.\n" +
     "Die Eingabe darf in jeder Sprache sein; die Ausgabe ist immer Englisch." },
@@ -87,6 +97,7 @@ export const NODE_TEXT_DE = {
   image_1: { label: "Bild 1", tooltip: IMAGE_DE(1) },
   image_2: { label: "Bild 2", tooltip: IMAGE_DE(2) },
   image_3: { label: "Bild 3", tooltip: IMAGE_DE(3) },
+  image_4: { label: "Bild 4", tooltip: IMAGE_DE(4) },
   trigger_word: { label: "Trigger-Wort", tooltip:
     "Nur für 'Caption > LoRA training caption': der Trigger des LoRAs für das Hauptmotiv " +
     "(ersetzt {trigger} im Systemprompt). Leer lassen für Captions ohne Trigger." },
@@ -118,11 +129,12 @@ export const NODE_TEXT_DE = {
   person_4: { label: "Person 4", tooltip: PERSON_DE(4) },
   image_n_is_person_n: { label: "Bild N = Person N", tooltip:
     "Koppelt jede Person mit dem Bild-Eingang derselben Nummer: person_1 = image_1, " +
-    "person_2 = image_2, person_3 = image_3 (person_4 hat keinen Bild-Eingang).\n" +
+    "person_2 = image_2, person_3 = image_3, person_4 = image_4.\n" +
     "An: Lädst du ein Foto der Person in den passenden Bild-Eingang, erfährt das Modell 'dieses " +
     "Bild zeigt diese Person' und übernimmt das Aussehen aus dem Foto. Bei Qwen-Image-Edit, " +
-    "MiniMax H3 REF2VA, Wan 2.7/3.0 und FLUX.2 verweist der Prompt auf das Bild (z. B. " +
-    "<image1>), statt das Gesicht zu beschreiben.\n" +
+    "MiniMax H3 REF2VA, Wan 2.7/3.0, Seedream, Seedance, Kling, Grok Imagine, GPT Image, Nano " +
+    "Banana und FLUX verweist der Prompt auf das Bild (z. B. <image1>, Image 1, @Image1), statt " +
+    "das Gesicht zu beschreiben.\n" +
     "Aus: Bilder und Personen haben nichts miteinander zu tun - z. B. wenn die Bilder " +
     "Start- und Endbild für MiniMax H3 FL2VA sind." },
   style_1: { label: "Stil 1", tooltip: STYLE_DE(1) },
@@ -183,6 +195,18 @@ export const STRINGS = {
     btnRefreshModels: "🔄 Refresh model list",
     btnLibrary: "👤 Persons & styles...",
     btnArchive: "📜 Load from archive...",
+    filterType: "Filter: type",
+    filterTypeTip: "Shows only presets of this type in the preset list: image models, edit models, video models, captions & tools, or your own presets. Display only: it never changes the selected preset and never starts a new run.",
+    filterTask: "Filter: task",
+    filterTaskTip: "Shows only 'Generation ▸' presets (expand a short idea into a full prompt) or 'Caption ▸' presets (rewrite an existing caption). Display only: it never changes the selected preset and never starts a new run.",
+    opt_all: "All",
+    opt_image: "Image",
+    opt_edit: "Edit",
+    opt_video: "Video",
+    opt_tools: "Captions & tools",
+    opt_own: "My presets",
+    opt_generation: "Generation",
+    opt_caption: "Caption",
     recommended: (name, words) => `Recommended for "${name}": ${words}.`,
     noLength: "This preset has no recommended length.",
     length: "Length",
@@ -217,7 +241,7 @@ export const STRINGS = {
     descriptionLabel: "Description",
     descriptionHint: "Appearance and fixed traits (face, hair, body, age, typical look). Binding in every prompt; tag models get it as tags.",
     voiceLabel: "Voice",
-    voiceHint: "Timbre, pitch, pace, accent, e.g. 'deep raspy male voice, slow, northern German accent'. Used only by models with audio: MiniMax H3 FL2VA / REF2VA, Wan 2.7, Wan 3.0. Ignored by Wan 2.2 and all image models.",
+    voiceHint: "Timbre, pitch, pace, accent, e.g. 'deep raspy male voice, slow, northern German accent'. Used only by models with audio: MiniMax H3 FL2VA / REF2VA, Wan 2.7, Wan 3.0, Seedance 1.5 / 2.0 / 2.5, Kling 3.0 / 2.6, Veo 3.1, Grok Imagine Video. Ignored by Wan 2.2 and all image models.",
     textLabel: "Text",
     textHint: "Applied to every result while selected, e.g. a camera look ('shot on 35mm film, grain, muted colours'), a lighting mood or a ban list ('never: golden hour, neon lights').",
     save: "💾 Save",
@@ -261,6 +285,18 @@ export const STRINGS = {
     btnRefreshModels: "🔄 Modell-Liste aktualisieren",
     btnLibrary: "👤 Personen & Stile...",
     btnArchive: "📜 Aus Archiv laden...",
+    filterType: "Filter: Typ",
+    filterTypeTip: "Zeigt in der Auswahlliste nur Auswahlen dieses Typs: Bildmodelle, Edit-Modelle, Videomodelle, Captions & Werkzeuge oder deine eigenen Auswahlen. Nur Anzeige: ändert nie die gewählte Auswahl und startet nie einen neuen Lauf.",
+    filterTask: "Filter: Aufgabe",
+    filterTaskTip: "Zeigt nur 'Generation ▸'-Auswahlen (eine kurze Idee zum vollständigen Prompt ausbauen) oder 'Caption ▸'-Auswahlen (eine vorhandene Caption umschreiben). Nur Anzeige: ändert nie die gewählte Auswahl und startet nie einen neuen Lauf.",
+    opt_all: "Alle",
+    opt_image: "Bild",
+    opt_edit: "Bearbeiten",
+    opt_video: "Video",
+    opt_tools: "Captions & Werkzeuge",
+    opt_own: "Eigene",
+    opt_generation: "Generation",
+    opt_caption: "Caption",
     recommended: (name, words) => `Empfohlen für "${name}": ${words}.`,
     noLength: "Für diese Auswahl gibt es keine Längenempfehlung.",
     length: "Länge",
@@ -295,7 +331,7 @@ export const STRINGS = {
     descriptionLabel: "Beschreibung",
     descriptionHint: "Aussehen und feste Merkmale (Gesicht, Haare, Körper, Alter, typischer Look). In jedem Prompt verbindlich; Tag-Modelle bekommen sie als Tags.",
     voiceLabel: "Stimme",
-    voiceHint: "Klangfarbe, Tonhöhe, Tempo, Akzent, z. B. 'tiefe, raue Männerstimme, langsam, norddeutscher Akzent'. Nur für Modelle mit Ton: MiniMax H3 FL2VA / REF2VA, Wan 2.7, Wan 3.0. Wan 2.2 und alle Bildmodelle ignorieren sie.",
+    voiceHint: "Klangfarbe, Tonhöhe, Tempo, Akzent, z. B. 'tiefe, raue Männerstimme, langsam, norddeutscher Akzent'. Nur für Modelle mit Ton: MiniMax H3 FL2VA / REF2VA, Wan 2.7, Wan 3.0, Seedance 1.5 / 2.0 / 2.5, Kling 3.0 / 2.6, Veo 3.1, Grok Imagine Video. Wan 2.2 und alle Bildmodelle ignorieren sie.",
     textLabel: "Text",
     textHint: "Wird auf jedes Ergebnis angewendet, solange gewählt, z. B. ein Kameralook ('shot on 35mm film, grain, muted colours'), eine Lichtstimmung oder eine Verbotsliste ('never: golden hour, neon lights').",
     save: "💾 Speichern",

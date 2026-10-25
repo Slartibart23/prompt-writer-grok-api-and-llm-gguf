@@ -22,8 +22,18 @@ FIELDS = {
 }
 LIMITS = {"temperature": (0.0, 2.0), "top_p": (0.05, 1.0), "max_tokens": (256, 32768)}
 MAX_NAME = 80
+# Up to 1.1.0 the "Generation ▸" presets were called "Idea ▸": saved values under
+# an old name now belong to the new one (the browser renames it in workflows).
+LEGACY_PREFIX = ("Idea ▸ ", "Generation ▸ ")
 
 _lock = threading.Lock()
+
+
+def current_name(name):
+    old, new = LEGACY_PREFIX
+    if name.startswith(old) and new + name[len(old):] in BUILTIN:
+        return new + name[len(old):]
+    return name
 
 
 def _path():
@@ -40,7 +50,11 @@ def _load_user():
         print(f"[Prompt Writer] presets.json unreadable, ignoring it: {e}")
         return {}
     presets = data.get("presets") if isinstance(data, dict) else None
-    return presets if isinstance(presets, dict) else {}
+    if not isinstance(presets, dict):
+        return {}
+    migrated = {current_name(k): v for k, v in presets.items() if current_name(k) != k}
+    migrated.update({k: v for k, v in presets.items() if current_name(k) == k})  # new names win
+    return migrated
 
 
 def _save_user(presets):

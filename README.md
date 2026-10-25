@@ -11,7 +11,8 @@ You can choose between two ways to let it write:
 
 Both nodes share everything else:
 
-- **Presets per target model:** each target model has its own task preset with a matching system prompt, standard negative prompt and sampling settings.
+- **Presets per target model:** each target model has its own task preset with a matching system prompt, standard negative prompt and sampling settings. This covers local models (Krea 2, Qwen-Image, Z-Image, FLUX, SDXL family, Wan, MiniMax H3) and API models (Seedream, Seedance, GPT Image, Nano Banana, Grok Imagine, Flux 3, Kling, Veo).
+- **Preset filters:** two boxes above the preset list narrow it by type (image, edit, video, captions & tools, your own) and task (Generation, Caption).
 - **Your own persons and style blocks:** pick them from a local library and they appear in every prompt, with every action clearly assigned by name.
 - **Prompt archive:** every result can be found and reused later.
 - **Prompt Writer · Show Prompt** displays the result with a word count.
@@ -39,7 +40,7 @@ Both nodes share everything else:
 
 ```
 Idea -> prompt:
-[your idea, any language] -> [Prompt Writer · Grok API or LLM GGUF: "Idea ▸ FLUX"]
+[your idea, any language] -> [Prompt Writer · Grok API or LLM GGUF: "Generation ▸ FLUX"]
         -> prompt ----------> [Prompt Writer · Show Prompt] -> [CLIP Text Encode +]
         -> negative_prompt -----------------------------------> [CLIP Text Encode -]
 
@@ -47,7 +48,11 @@ Caption rewriting (batch):
 [Prompt Writer · Text File Loader] -> [Prompt Writer: "Caption ▸ LoRA training caption"] -> [Save Text File]
 
 Edit instruction with reference images:
-[Load Image] x2 -> image_1, image_2 -> [Prompt Writer: "Idea ▸ Qwen-Image-Edit 2.1"] -> [Qwen edit workflow]
+[Load Image] x2 -> image_1, image_2 -> [Prompt Writer: "Generation ▸ Qwen-Image-Edit 2.1"] -> [Qwen edit workflow]
+
+API video with reference images:
+[Load Image] x3 -> image_1..3 -> [Prompt Writer: "Generation ▸ Seedance Reference"] -> prompt -> [ByteDance Seedance 2.5 Reference to Video]
+                (same images, same order) ----------------------------------------> reference images
 ```
 
 ## Nodes
@@ -56,7 +61,7 @@ All nodes are in the node menu under **Prompt Writer**.
 
 | Node | Purpose |
 |---|---|
-| **Prompt Writer · Grok API** | Prompt writing, caption rewriting and image captioning through the xAI Grok API. It has three optional image inputs, a custom system prompt input and 30 built-in task presets. You can save your own presets, pick up to four persons and two style blocks from your library, and reload results from the archive. Outputs `prompt` and `negative_prompt`. |
+| **Prompt Writer · Grok API** | Prompt writing, caption rewriting and image captioning through the xAI Grok API. It has four optional image inputs, a custom system prompt input and 58 built-in task presets. You can save your own presets, pick up to four persons and two style blocks from your library, and reload results from the archive. Outputs `prompt` and `negative_prompt`. |
 | **Prompt Writer · LLM GGUF** | The same with a local, uncensored **Qwen3.8-27B** (huihui abliterated or HauhauCS Aggressive, several sizes) instead of the API. The chosen model and its vision projector are downloaded on the first run. Needs llama-cpp-python with CUDA: see **[docs/LOCAL_GGUF.md](docs/LOCAL_GGUF.md)** for the installation and which model fits your GPU. |
 | **Prompt Writer · Show Prompt** | Shows a text on the node and passes it on unchanged. Below the text, a status line counts words, tags (comma-separated parts), sentences and characters; switch it off with "show counts". Counting is done locally, needs no API call, and never re-runs anything. The last text is kept with the workflow. |
 | **Prompt Writer · System Prompt Loader** | Loads a system prompt from a `.txt` file and reloads it automatically when the file changes. Connect it to `custom_system_prompt`. |
@@ -68,7 +73,7 @@ All nodes are in the node menu under **Prompt Writer**.
 
 The switch **🌐 Language / Sprache** at the top of the writer nodes and Show Prompt shows them in **English** or **Deutsch**: field labels, tooltips, inputs and outputs, buttons, dialogs, notifications and preset notes.
 
-- It only changes what you see. It is not saved in the workflow and it doesn't re-run a node. Your choice is remembered in the browser and applies to all nodes of this pack.
+- It only changes what you see. It is not saved in the workflow and it doesn't re-run a node. It applies to all nodes of this pack, and every page load starts in English.
 - Preset names stay English because they are saved in workflows.
 - The system prompts sent to the model and the generated prompt stay English.
 - The short node description shown when you hover over a node's title stays English, because ComfyUI keeps it read-only.
@@ -84,16 +89,27 @@ Choosing a preset fills `system_prompt`, `negative_prompt`, `temperature`, `top_
 
 The preset only labels the values. The node always runs with the values shown in its fields, so a workflow shared with someone who doesn't have your presets still runs unchanged.
 
+**Filter: type** and **Filter: task**, right above the preset list, narrow it down:
+
+- Type: All, Image, Edit, Video, Captions & tools, or My presets.
+- Task: All, Generation or Caption.
+
+The filters only change which presets the list shows. They never change the selected preset, which stays in the list even when it doesn't match, and they never re-run the node. The choice is kept per node in the workflow.
+
 | Preset | What it does |
 |---|---|
 | Custom system prompt | Your own system prompt. Left empty, only the node's own rules are sent (see below). |
 | Caption ▸ LoRA training caption | Refines a raw caption (e.g. from JoyCaption) into a training caption. If you put your LoRA's trigger token into `trigger_word`, the subject's fixed traits are removed so they bind to that token. |
 | Caption ▸ Describe image | Captions `image_1`. Optional text adds extra instructions or a question about the image. |
 | Recast ▸ Swap persons | Swaps the persons in an existing prompt for the selected `person_1..4`; everything else stays (see below). |
-| Idea ▸ *target* | Expands a short idea into a full prompt for the target model. |
+| Generation ▸ *target* | Expands a short idea or keywords into a full prompt for the target model. (Called "Idea ▸" up to 1.1.0; saved workflows and presets are renamed automatically.) |
 | Caption ▸ *target* | Rewrites an existing caption faithfully (nothing new is added) into the target model's prompt style. |
 
-**Targets:** Krea 2 · Qwen-Image 2.1 · Qwen-Image-Edit 2.1 · Z-Image · FLUX · Illustrious · Pony · SDXL · Wan 2.2 · Wan 2.7 · Wan 3.0 · MiniMax H3 FL2VA · MiniMax H3 REF2VA
+**Targets, local models:** Krea 2 · Qwen-Image 2.1 · Qwen-Image-Edit 2.1 · Z-Image · FLUX · Illustrious · Pony · SDXL · Wan 2.2 · Wan 2.7 · Wan 3.0 · MiniMax H3 FL2VA · MiniMax H3 REF2VA
+
+**Targets, API models:** Seedream 5.0 · Seedream 4.5 / 4.0 · Seedream Edit · GPT Image · Nano Banana · Grok Imagine Image · Flux 3 · Seedance 2.5 · Seedance 2.0 · Seedance 1.5 / 1.0 Pro · Seedance Reference · Kling 3.0 · Veo 3.1 · Grok Imagine Video
+
+The API presets write prompts for the ComfyUI partner nodes and other API services (BytePlus, Venice ...). The node only writes the prompt; the image or video is generated by the API node you connect it to. OpenAI's Sora is missing because OpenAI removed it from its API on 2026-09-24.
 
 | Target | Prompt style | Standard negative prompt |
 |---|---|---|
@@ -108,7 +124,20 @@ The preset only labels the values. The node always runs with the values shown in
 | Wan 2.2 | T2V: cinematic setting terms + subject + detailed motion. I2V (start frame on `image_1`): motion and camera only | Official Wan negative (Chinese) |
 | Wan 2.7 / 3.0 | Entity + scene + motion + aesthetics + sound; multi-shot `Shot 1 [0-3s]`; references as "Image 1" | Official Wan negative (Chinese) |
 | MiniMax H3 FL2VA | Alignment line + `integrated_multimodal_description` / `overall_soundscape` / `non_diegetic_music`; `image_1` = first frame, `image_2` = last frame | none |
-| MiniMax H3 REF2VA | The six full-reference sections with `<Subject N>` / `<Picture N>` labels; `image_1..3` = reference pictures | none |
+| MiniMax H3 REF2VA | The six full-reference sections with `<Subject N>` / `<Picture N>` labels; `image_1..4` = reference pictures | none |
+| Seedream 5.0, 4.5 / 4.0 | Full sentences, subject + action + environment + style, 40–150 words; quoted text; references as "Image 1" | none (no negative prompt in the API) |
+| Seedream Edit | Short edit instruction, "Image 1"…"Image 4" in node order, one "keep … unchanged" clause | none |
+| GPT Image | Intended use first, then scene → subject → details → constraints; labelled lines for complex images; exact quoted text | none |
+| Nano Banana | Narrative paragraph that starts with a verb; references by role ("the first image") | none |
+| Grok Imagine Image | 4–6 sentences in a fixed order (subject, details, art direction, light, colour, composition); no avoid-lists | none |
+| Flux 3 | Lean connected sentences, medium → subject → setting → light → framing; "image 1" references | none |
+| Seedance 2.5 | Summary + timeline with second timestamps (`0s-3s: …`) + closing notes; `Name's line (emotion): "…"` | none |
+| Seedance 2.0 | Formula + `Shot 1: …` storyboard without timestamps; `{dialogue}`, `<sound>`, `(music)` | none |
+| Seedance 1.5 / 1.0 Pro | Subject + movement + environment + camera + aesthetics + sound; speaker lines | none |
+| Seedance Reference | Asset bindings ("Image 1 is …"), summary, shots; edit / extend / keyframe wording | none |
+| Kling 3.0 | Subject → action → setting → camera → light → mood; `[Shot 1: Wide shot, 3s]`; `@Image1` references; speaker lines | Short generic list (Kling 3.0 / 2.x nodes; Omni has none) |
+| Veo 3.1 | Cinematography + subject + action + context + style; quoted dialogue, `SFX:` and `Ambient noise:` lines | Noun list (subtitles, watermark, …) for the node's negative field |
+| Grok Imagine Video | One continuous shot, opening image first; `@Image1` / `@Audio1` references | none |
 
 The guides inside the presets follow each model's official sources:
 
@@ -119,6 +148,13 @@ The guides inside the presets follow each model's official sources:
 - Wan 2.2: `system_prompt.py`
 - Wan 2.7 / 3.0: the Alibaba Model Studio video guide
 - MiniMax H3: its own prompt-writing guides
+- Seedream and Seedance: the BytePlus ModelArk prompt guides (Seedream 4.0–4.5, Seedream 5.0 pro / flash, Seedance 2.5, Seedance 2.0 series, Seedance 1.5 pro)
+- GPT Image: OpenAI's image prompting guide and image generation docs
+- Nano Banana: Google's Gemini image generation docs and Nano Banana prompting guides
+- Grok Imagine: xAI's image prompting guide and video docs
+- Flux 3 and FLUX.2 API models: BFL's prompting guides
+- Kling 3.0: Kling's prompt guide and multi-shot guide
+- Veo 3.1: Google Cloud's Veo prompt guide
 
 For Illustrious, Pony and SDXL they follow the model cards plus established community practice. For **Wan 3.0** there is little model-specific guidance yet, so its preset follows the Wan 2.7 guide.
 
@@ -130,7 +166,7 @@ Every target guide also ends with **an example of a good result**. It is marked 
 |---|---|
 | `text` | Your input in any language: an idea, a caption or an edit request. You can type it or connect a string. The output is always English. Only text that should appear in the picture and spoken dialogue stay in their original language. |
 | `custom_system_prompt` | When connected and not empty, it **always** replaces the preset's system prompt. |
-| `image_1` … `image_3` | Optional single images, not batches; only the first image of a batch is used. The model sees each one as "Image N" by its slot number, so an empty slot doesn't shift the numbering. The tooltip explains how each preset uses them. |
+| `image_1` … `image_4` | Optional single images, not batches; only the first image of a batch is used. The model sees each one as "Image N" by its slot number, so an empty slot doesn't shift the numbering. The tooltip explains how each preset uses them. |
 | `trigger_word` | Trigger token for "Caption ▸ LoRA training caption". It replaces `{trigger}` in the system prompt. |
 | `negative_prompt` | Passed straight to the `negative_prompt` output. It is not sent to the model. |
 | `min_words` / `max_words` | Optional length of the result, 0 = off. The tooltip shows the length recommended for the selected preset's target model. When set, the range is binding and overrides the preset's length guidance. Tag lists count each tag as one word; MiniMax H3 formats apply the range to the main description. |
@@ -141,7 +177,7 @@ Every target guide also ends with **an example of a good result**. It is marked 
 
 | Library entry | Fields | Used by |
 |---|---|---|
-| Person | **Name:** written into every prompt exactly as given, so every pose and action is clearly assigned; it can also act as the trigger. **Trigger:** the LoRA's trigger token, written right after the name (leave it empty if the name is the trigger). **Description:** appearance and fixed traits, binding. **Voice:** timbre, pitch, pace, accent. | `person_1` … `person_4`. The voice is used only by MiniMax H3 FL2VA / REF2VA, Wan 2.7 and Wan 3.0, the models with audio. |
+| Person | **Name:** written into every prompt exactly as given, so every pose and action is clearly assigned; it can also act as the trigger. **Trigger:** the LoRA's trigger token, written right after the name (leave it empty if the name is the trigger). **Description:** appearance and fixed traits, binding. **Voice:** timbre, pitch, pace, accent. | `person_1` … `person_4`. The voice is used only by the models with audio: MiniMax H3 FL2VA / REF2VA, Wan 2.7 / 3.0, Seedance 1.5 / 2.0 / 2.5, Kling 3.0 / 2.6, Veo 3.1 and Grok Imagine Video. |
 | Style block | **Text:** e.g. a camera look, a lighting mood or a ban list | `style_1`, `style_2`; applied to every result |
 
 - **At a glance:** a selected person turns its field **dark red**, a selected style block turns its field **dark blue**. Fields set to "(none)" look normal. The colour is display only and is not saved in the workflow.
@@ -149,9 +185,9 @@ Every target guide also ends with **an example of a good result**. It is marked 
   - Each person is introduced once as "name, trigger, description".
   - After that, every pose, action, gaze and line of dialogue is attributed to a person by name, with no ambiguous "she" or "the woman" when several persons are present.
   - Tag models (Pony, Illustrious, SDXL) get the name first, then the trigger, then the description as tags.
-- **`image_n_is_person_n`** (on by default) pairs each person with the image input of the same number: `person_1` = `image_1`, `person_2` = `image_2`, `person_3` = `image_3`. `person_4` has no image input.
+- **`image_n_is_person_n`** (off by default) pairs each person with the image input of the same number: `person_1` = `image_1`, `person_2` = `image_2`, `person_3` = `image_3`, `person_4` = `image_4`.
   - Load a photo of the person into the matching image input, and the model takes the look from it.
-  - With Qwen-Image-Edit (`<imageN>`), MiniMax H3 REF2VA (`<Picture N>`), Wan 2.7 / 3.0 reference-to-video ("Image N") and FLUX.2 multi-reference, the prompt points at the image instead of describing the face.
+  - With Qwen-Image-Edit (`<imageN>`), MiniMax H3 REF2VA (`<Picture N>`), Wan 2.7 / 3.0, Seedream and Seedance ("Image N"), Kling and Grok Imagine (`@ImageN`), GPT Image, Nano Banana and FLUX multi-reference, the prompt points at the image instead of describing the face.
   - Turn it off when the images mean something else, e.g. the first and last frame of H3 FL2VA.
 - **Export / Import** in the dialog moves the library between installs. On import you choose whether names that already exist are replaced or kept.
 - **Archive:** with `archive` on, every result is appended to `ComfyUI/user/grok_prompt_forge/archive.jsonl` together with its input, preset, persons and settings. **📜 Load from archive...** searches it:
@@ -185,9 +221,9 @@ The preset values follow what official prompt enhancers use:
 
 | Task | temperature | top_p |
 |---|---|---|
-| Idea ▸ image models | 0.7 – 0.8 | 0.9 – 0.95 |
-| Idea ▸ video models | 0.8 (H3: 0.6, strict format) | 0.95 |
-| Idea ▸ Qwen-Image-Edit | 0.3 | off |
+| Generation ▸ image models | 0.7 – 0.8 | 0.9 – 0.95 |
+| Generation ▸ video models | 0.75 – 0.8 (H3: 0.6, strict format) | 0.95 |
+| Generation ▸ Qwen-Image-Edit | 0.3 | off |
 | Caption ▸ … (faithful rewrite) | 0.2 – 0.4 | off |
 | LoRA training caption / describe image | 0.2 / 0.3 | off |
 

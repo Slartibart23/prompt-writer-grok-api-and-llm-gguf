@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.2.0 — 2026-10-25
+
+- **"Idea ▸" is now "Generation ▸"** (e.g. "Generation ▸ FLUX"). Saved workflows show the new name on loading, and values you saved under an old "Idea ▸" name carry over to the new one. The default preset is "Generation ▸ Krea 2".
+- **Presets for API models:** 28 new presets ("Generation ▸" and "Caption ▸") for 14 API targets, written from the makers' own prompt guides:
+  - images: Seedream 5.0, Seedream 4.5 / 4.0, Seedream Edit, GPT Image, Nano Banana, Grok Imagine Image, Flux 3;
+  - video: Seedance 2.5, Seedance 2.0, Seedance 1.5 / 1.0 Pro, Seedance Reference, Kling 3.0, Veo 3.1, Grok Imagine Video.
+
+  Each has its own model guide, an example result, a recommended length and German notes. The FLUX preset now also names FLUX.2 [pro] / [max] / [flex].
+- **Fourth image input:** `image_4`, so every person has its own image input (`person_4` = `image_4` with `image_n_is_person_n`). It sits at the end of the node, so saved workflows keep their connections and values.
+- **Preset filters:** "Filter: type" (All, Image, Edit, Video, Captions & tools, My presets) and "Filter: task" (All, Generation, Caption) above the preset list. Display only: the selected preset is kept, nothing re-runs, and the choice is kept per node in the workflow.
+- `image_n_is_person_n` is now **off** for new nodes. Saved workflows keep their setting.
+- The nodes always start in **English**; German applies until the page is reloaded and is no longer remembered in the browser.
+- Tooltips, the persons' voice note and the README cover the new models.
+
 ## 1.1.0 — 2026-10-24
 
 - Selected persons (`person_1` … `person_4`) get a dark red field background, selected style blocks (`style_1`, `style_2`) a dark blue one, on both writer nodes. "(none)" keeps the normal look. This is display only: it is not saved in the workflow and never re-runs a node.

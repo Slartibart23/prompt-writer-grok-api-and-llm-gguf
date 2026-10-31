@@ -39,6 +39,12 @@ The user gives an existing caption or description of an image (e.g. from JoyCapt
 - Change only the form: order, wording, format and the syntax this model needs (see the model guide below). Turn vague or subjective phrases into concrete visual facts. Remove meta phrases ("this image shows", "in this photo"), image-quality remarks and guesses about intentions.
 - If images are attached, use them only to resolve ambiguities in the caption."""
 
+# Added to every target that is written as prose (not tag lists, not edit instructions).
+SENTENCES = """## Sentences
+- Write complete sentences, each ending with a period.
+- Each sentence makes one clear statement: the look of one subject, their clothing, a pose, an action or interaction, an object, the setting or background, the light, the camera or the style. Split a long description into several short sentences rather than chaining clauses or fragments with commas.
+- No comma-chained keyword lists. Only labels, tags and term lists that the guide above explicitly asks for (shot labels, timestamps, section names, cinematic setting terms) keep their own form."""
+
 CAPTION_TO_VIDEO = """- The caption describes a still image. Keep all of it as the starting state of the clip and add only simple, plausible motion and camera behaviour that the scene itself suggests."""
 
 # --------------------------------------------------------------------------- #
@@ -87,12 +93,13 @@ SEEDANCE_I2V = """Start frame attached (image-to-video, the API's first_frame): 
 TARGETS = [
     {
         "label": "Krea 2",
-        "about": "Krea 2 Raw / Turbo and fine-tunes (natural language, 60-200 words). "
-                 "The negative prompt only matters with CFG > 1 (Raw); Turbo ignores it.",
+        "about": "Krea 2 Raw / Turbo and fine-tunes (natural language in full sentences, "
+                 "120-250 words). The negative prompt only matters with CFG > 1 (Raw); Turbo "
+                 "ignores it.",
         "negative": NEG_GENERIC,
         "idea": (0.8, 0.95), "caption": (0.3, 1.0), "max_tokens": 8192,
-        "guide": """- Natural language in ONE paragraph, about 60-200 words: a dense, observational description of the finished image. No bullet points, no JSON, no tag lists.
-- Order: main subject, each subject grouped with its own attributes (appearance, clothing, expression) -> pose and action -> setting and background -> medium and style -> camera angle and framing -> lighting -> colour palette. A short style tag may close the prompt after a comma (e.g. ", 35mm film photo", ", halftone texture").
+        "guide": """- Natural language in ONE paragraph, separated into sentences that each end with a period, about 120-250 words: a dense, observational description of the finished image. No bullet points, no JSON, no tag lists.
+- Order: main subject, each subject grouped with its own attributes (appearance, clothing, expression) -> pose and action -> setting and background -> medium and style -> camera angle and framing -> lighting -> colour palette. A short final sentence may name the medium or look (e.g. "Film photo with fine grain.", "Halftone print texture.").
 - Honour the medium the user states (photo, oil painting, 3D render, anime illustration ...). If none is stated, choose one that fits and name it clearly.
 - Put any text to be rendered in double quotes and say where it appears.
 - Do not over-specify. If the input is already detailed, only polish it lightly.
@@ -605,7 +612,7 @@ Only when a trigger token is given: remove hair colour, texture and length, eye 
 - Unambiguous attribution in interaction scenes: WHO does WHAT to WHOM. Fix vague pronouns.
 - Describe explicit content as direct factual description; never censor, soften or moralize.
 - Strip mood language, aesthetic judgments, image-quality remarks and meta phrases ("this image shows").
-- Plain natural-language sentences. Keep the raw caption's level of detail for everything in the KEEP list.
+- Plain natural-language sentences, each ending with a period and each making one clear statement (an action, a pose, the clothing, the setting ...). Split long chains of clauses into several sentences. Keep the raw caption's level of detail for everything in the KEEP list.
 
 ## Output
 Output ONLY the single refined caption. No numbering, no commentary, no quotation marks, no markdown."""
@@ -615,6 +622,7 @@ DESCRIBE_IMAGE = """You are an image captioner. Describe image 1 (and any furthe
 - Begin with the main subject. Describe people, appearance, clothing or state of dress, pose, actions, expressions, gaze, objects and setting in concrete, definite language.
 - Include camera framing (shot type, angle, vantage height) and concrete lighting (source, direction, quality, colour).
 - Transcribe visible text verbatim in double quotes.
+- Write complete sentences, each ending with a period. Each sentence makes one clear statement (the look of one person, their clothing, a pose, an action, the setting, the light, the framing); split long chains of clauses into several sentences.
 - Describe explicit content as direct factual description; never censor, soften or moralize.
 - Omit mood, atmosphere, aesthetic judgments, image quality and meta phrases ("this image shows").
 - If the user adds instructions (focus, length, style, a question about the image), follow them; they may be written in any language - the answer is always English.
@@ -625,7 +633,7 @@ Output ONLY the caption (or the answer). No preamble, no markdown."""
 # Recommended prompt length per target, shown in the tooltip of min_words /
 # max_words. Taken from the model makers' guides where they give one.
 WORDS = {
-    "Krea 2": "60-200 words (Krea 2 docs: long, detailed prompts work best)",
+    "Krea 2": "120-250 words in full sentences (Krea 2 docs: long, detailed prompts work best)",
     "Qwen-Image 2.1": "400-500 words (official Qwen-Image 2.1 prompt rewriter)",
     "Qwen-Image-Edit 2.1": "30-80 words (Qwen gives no number; edit instructions stay short)",
     "Z-Image": "80-250 words (Tongyi: long, detailed prompts; examples 60-150)",
@@ -658,10 +666,16 @@ WORDS = {
 # follow a concrete example far more reliably than rules alone.
 EXAMPLES = {
     "Krea 2": (
-        "A close-up portrait of a young woman with straight black hair and an intense gaze, "
-        "wearing a light grey collared shirt with a black tie, a bouquet of pink lilies blurred in "
-        "the right foreground, solid crimson background, soft directional studio lighting from the "
-        "left, shallow depth of field, muted warm palette, 85mm portrait photo"),
+        "A young woman with straight black hair sits at a small round café table by a large "
+        "window. She wears a light grey collared shirt with a loosened black tie. She rests her "
+        "chin on her right hand and looks straight into the camera with an intense, calm gaze. A "
+        "white porcelain cup of black coffee stands in front of her, and a thin curl of steam "
+        "rises from it. A bouquet of pink lilies in a glass vase is blurred in the right "
+        "foreground. Behind her, the street outside is softly out of focus, and a red tram passes "
+        "by. The scene is an 85mm portrait photograph taken at eye level with a shallow depth of "
+        "field. Soft daylight falls in from the left and leaves gentle shadows on the right side "
+        "of her face. The palette is muted and warm, with greys, soft pinks and deep red accents. "
+        "Film photo with fine grain."),
     "Qwen-Image 2.1": (
         "The image is a horizontal photorealistic photograph of a small corner bakery at dawn, set "
         "against a deep navy street still in shadow. In the background, a row of narrow stone "
@@ -687,13 +701,14 @@ EXAMPLES = {
         "small red flower pattern painted on her forehead. She holds a round paper lantern in her "
         "right hand that lights her face from below with warm orange light, and looks calmly to "
         "the left. Behind her, a tiered pagoda stands in silhouette against a dark blue sky, with "
-        "softly blurred lantern lights reflected in the river. Medium shot at eye level, sharp "
-        "focus on her face, photorealistic."),
+        "softly blurred lantern lights reflected in the river. The medium shot is taken at eye "
+        "level with sharp focus on her face. The image is photorealistic."),
     "FLUX": (
-        "A soaking wet tiger cub takes shelter under a broad banana leaf in a rainy jungle, water "
-        "dripping from its whiskers, eyes wide and alert, heavy rain falling in silver streaks, "
-        "dense green undergrowth softly blurred behind it, overcast diffused light, close-up "
-        "nature photograph, shot on 100mm macro, shallow depth of field"),
+        "A soaking wet tiger cub takes shelter under a broad banana leaf in a rainy jungle. Water "
+        "drips from its whiskers, and its eyes are wide and alert. Heavy rain falls around it in "
+        "silver streaks. Dense green undergrowth is softly blurred behind it. The light is "
+        "overcast and diffused. The image is a close-up nature photograph, shot on a 100mm macro "
+        "lens with a shallow depth of field."),
     "Illustrious": (
         "masterpiece, best quality, amazing quality, absurdres, 1girl, solo, long silver hair, red "
         "eyes, black hooded cloak, holding lantern, looking at viewer, upper body, night, forest, "
@@ -721,18 +736,18 @@ EXAMPLES = {
         "waitress in her fifties with grey hair pinned up refills the coffee of a young man in a "
         "denim jacket who sits alone at the counter. She leans on the counter and says, in a "
         "warm, slow, slightly raspy voice with a southern accent: \"Long night, honey?\" He looks "
-        "up, smiles wearily and nods. Warm practical lighting from pendant lamps, neon glow "
-        "through the window, medium two-shot at eye level, slow push-in. Sound: the hum of a "
-        "fridge, coffee pouring, rain against the window. No background music. Generate single "
-        "shot."),
+        "up, smiles wearily and nods. Pendant lamps give warm practical light, and neon glows "
+        "through the window. The camera frames a medium two-shot at eye level and pushes in "
+        "slowly. Sound: a fridge hums, coffee pours and rain taps against the window. No "
+        "background music. Generate single shot."),
     "Wan 3.0": (
-        "A rooftop garden in a city at dusk, string lights overhead. Shot 1 [0-4s]: wide shot, a "
-        "man in a white shirt waters tomato plants while the skyline glows orange behind him; "
-        "slow truck right. Shot 2 [4-8s]: close-up, his daughter, about ten, runs in holding a "
-        "ripe tomato and says, excited and quick, in a bright child's voice: \"Look, the first "
-        "one!\" Shot 3 [8-12s]: medium shot, he kneels, takes the tomato and laughs; static shot. "
-        "Sound: distant traffic, water splashing on leaves, birdsong. Soft acoustic guitar in the "
-        "background."),
+        "A rooftop garden in a city lies under strings of lights at dusk. Shot 1 [0-4s]: Wide "
+        "shot. A man in a white shirt waters tomato plants while the skyline glows orange behind "
+        "him. The camera trucks slowly to the right. Shot 2 [4-8s]: Close-up. His daughter, about "
+        "ten, runs in holding a ripe tomato. She says, excited and quick, in a bright child's "
+        "voice: \"Look, the first one!\" Shot 3 [8-12s]: Medium shot, static camera. He kneels, "
+        "takes the tomato and laughs. Sound: traffic hums in the distance, water splashes on the "
+        "leaves and birds sing. A soft acoustic guitar plays in the background."),
     "MiniMax H3 FL2VA": (
         "How the reference pictures align with the target video — Picture 1 (from Shot 1) aligns "
         "with the 0.00-second mark of the target video; Picture 2 (from Shot 1) aligns with the "
@@ -774,87 +789,94 @@ EXAMPLES = {
     "Seedream 5.0": (
         "A vertical poster for a summer jazz festival by the sea. A saxophonist in a white linen "
         "suit plays on a small wooden stage at sunset, the orange sky mirrored in the calm water "
-        "behind him and strings of warm bulbs swaying above a dancing crowd. Flat retro "
+        "behind him and strings of warm bulbs swaying above a dancing crowd. It is a flat retro "
         "screen-print illustration in coral, teal and cream with a fine paper grain. At the top, "
-        "the title \"BLUE TIDE JAZZ\" in bold rounded letters; at the bottom, \"12-14 July · "
-        "Harbour Stage\" in small white capitals."),
+        "the title \"BLUE TIDE JAZZ\" stands in bold rounded letters. At the bottom, \"12-14 July "
+        "· Harbour Stage\" is written in small white capitals."),
     "Seedream 4.5 / 4.0": (
         "A tiny ramen stall in a narrow alley at night, seen from the street at eye level. An "
         "elderly cook in a white headband ladles broth into a red bowl while two office workers "
         "in loosened ties sit on stools at the counter. Steam rises into the light of a paper "
         "lantern that reads \"RAMEN\". Wet cobblestones reflect the warm glow, and a cat sleeps on "
-        "a crate by the door. Realistic photograph, soft warm light, shallow depth of field."),
+        "a crate by the door. It is a realistic photograph with soft warm light and a shallow "
+        "depth of field."),
     "Seedream Edit": (
         "Dress the woman in Image 1 in the green wool coat from Image 2, matching its collar, "
         "buttons and length, and hang the brown leather bag from Image 3 on her left shoulder; "
         "keep her face, hairstyle, pose and the street background unchanged."),
     "GPT Image": (
         "Product ad for a craft coffee brand.\n"
-        "Scene: a sunlit kitchen counter of pale oak, a window with soft morning light on the left.\n"
-        "Subject: a matte black coffee bag standing upright, a ceramic cup of black coffee beside "
-        "it with a thin curl of steam.\n"
-        "Details: scattered roasted beans, a brass scoop, fine paper texture on the bag; "
-        "photorealistic, shallow depth of field, eye-level.\n"
-        "Text: on the bag, \"NORTH ROAST\" in bold white sans-serif capitals, centred - exact text, "
-        "verbatim, no extra characters.\n"
-        "Constraints: no watermark, no other text, no logos."),
+        "Scene: A sunlit kitchen counter of pale oak stands below a window. Soft morning light "
+        "falls in from the left.\n"
+        "Subject: A matte black coffee bag stands upright. A ceramic cup of black coffee stands "
+        "beside it, and a thin curl of steam rises from the cup.\n"
+        "Details: Roasted beans lie scattered next to a brass scoop. The bag has a fine paper "
+        "texture. The image is photorealistic, taken at eye level with a shallow depth of field.\n"
+        "Text: \"NORTH ROAST\" is printed on the bag in bold white sans-serif capitals, centred. "
+        "Exact text, verbatim, no extra characters.\n"
+        "Constraints: No watermark, no other text and no logos."),
     "Nano Banana": (
         "Create a photorealistic close-up of an elderly watchmaker at his cluttered workbench, "
         "leaning over an open pocket watch with a jeweller's loupe in his right eye and fine "
         "tweezers lifting a tiny brass gear. Warm light from a green-shaded desk lamp falls across "
         "his hands and the scattered springs, while the shop behind him fades into soft shadow "
-        "with rows of wall clocks. Shot on an 85mm lens at eye level, shallow depth of field, rich "
-        "film-like colour with deep greens and warm brass tones."),
+        "with rows of wall clocks. The shot is taken with an 85mm lens at eye level and a shallow "
+        "depth of field. The colours are rich and film-like, with deep greens and warm brass "
+        "tones."),
     "Grok Imagine Image": (
         "A red vintage scooter stands on its kickstand on a narrow cobbled street in a hillside "
         "town at midday. Its chrome mirrors and cracked leather seat catch the light, and a wicker "
         "basket of lemons is strapped to the rear rack. Realistic travel photograph. Hard midday "
         "sun casts short, crisp shadows across the stones and keeps the scooter clearly readable. "
-        "Warm palette of red, ochre and pale yellow walls. Low three-quarter view from the left, "
-        "the scooter centred in the lower half of the frame."),
+        "The palette is warm, with red paint and ochre and pale yellow walls. The view is a low "
+        "three-quarter angle from the left, with the scooter centred in the lower half of the "
+        "frame."),
     "Flux 3": (
         "Editorial photograph of a ceramic teapot on a bleached oak table beside a window, "
         "afternoon light falling in from the left and casting a long soft shadow. A small paper "
-        "tag tied to the handle reads \"OPEN LATE\" in bold black sans-serif capitals. Framed "
-        "slightly from above with an 85mm lens, shallow depth of field."),
+        "tag tied to the handle reads \"OPEN LATE\" in bold black sans-serif capitals. The teapot "
+        "is framed slightly from above with an 85mm lens and a shallow depth of field."),
     "Kling 3.0": (
-        "A rainy night market lined with neon signs, cinematic realism; a street vendor in a "
-        "yellow raincoat and a hungry delivery rider.\n"
+        "A street vendor in a yellow raincoat serves a hungry delivery rider at a rainy night "
+        "market lined with neon signs, in a cinematic, realistic style.\n"
         "[Shot 1: Wide shot, 3s] The vendor in the yellow raincoat stirs a steaming pot under a "
-        "dripping awning while scooters splash past; slow truck right.\n"
+        "dripping awning while scooters splash past. The camera trucks slowly to the right.\n"
         "[Shot 2: Medium shot, 3s] The delivery rider in a black helmet stops at the stall and "
         "lifts his visor. Rider (tired, English): \"Anything still hot?\"\n"
         "[Shot 3: Close-up, 4s] The vendor in the yellow raincoat ladles soup into a bowl and "
-        "smiles. Vendor (warm tone, English): \"Best soup in the city.\" Slow push-in.\n"
-        "Wet reflections, warm and magenta neon light, shallow depth of field. Ambient: rain on "
-        "tarpaulin, sizzling oil, distant traffic."),
+        "smiles. Vendor (warm tone, English): \"Best soup in the city.\" The camera pushes in "
+        "slowly.\n"
+        "The wet street reflects warm and magenta neon light, and the depth of field is shallow. "
+        "Ambient: rain drums on the tarpaulin, oil sizzles and traffic hums in the distance."),
     "Veo 3.1": (
-        "Low-angle tracking shot: a lighthouse keeper in a heavy wool coat climbs a spiral iron "
-        "staircase at dusk, a lantern swinging in his hand and throwing warm light across the "
+        "A low-angle tracking shot follows a lighthouse keeper in a heavy wool coat up a spiral "
+        "iron staircase at dusk. A lantern swings in his hand and throws warm light across the "
         "curved stone walls. He stops at a narrow window, wipes the fogged glass with his sleeve "
-        "and looks out at dark waves rolling in. He says quietly, \"The storm is early.\" Shallow "
-        "depth of field, weathered documentary look, cold blue light outside against the warm "
-        "lantern glow. SFX: boots ringing on iron steps. Ambient noise: wind whistling through "
-        "the tower."),
+        "and looks out at dark waves rolling in. He says quietly, \"The storm is early.\" The "
+        "image has a shallow depth of field and a weathered documentary look. Cold blue light "
+        "outside contrasts with the warm lantern glow. SFX: boots ring on the iron steps. Ambient "
+        "noise: wind whistles through the tower."),
     "Grok Imagine Video": (
         "A woman in a long grey coat stands on a rain-soaked rooftop at night, city lights glowing "
         "behind her. She slowly turns towards the camera, rain dripping from her hair, as the "
         "camera pushes in. Neon signs reflect in the puddles at her feet. She says softly, \"You "
-        "came back.\" Steady light rain, distant thunder and the hum of the city."),
+        "came back.\" Light rain falls steadily, thunder rumbles in the distance and the city "
+        "hums below."),
     "Seedance 2.5": (
-        "Realistic coastal drama on a windy harbour pier at dusk: an old fisherman teaches his "
-        "granddaughter to tie a knot, handheld medium shots.\n"
+        "An old fisherman teaches his granddaughter to tie a knot on a windy harbour pier at "
+        "dusk, filmed as a realistic coastal drama in handheld medium shots.\n"
         "0s-4s: Medium shot. The fisherman, in his seventies with a grey beard and a yellow oilskin "
         "jacket, sits on an upturned crate and slowly loops a thick rope around his fingers; the "
-        "girl, about eight, in a red raincoat, leans in to watch. Gulls cry, waves slap against the "
-        "pilings.\n"
+        "girl, about eight, in a red raincoat, leans in to watch. Gulls cry and waves slap against "
+        "the pilings.\n"
         "4s-8s: Close-up of their hands. The girl copies the loop, pulls too hard and the rope "
         "slips; she laughs. The fisherman's line (warm, amused, low raspy voice): \"Gently. The sea "
         "is never in a hurry.\"\n"
         "8s-12s: The camera pulls back slowly to a wide shot as she holds up a finished knot and he "
         "nods, smiling, fishing boats rocking in the grey water behind them.\n"
-        "Slight handheld sway throughout, natural colours, soft overcast light, rich details. Wind "
-        "and harbour sounds only, no BGM. No subtitles."),
+        "The handheld camera sways slightly throughout. The colours are natural, the overcast "
+        "light is soft and the details are rich. Only wind and harbour sounds are heard, no BGM. "
+        "No subtitles."),
     "Seedance 2.0": (
         "A young barista in a black apron prepares a latte for an elderly regular in a small "
         "sunlit café. Shot 1: Medium shot, fixed camera. She slowly pours steamed milk into the "
@@ -863,9 +885,9 @@ EXAMPLES = {
         "cap. He leans forward, his eyes crinkling, and says in a warm, slow voice {You remembered "
         "the cinnamon}. Shot 3: Close-up of the barista; the camera pushes in slowly as she lowers "
         "her eyes, the corners of her mouth rising, and slides the cup towards him. (soft acoustic "
-        "guitar in the background) Warm tones, natural light, cinematic texture, rich details. "
-        "Faces stay stable without deformation, natural smooth motion. No subtitles, no text, no "
-        "watermark, no logo."),
+        "guitar in the background) The image has warm tones, natural light, a cinematic texture "
+        "and rich details. Faces stay stable without deformation, and the motion is natural and "
+        "smooth. No subtitles, no text, no watermark, no logo."),
     "Seedance 1.5 / 1.0 Pro": (
         "In a cramped vintage record shop on a rainy afternoon, a tall man in his forties with a "
         "grey scarf slowly flips through a crate of records while the young owner with short pink "
@@ -878,9 +900,10 @@ EXAMPLES = {
         "Image 1 is Mara, the woman with short silver hair and a black leather jacket - use her "
         "face and outfit. Image 2 is the rooftop location - use the place and its neon light. "
         "Audio 1 is Mara's voice timbre.\n"
-        "Mara hands her old partner a sealed envelope on a rain-wet rooftop at night; tense neon "
-        "thriller, slow camera.\n"
-        "Shot 1: Wide shot of the rooftop from Image 2, slow push-in. Mara (Image 1) walks to the "
+        "Mara hands her old partner a sealed envelope on a rain-wet rooftop at night, filmed as a "
+        "tense neon thriller with a slow camera.\n"
+        "Shot 1: A wide shot shows the rooftop from Image 2 as the camera pushes in slowly. Mara "
+        "(Image 1) walks to the "
         "edge, rain glinting in the neon light, and stops beside a man in a grey trench coat who "
         "stands with his back to the camera.\n"
         "Shot 2: Medium close-up of Mara. She pulls an envelope from her jacket and holds it out "
@@ -889,13 +912,13 @@ EXAMPLES = {
         "Shot 3: Close-up of the envelope changing hands; the camera holds still as distant "
         "sirens rise.\n"
         "Mara's face and outfit stay consistent with Image 1 throughout; no duplicate characters. "
-        "Rain and distant traffic, a low synth drone. No subtitles."),
+        "Rain falls, traffic hums in the distance and a low synth drone plays. No subtitles."),
 }
 
 # German texts for the node's language switch (web/grok_prompt_forge_i18n.js).
 # Only what the user reads on the node; the system prompts stay English.
 WORDS_DE = {
-    "Krea 2": "60-200 Wörter (Krea-2-Doku: lange, detaillierte Prompts wirken am besten)",
+    "Krea 2": "120-250 Wörter in ganzen Sätzen (Krea-2-Doku: lange, detaillierte Prompts wirken am besten)",
     "Qwen-Image 2.1": "400-500 Wörter (offizieller Prompt-Umschreiber von Qwen-Image 2.1)",
     "Qwen-Image-Edit 2.1": "30-80 Wörter (Qwen nennt keine Zahl; Edit-Anweisungen bleiben kurz)",
     "Z-Image": "80-250 Wörter (Tongyi: lange, detaillierte Prompts; Beispiele 60-150)",
@@ -924,8 +947,9 @@ WORDS_DE = {
     "Grok Imagine Video": "40-120 Wörter (xAI nennt keine Zahl; sehr lange Prompts werden abgelehnt)",
 }
 ABOUT_DE = {
-    "Krea 2": "Krea 2 Raw / Turbo und Fine-Tunes (natürliche Sprache, 60-200 Wörter). Der "
-              "Negativprompt wirkt nur bei CFG > 1 (Raw); Turbo ignoriert ihn.",
+    "Krea 2": "Krea 2 Raw / Turbo und Fine-Tunes (natürliche Sprache in ganzen Sätzen, "
+              "120-250 Wörter). Der Negativprompt wirkt nur bei CFG > 1 (Raw); Turbo "
+              "ignoriert ihn.",
     "Qwen-Image 2.1": "Qwen-Image 2.1 Text-zu-Bild (langer, beschreibender Absatz, ~400-500 "
                       "Wörter). Läuft in den ComfyUI-Vorlagen mit CFG 1, dort wird der "
                       "Negativprompt ignoriert.",
@@ -1053,8 +1077,9 @@ def _model_prompt(target, task):
             intro += "\n" + CAPTION_TO_VIDEO
     role = "edit instructions" if kind == "edit" else "prompts"
     example = EXAMPLES[label]
+    sentences = f"\n\n{SENTENCES}" if kind in ("image", "video", "h3") else ""
     return (f"You are an expert prompt writer for {label} in ComfyUI.\n\n{intro}\n\n"
-            f"## How {label} wants its {role}\n{target['guide']}\n\n"
+            f"## How {label} wants its {role}\n{target['guide']}{sentences}\n\n"
             f"## Example of a good result\nFor form, structure and length only - never copy its "
             f"content, subjects or wording.\n\n{example}\n\n{COMMON}")
 

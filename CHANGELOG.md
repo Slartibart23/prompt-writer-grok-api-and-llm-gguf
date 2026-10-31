@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.2.1 — 2026-10-31
+
+- **Prompts in full sentences:** every preset that writes prose (all image and video targets except the tag models and the edit instructions, plus "Describe image" and "LoRA training caption") now asks for complete sentences that each end with a period, each with one clear statement about a subject's look, pose, action, the background, the light and so on. Long descriptions are split into several sentences instead of comma-chained fragments.
+- **Krea 2:** 120–250 words in full sentences (was 60–200); a short closing sentence may name the medium or look.
+- The example results of the presets follow the new rule.
+
 ## 1.2.0 — 2026-10-25
 
 - **"Idea ▸" is now "Generation ▸"** (e.g. "Generation ▸ FLUX"). Saved workflows show the new name on loading, and values you saved under an old "Idea ▸" name carry over to the new one. The default preset is "Generation ▸ Krea 2".

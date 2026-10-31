@@ -117,7 +117,7 @@ The API presets write prompts for the ComfyUI partner nodes and other API servic
 
 | Target | Prompt style | Standard negative prompt |
 |---|---|---|
-| Krea 2 | One natural-language paragraph, 60–200 words; text to render goes in quotes | Generic. Only used by Raw at CFG > 1; Turbo runs at CFG 0. |
+| Krea 2 | One paragraph of full sentences ending with periods, 120–250 words; text to render goes in quotes | Generic. Only used by Raw at CFG > 1; Turbo runs at CFG 0. |
 | Qwen-Image 2.1 | Observer-style paragraph of about 400–500 words that walks through the frame and ends with "The overall composition …" | Official Qwen negative (Chinese). Ignored at CFG 1. |
 | Qwen-Image-Edit 2.1 | Edit instruction that refers to the inputs as `<image1>`…`<image3>`, plus one preservation clause | none (CFG 1) |
 | Z-Image | Long natural-language description; constraints phrased positively | Generic. Only used by Base; Turbo has no CFG. |
@@ -161,6 +161,8 @@ The guides inside the presets follow each model's official sources:
 - Veo 3.1: Google Cloud's Veo prompt guide
 
 For Illustrious, Pony and SDXL they follow the model cards plus established community practice. For **Wan 3.0** there is little model-specific guidance yet, so its preset follows the Wan 2.7 guide.
+
+Every target that is written as prose (all image and video models except the tag models Illustrious, Pony and SDXL and the edit instructions) also gets a **sentence rule**: complete sentences that each end with a period, each making one clear statement about a subject's look, clothing, pose, action, the setting, the light, the camera or the style. Long descriptions are split into several short sentences instead of comma-chained fragments. Fixed labels that a model needs, such as shot labels, timestamps or section names, keep their form. "Caption ▸ Describe image" and "Caption ▸ LoRA training caption" follow the same rule.
 
 Every target guide also ends with **an example of a good result**. It is marked as a model for form and length only, never for content. Local models in particular follow a concrete example far more reliably than written rules alone.
 

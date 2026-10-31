@@ -115,6 +115,18 @@ class BuiltinPresetTests(unittest.TestCase):
         user = presets.all_presets()
         self.assertTrue(all(p["group"] for p in user if p["builtin"]))
 
+    def test_prose_targets_ask_for_sentences_with_periods(self):
+        for t in builtin_presets.TARGETS:
+            prose = t.get("kind", "image") in ("image", "video", "h3")
+            for task in ("Generation", "Caption"):
+                system = builtin_presets.BUILTIN[f"{task} ▸ {t['label']}"]["system_prompt"]
+                self.assertEqual("## Sentences" in system, prose, t["label"])
+            if prose and t.get("kind") != "h3":
+                # the example must follow the rule it is shown with
+                example = builtin_presets.EXAMPLES[t["label"]]
+                self.assertRegex(example.rstrip(), r'[.!?]"?\)?$', t["label"])
+        self.assertIn("120-250 words", builtin_presets.BUILTIN["Generation ▸ Krea 2"]["system_prompt"])
+
     def test_api_models_without_negative_prompt(self):
         for target in ("Seedream 5.0", "Seedance 2.5", "GPT Image", "Nano Banana", "Flux 3",
                        "Grok Imagine Video"):

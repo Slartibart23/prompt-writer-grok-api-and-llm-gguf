@@ -5,7 +5,10 @@
 //   (ComfyUI/user/grok_prompt_forge/presets.json), "Delete preset" removes it
 // - "Refresh model list" loads the current model ids from the xAI API
 // - "Persons & styles..." edits your library (ComfyUI/user/grok_prompt_forge/
-//   library.json) with export / import; person_1..4 and style_1..2 follow it
+//   library.json) with export / import and template persons; person_1..4 and
+//   style_1..2 follow it
+// - Prompt Writer · Persons chooses the persons outside the writer nodes; while
+//   a writer's `persons` input is connected, its own person_1..4 are locked
 // - "Load from archive..." puts an archived prompt into the text field
 // - Prompt Writer · Show Prompt shows a text with its word / tag / sentence / character
 //   count (display only, never re-runs anything)
@@ -14,7 +17,7 @@
 // - the language switch at the top shows the nodes in English or German
 //   (display only, English after every page load; see grok_prompt_forge_i18n.js)
 
-import { LANGUAGES, LOCAL_TEXT_DE, NODE_TEXT_DE, SHOW_TEXT_DE, STRINGS } from "./grok_prompt_forge_i18n.js";
+import { LANGUAGES, LOCAL_TEXT_DE, NODE_TEXT_DE, PERSONS_TEXT_DE, SHOW_TEXT_DE, STRINGS } from "./grok_prompt_forge_i18n.js";
 
 const { app } = window.comfyAPI.app;
 const { api } = window.comfyAPI.api;
@@ -22,11 +25,14 @@ const { api } = window.comfyAPI.api;
 const NODE = "GrokPromptForge";
 const LOCAL_NODE = "LocalPromptForgeGGUF"; // same presets, persons and archive, local model
 const SHOW_NODE = "GrokShowPrompt";
+const PERSONS_NODE = "PromptWriterPersons"; // chooses the persons for one or more writer nodes
 const FORGE_NODES = [NODE, LOCAL_NODE];
+const OUR_NODES = [...FORGE_NODES, SHOW_NODE, PERSONS_NODE];
 const TEXTS_DE = {
   [NODE]: NODE_TEXT_DE,
   [LOCAL_NODE]: { ...NODE_TEXT_DE, ...LOCAL_TEXT_DE },
   [SHOW_NODE]: SHOW_TEXT_DE,
+  [PERSONS_NODE]: PERSONS_TEXT_DE,
 };
 const FIELDS = ["system_prompt", "negative_prompt", "temperature", "top_p", "max_tokens"];
 const WORD_FIELDS = ["min_words", "max_words"];
@@ -85,7 +91,7 @@ function applyLanguage(node) {
 
 function translateNode(node) {
   const de = lang === "de";
-  const type = [...FORGE_NODES, SHOW_NODE].find((t) => isType(node, t));
+  const type = OUR_NODES.find((t) => isType(node, t));
   const isShow = type === SHOW_NODE;
   const texts = TEXTS_DE[type];
   applyDefinitionTexts(type, texts);
@@ -114,9 +120,10 @@ function translateNode(node) {
     else if (slot.label === text.label) slot.label = undefined;
   }
   if (isShow) renderShown(node);
-  else {
+  else if (FORGE_NODES.includes(type)) {
     showFilters(node);
     showWordHint(node);
+    lockPersons(node);
   }
   node.setDirtyCanvas?.(true, true);
 }
@@ -175,7 +182,12 @@ function forgeNodes() {
 }
 
 function allNodes() {
-  return graphNodes().filter((n) => [...FORGE_NODES, SHOW_NODE].some((t) => isType(n, t)));
+  return graphNodes().filter((n) => OUR_NODES.some((t) => isType(n, t)));
+}
+
+// nodes with person_1..4 / style_1..2 selection boxes
+function libraryNodes() {
+  return graphNodes().filter((n) => [...FORGE_NODES, PERSONS_NODE].some((t) => isType(n, t)));
 }
 
 function toast(severity, summary, detail) {
@@ -425,7 +437,7 @@ function markSelections(node) {
         Object.defineProperty(w, "background_color", {
           configurable: true,
           get() {
-            if (this.value && this.value !== NONE) return SELECTED_COLORS[kind];
+            if (this.value && this.value !== NONE && !this.disabled) return SELECTED_COLORS[kind];
             return normal ? normal.call(this) : window.LiteGraph?.WIDGET_BGCOLOR;
           },
         });
@@ -435,6 +447,20 @@ function markSelections(node) {
       }
     }
   }
+}
+
+// While the `persons` input of a writer node is connected, its own person_1..4
+// are locked (greyed out, ignored): Prompt Writer · Persons chooses them.
+function lockPersons(node) {
+  const locked = !!node.inputs?.some((i) => i.name === "persons" && i.link != null);
+  for (const slot of LIBRARY.person.slots) {
+    const w = widget(node, slot);
+    if (!w) continue;
+    w.disabled = locked;
+    const base = lang === "de" ? NODE_TEXT_DE[slot].tooltip : specTooltip(node, slot);
+    w.tooltip = locked ? `${t("personsLocked")}\n\n${base}` : base;
+  }
+  node.setDirtyCanvas?.(true, true);
 }
 
 // ------------------------------------------------------------------ dialogs
@@ -517,7 +543,7 @@ async function fetchLibrary() {
 // Show the new name lists on every node; renamed / deleted entries are followed.
 function updateLibraryLists(data, kind, renamed = null) {
   const lists = { person: data.persons, style: data.styles };
-  for (const node of forgeNodes()) {
+  for (const node of libraryNodes()) {
     for (const k of Object.keys(LIBRARY)) {
       for (const slot of LIBRARY[k].slots) {
         const w = widget(node, slot);
@@ -652,7 +678,18 @@ async function openLibrary(node, startKind = "person") {
     exportBtn.title = t("exportTitle");
     const importBtn = button(t("importLibrary"), () => fileInput.click());
     importBtn.title = t("importTitle");
-    footer.replaceChildren(exportBtn, importBtn, fileInput,
+    const templatesBtn = button(t("addTemplates"), async () => {
+      try {
+        const res = await postJson("/grok_prompt_forge/library/templates", {});
+        data = res;
+        updateLibraryLists(data, null);
+        toast("success", t("templatesAdded"), t("templatesResult", res.added, res.skipped));
+        kind = "person";
+        render();
+      } catch (e) { toast("error", t("templatesFailed"), String(e.message ?? e)); }
+    });
+    templatesBtn.title = t("templatesTitle");
+    footer.replaceChildren(exportBtn, importBtn, templatesBtn, fileInput,
       el("div", { style: { ...HINT_STYLE, margin: "0 0 0 auto" }, textContent: t("storedIn") }));
   }
 
@@ -807,8 +844,34 @@ app.registerExtension({
       };
       return;
     }
+    if (nodeData?.name === PERSONS_NODE) {
+      const onCreated = nodeType.prototype.onNodeCreated;
+      nodeType.prototype.onNodeCreated = function () {
+        const r = onCreated?.apply(this, arguments);
+        addLanguageSwitch(this);
+        addButton(this, "btnLibrary", openLibrary);
+        markSelections(this);
+        applyLanguage(this);
+        return r;
+      };
+      const onConfigurePersons = nodeType.prototype.onConfigure;
+      nodeType.prototype.onConfigure = function () {
+        const r = onConfigurePersons?.apply(this, arguments);
+        applyLanguage(this);
+        return r;
+      };
+      return;
+    }
     if (!FORGE_NODES.includes(nodeData?.name)) return;
     const isGrok = nodeData.name === NODE;
+
+    // the `persons` input locks person_1..4 while it is connected
+    const onConnectionsChange = nodeType.prototype.onConnectionsChange;
+    nodeType.prototype.onConnectionsChange = function () {
+      const r = onConnectionsChange?.apply(this, arguments);
+      lockPersons(this);
+      return r;
+    };
 
     const onNodeCreated = nodeType.prototype.onNodeCreated;
     nodeType.prototype.onNodeCreated = function () {

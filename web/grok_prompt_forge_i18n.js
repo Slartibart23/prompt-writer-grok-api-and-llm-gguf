@@ -35,7 +35,10 @@ const PERSON_DE = (n) =>
   `Person ${n} aus deiner Bibliothek (Button '👤 Personen & Stile...'). Name, LoRA-Trigger, ` +
   "Beschreibung und Stimme kommen in den Prompt und sind verbindlich; der Name erscheint " +
   "immer, damit jede Pose und Handlung eindeutig dieser Person zugeordnet ist. Im Text " +
-  `sprichst du die Person mit Namen oder als 'Person ${n}' an. (none) = keine Person.`;
+  `sprichst du die Person mit Namen oder als 'Person ${n}' an. (none) = keine Person. ` +
+  "Ein Eintrag, dessen Beschreibung mit 'A group of' beginnt, ist eine Gruppe benannter " +
+  "Personen in einem Slot.";
+const LOCK_DE = " Gesperrt, solange der Eingang 'Personen' angeschlossen ist.";
 
 const STYLE_DE = (n) =>
   `Stil-Baustein ${n} aus deiner Bibliothek (Button '👤 Personen & Stile...'): ein ` +
@@ -98,6 +101,12 @@ export const NODE_TEXT_DE = {
   image_2: { label: "Bild 2", tooltip: IMAGE_DE(2) },
   image_3: { label: "Bild 3", tooltip: IMAGE_DE(3) },
   image_4: { label: "Bild 4", tooltip: IMAGE_DE(4) },
+  persons: { label: "Personen", tooltip:
+    "Optional: 'Prompt Writer · Persons' anschließen, um die Personen außerhalb dieses Nodes " +
+    "zu wählen - z. B. eine Besetzung für mehrere Writer-Nodes. Solange er angeschlossen ist, " +
+    "sind person_1..person_4 an diesem Node gesperrt und werden ignoriert; es zählen die " +
+    "Slotnummern des Persons-Nodes (Person 3 dort = Person 3 hier, auch für 'Bild N = " +
+    "Person N')." },
   trigger_word: { label: "Trigger-Wort", tooltip:
     "Nur für 'Caption > LoRA training caption': der Trigger des LoRAs für das Hauptmotiv " +
     "(ersetzt {trigger} im Systemprompt). Leer lassen für Captions ohne Trigger." },
@@ -123,10 +132,10 @@ export const NODE_TEXT_DE = {
     "Reasoning-Modelle denken vor der Antwort nach - großzügig einstellen." },
   min_words: { label: "min. Wörter", tooltip: WORDS_DE },
   max_words: { label: "max. Wörter", tooltip: WORDS_DE },
-  person_1: { label: "Person 1", tooltip: PERSON_DE(1) },
-  person_2: { label: "Person 2", tooltip: PERSON_DE(2) },
-  person_3: { label: "Person 3", tooltip: PERSON_DE(3) },
-  person_4: { label: "Person 4", tooltip: PERSON_DE(4) },
+  person_1: { label: "Person 1", tooltip: PERSON_DE(1) + LOCK_DE },
+  person_2: { label: "Person 2", tooltip: PERSON_DE(2) + LOCK_DE },
+  person_3: { label: "Person 3", tooltip: PERSON_DE(3) + LOCK_DE },
+  person_4: { label: "Person 4", tooltip: PERSON_DE(4) + LOCK_DE },
   image_n_is_person_n: { label: "Bild N = Person N", tooltip:
     "Koppelt jede Person mit dem Bild-Eingang derselben Nummer: person_1 = image_1, " +
     "person_2 = image_2, person_3 = image_3, person_4 = image_4.\n" +
@@ -176,6 +185,15 @@ export const LOCAL_TEXT_DE = {
     "für Karten, die für das ganze Modell zu klein sind." },
   top_k: { label: "top_k", tooltip:
     "Berücksichtigt nur die k wahrscheinlichsten nächsten Wörter. Qwen empfiehlt 20; 0 = aus." },
+};
+
+// German texts of the Prompt Writer · Persons node.
+export const PERSONS_TEXT_DE = {
+  person_1: { label: "Person 1", tooltip: PERSON_DE(1) },
+  person_2: { label: "Person 2", tooltip: PERSON_DE(2) },
+  person_3: { label: "Person 3", tooltip: PERSON_DE(3) },
+  person_4: { label: "Person 4", tooltip: PERSON_DE(4) },
+  "output:persons": { label: "Personen" },
 };
 
 // German texts of the Prompt Writer · Show Prompt node (separate: "text" means something else there).
@@ -239,7 +257,7 @@ export const STRINGS = {
     triggerLabel: "Trigger",
     triggerHint: "The LoRA's trigger token, written into the prompt exactly like this right after the name. Leave empty if the name itself is the trigger or there is no LoRA.",
     descriptionLabel: "Description",
-    descriptionHint: "Appearance and fixed traits (face, hair, body, age, typical look). Binding in every prompt; tag models get it as tags.",
+    descriptionHint: "Appearance and fixed traits (face, hair, body, age, typical look). Binding in every prompt; tag models get it as tags. For a group, start with 'A group of' and give every member a name of their own.",
     voiceLabel: "Voice",
     voiceHint: "Timbre, pitch, pace, accent, e.g. 'deep raspy male voice, slow, northern German accent'. Used only by models with audio: MiniMax H3 FL2VA / REF2VA, Wan 2.7, Wan 3.0, Seedance 1.5 / 2.0 / 2.5, Kling 3.0 / 2.6, Veo 3.1, Grok Imagine Video. Ignored by Wan 2.2 and all image models.",
     textLabel: "Text",
@@ -257,6 +275,12 @@ export const STRINGS = {
     importFailed: "Import failed",
     exportLibrary: "⬇ Export library",
     exportTitle: "Download all persons and style blocks as one JSON file, e.g. to move them to another ComfyUI install.",
+    addTemplates: "📥 Add templates",
+    templatesTitle: "Adds 10 template persons and 2 groups (Group_of_men, Group_of_women) to your library. Names you already have are never changed.",
+    templatesAdded: "Templates added",
+    templatesResult: (a, s) => `${a} added, ${s} already in your library`,
+    templatesFailed: "Templates not added",
+    personsLocked: "Locked: the connected 'Prompt Writer · Persons' node chooses the persons.",
     importLibrary: "⬆ Import...",
     importTitle: "Add persons and style blocks from an exported JSON file.",
     storedIn: "Stored in ComfyUI/user/grok_prompt_forge/library.json",
@@ -329,7 +353,7 @@ export const STRINGS = {
     triggerLabel: "Trigger",
     triggerHint: "Der Trigger des LoRAs, genau so direkt nach dem Namen in den Prompt geschrieben. Leer lassen, wenn der Name selbst der Trigger ist oder es kein LoRA gibt.",
     descriptionLabel: "Beschreibung",
-    descriptionHint: "Aussehen und feste Merkmale (Gesicht, Haare, Körper, Alter, typischer Look). In jedem Prompt verbindlich; Tag-Modelle bekommen sie als Tags.",
+    descriptionHint: "Aussehen und feste Merkmale (Gesicht, Haare, Körper, Alter, typischer Look). In jedem Prompt verbindlich; Tag-Modelle bekommen sie als Tags. Für eine Gruppe mit 'A group of' beginnen und jedem Mitglied einen eigenen Namen geben.",
     voiceLabel: "Stimme",
     voiceHint: "Klangfarbe, Tonhöhe, Tempo, Akzent, z. B. 'tiefe, raue Männerstimme, langsam, norddeutscher Akzent'. Nur für Modelle mit Ton: MiniMax H3 FL2VA / REF2VA, Wan 2.7, Wan 3.0, Seedance 1.5 / 2.0 / 2.5, Kling 3.0 / 2.6, Veo 3.1, Grok Imagine Video. Wan 2.2 und alle Bildmodelle ignorieren sie.",
     textLabel: "Text",
@@ -347,6 +371,12 @@ export const STRINGS = {
     importFailed: "Import fehlgeschlagen",
     exportLibrary: "⬇ Bibliothek exportieren",
     exportTitle: "Alle Personen und Stil-Bausteine als eine JSON-Datei herunterladen, z. B. für eine andere ComfyUI-Installation.",
+    addTemplates: "📥 Vorlagen hinzufügen",
+    templatesTitle: "Fügt deiner Bibliothek 10 Vorlage-Personen und 2 Gruppen (Group_of_men, Group_of_women) hinzu. Namen, die du schon hast, bleiben unverändert.",
+    templatesAdded: "Vorlagen hinzugefügt",
+    templatesResult: (a, s) => `${a} hinzugefügt, ${s} schon in deiner Bibliothek`,
+    templatesFailed: "Vorlagen nicht hinzugefügt",
+    personsLocked: "Gesperrt: der angeschlossene Node 'Prompt Writer · Persons' wählt die Personen.",
     importLibrary: "⬆ Importieren...",
     importTitle: "Personen und Stil-Bausteine aus einer exportierten JSON-Datei hinzufügen.",
     storedIn: "Gespeichert in ComfyUI/user/grok_prompt_forge/library.json",

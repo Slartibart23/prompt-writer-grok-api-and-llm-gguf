@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.0 — 2026-11-02
+
+- **New node Prompt Writer · Persons:** chooses up to four persons from your library outside the writer nodes. Its `persons` output goes to the new `persons` input of Prompt Writer · Grok API and LLM GGUF; one Persons node can feed several writers. While the input is connected, the writer's own `person_1` … `person_4` are greyed out, locked and ignored. The slot numbers come from the Persons node, also for `image_n_is_person_n`. The new input sits at the end of the writer nodes, so saved workflows keep their values and connections.
+- **Template persons:** "📥 Add templates" in the persons dialog adds ten fictional persons (eight men, two women) and two groups, **Group_of_men** (six) and **Group_of_women** (four). The descriptions cover only the outer appearance, in detailed English sentences without measurements, and every name is also its trigger (e.g. K3nji, 4mara). Names already in your library are never changed.
+- **Groups:** a person entry whose description starts with "A group of" stands for several named persons in one slot. The prompt introduces every member by name and assigns actions to members; the group's own name is only a label.
+
 ## 1.2.1 — 2026-10-31
 
 - **Prompts in full sentences:** every preset that writes prose (all image and video targets except the tag models and the edit instructions, plus "Describe image" and "LoRA training caption") now asks for complete sentences that each end with a period, each with one clear statement about a subject's look, pose, action, the background, the light and so on. Long descriptions are split into several sentences instead of comma-chained fragments.

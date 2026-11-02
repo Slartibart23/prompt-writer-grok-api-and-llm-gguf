@@ -45,7 +45,7 @@ def _load_pack():
 _install_stubs()
 PACK_MODULE = _load_pack()
 from grokpack.grok_forge import api, archive, builtin_presets, forge_node, library, models, presets  # noqa: E402
-from grokpack.grok_forge import local_models, local_node  # noqa: E402
+from grokpack.grok_forge import local_models, local_node, person_templates, persons_node  # noqa: E402
 
 
 def tearDownModule():
@@ -322,7 +322,7 @@ class ForgeNodeTests(unittest.TestCase):
         self.assertEqual(order[:len(v310)], v310)
         self.assertEqual(order[len(v310):], ["person_1", "person_2", "person_3", "person_4",
                                              "image_n_is_person_n", "style_1", "style_2",
-                                             "archive", "image_4"])
+                                             "archive", "image_4", "persons"])
         self.assertTrue(forge_node.GrokPromptForge.VALIDATE_INPUTS(
             "unknown", "unknown", person_1="Nobody", style_2="Gone"))
 
@@ -354,6 +354,24 @@ class LibraryTests(unittest.TestCase):
         for bad in ("", "  ", library.NONE):
             with self.assertRaises(ValueError):
                 library.save("style", bad, {"text": "x"})
+
+    def test_templates_are_added_once_and_never_overwrite(self):
+        library.save("person", "K3nji", {"description": "my own K3nji"})
+        self.assertEqual(library.import_entries(person_templates.TEMPLATES), (11, 0, 1))
+        self.assertEqual(library.get("person", "K3nji")["description"], "my own K3nji")
+        self.assertEqual(library.import_entries(person_templates.TEMPLATES), (0, 0, 12))
+        entries = person_templates.TEMPLATES["persons"]
+        self.assertEqual(len(entries), 12)
+        for name, entry in entries.items():
+            group = forge_node.is_group(entry)
+            self.assertEqual(group, name.startswith("Group_of_"), name)
+            # a single person's name is the trigger; no measurements image models can't show
+            self.assertEqual(entry["trigger"], "" if group else name)
+            self.assertNotRegex(entry["description"], r"\b\d+\b", name)
+            self.assertFalse(entry["voice"], name)
+            if not group:
+                self.assertRegex(name, r"\d", name)
+                self.assertTrue(entry["description"].startswith(name), name)
 
     def test_import_keeps_or_replaces(self):
         library.save("style", "Film", {"text": "mine"})
@@ -440,6 +458,36 @@ class PersonRuleTests(unittest.TestCase):
         self.assertEqual(entries[0]["prompt"], "result")
         self.assertEqual(len(archive.entries(query="STRAND")), 1)
         self.assertEqual(archive.entries(query="mond"), [])
+
+    def test_persons_node_feeds_the_writer_and_locks_its_own_persons(self):
+        img = np.zeros((1, 8, 8, 3), dtype=np.float32)
+        (cast,) = persons_node.PromptWriterPersons().select(
+            person_1=library.NONE, person_2="Bob", person_3="Alice", person_4="Nobody")
+        self.assertEqual([(slot, name) for slot, name, _ in cast], [(2, "Bob"), (3, "Alice")])
+        # the writer's own person_1 is ignored while the input is connected
+        system = self.system_of(persons=cast, person_1="Alice", image_3=img,
+                                image_n_is_person_n=True)
+        self.assertIn("Person 2:\n- Name: Bob", system)
+        self.assertIn("Person 3:\n- Name: Alice", system)
+        self.assertNotIn("Person 1:", system)
+        self.assertIn("Image 3 shows this person", system)  # slot numbers carry over
+        # an empty Persons node means: no persons, even if the writer has some selected
+        self.assertNotIn("## Persons", self.system_of(persons=[], person_1="Alice"))
+
+    def test_persons_node_reruns_after_an_edited_description(self):
+        before = persons_node.PromptWriterPersons.IS_CHANGED(person_1="Alice")
+        library.save("person", "Alice", {"trigger": "ohwx woman", "description": "long hair"})
+        self.assertNotEqual(before, persons_node.PromptWriterPersons.IS_CHANGED(person_1="Alice"))
+        self.assertTrue(persons_node.PromptWriterPersons.VALIDATE_INPUTS(person_1="Gone"))
+
+    def test_group_entry_introduces_its_members_not_its_label(self):
+        library.save("person", "Group_of_men", person_templates.TEMPLATES["persons"]["Group_of_men"])
+        system = self.system_of(person_1="Group_of_men", person_2="Alice")
+        self.assertIn('Person 1 - a GROUP (label "Group_of_men", never write it)', system)
+        self.assertIn("Introduce every member once by name", system)
+        self.assertIn("B0ris", system)
+        self.assertNotIn("- Name: Group_of_men", system)
+        self.assertIn("Person 2:\n- Name: Alice", system)
 
     def test_recast_preset(self):
         p = builtin_presets.BUILTIN["Recast ▸ Swap persons"]
@@ -617,7 +665,7 @@ class LocalModelTests(unittest.TestCase):
         for new in ("thinking", "unload_after_run", "context_length", "gpu_layers", "top_k"):
             self.assertIn(new, spec["optional"])
         # image_4 (1.2.0) comes after the local options, so their saved values keep their place
-        self.assertEqual(names[-6:], [*local_node.LOCAL_OPTIONS, "image_4"])
+        self.assertEqual(names[-7:], [*local_node.LOCAL_OPTIONS, "image_4", "persons"])
         self.assertEqual(spec["required"]["model"][0], local_models.model_labels())
         self.assertTrue(local_node.LocalPromptForgeGGUF.VALIDATE_INPUTS("x", "y", person_1="z"))
 
@@ -645,6 +693,7 @@ class PackTests(unittest.TestCase):
             "GrokPromptForge": "Prompt Writer · Grok API",
             "LocalPromptForgeGGUF": "Prompt Writer · LLM GGUF",
             "GrokShowPrompt": "Prompt Writer · Show Prompt",
+            "PromptWriterPersons": "Prompt Writer · Persons",
             "GrokSystemPromptLoader": "Prompt Writer · System Prompt Loader",
             "GrokTextFileLoader": "Prompt Writer · Text File Loader",
         })

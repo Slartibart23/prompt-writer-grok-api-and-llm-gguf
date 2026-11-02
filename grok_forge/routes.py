@@ -1,6 +1,6 @@
 """HTTP routes used by web/grok_prompt_forge.js (all under /grok_prompt_forge/)."""
 
-from . import archive, library, models, presets
+from . import archive, library, models, person_templates, presets
 
 LOG = "[Prompt Writer]"
 
@@ -85,6 +85,15 @@ def register():
             return web.json_response({"error": str(e)}, status=400)
         return web.json_response(dict(library_payload(), added=added, replaced=replaced,
                                       skipped=skipped))
+
+    @srv.routes.post("/grok_prompt_forge/library/templates")
+    async def grok_forge_templates(request):
+        # adds the template persons; names you already have are never touched
+        try:
+            added, _, skipped = library.import_entries(person_templates.TEMPLATES, False)
+        except Exception as e:
+            return web.json_response({"error": str(e)}, status=400)
+        return web.json_response(dict(library_payload(), added=added, skipped=skipped))
 
     @srv.routes.get("/grok_prompt_forge/archive")
     async def grok_forge_archive(request):

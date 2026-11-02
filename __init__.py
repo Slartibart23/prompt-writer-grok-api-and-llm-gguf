@@ -8,14 +8,16 @@ from .grok_forge import models, routes
 from .grok_forge.forge_node import GrokPromptForge
 from .grok_forge.loader_nodes import GrokSystemPromptLoader, GrokTextFileLoader
 from .grok_forge.local_node import LocalPromptForgeGGUF
+from .grok_forge.persons_node import PromptWriterPersons
 from .grok_forge.show_node import GrokShowPrompt
 
-__version__ = "1.2.1"
+__version__ = "1.3.0"
 
 NODE_CLASS_MAPPINGS = {
     "GrokPromptForge": GrokPromptForge,
     "LocalPromptForgeGGUF": LocalPromptForgeGGUF,
     "GrokShowPrompt": GrokShowPrompt,
+    "PromptWriterPersons": PromptWriterPersons,
     "GrokSystemPromptLoader": GrokSystemPromptLoader,
     "GrokTextFileLoader": GrokTextFileLoader,
 }
@@ -23,6 +25,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "GrokPromptForge": "Prompt Writer · Grok API",
     "LocalPromptForgeGGUF": "Prompt Writer · LLM GGUF",
     "GrokShowPrompt": "Prompt Writer · Show Prompt",
+    "PromptWriterPersons": "Prompt Writer · Persons",
     "GrokSystemPromptLoader": "Prompt Writer · System Prompt Loader",
     "GrokTextFileLoader": "Prompt Writer · Text File Loader",
 }

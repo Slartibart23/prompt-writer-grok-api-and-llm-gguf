@@ -21,7 +21,15 @@ PERSON_TOOLTIP = (
     "Person {n} from your library (button '👤 Persons & styles...'). Name, LoRA "
     "trigger, description and voice go into the prompt and are binding; the name "
     "always appears, so every pose and action is clearly assigned to this person. "
-    "In your text, refer to the person by name or as 'Person {n}'. (none) = no person.")
+    "In your text, refer to the person by name or as 'Person {n}'. (none) = no person. "
+    "A library entry whose description starts with 'A group of' is a group of named "
+    "persons in one slot.")
+PERSON_LOCK_NOTE = " Locked while the 'persons' input is connected."
+PERSONS_INPUT_TOOLTIP = (
+    "Optional: connect 'Prompt Writer · Persons' to choose the persons outside this node - "
+    "e.g. one cast for several writer nodes. While it is connected, person_1..person_4 on "
+    "this node are locked and ignored; the slot numbers from the Persons node count (Person 3 "
+    "there = Person 3 here, also for image_n_is_person_n).")
 LINK_TOOLTIP = (
     "Pairs each person with the image input of the same number: person_1 = image_1, "
     "person_2 = image_2, person_3 = image_3, person_4 = image_4.\n"
@@ -97,7 +105,20 @@ def persons_rule(persons, image_slots, link_images):
              "the trigger and the description as tags.",
              "- In formats with reference labels or speaker IDs (<Subject N>, (S1), "
              "<image1>), keep those labels and add the name next to them."]
+    if any(is_group(entry) for _, _, entry in persons):
+        lines.append("- A GROUP entry describes several persons, each with a name of their "
+                     "own. The group's label is not a name: never write it. Introduce every "
+                     "member once by name with their description, and assign every pose and "
+                     "action to a member by name.")
     for slot, name, entry in persons:
+        if is_group(entry):
+            lines.append(f"\nPerson {slot} - a GROUP (label \"{name}\", never write it):")
+            lines.append(f"- Members (binding; every member appears, each under their own "
+                         f"name, in tag lists as tags): {entry['description']}")
+            if link_images and slot in image_slots:
+                lines.append(f"- Image {slot} shows this group. Take the members' looks from "
+                             "it, matched to the descriptions above.")
+            continue
         lines.append(f"\nPerson {slot}:")
         lines.append(f"- Name: {name} - write it exactly like this.")
         trigger = entry["trigger"]
@@ -132,16 +153,46 @@ def styles_rule(styles):
     return "\n".join(lines) if len(lines) > 2 else ""
 
 
-def _selected(kwargs):
-    """Look up the selected persons and styles in the library."""
-    persons, styles = [], []
+def is_group(entry):
+    """A person entry whose description starts with "A group of" stands for several
+    named persons (see person_templates.py)."""
+    return entry.get("description", "").lower().startswith("a group of")
+
+
+def selected_persons(kwargs, log=LOG):
+    """[(slot, name, entry)] of person_1..4 in kwargs, looked up in the library."""
+    persons = []
     for n in range(1, PERSON_SLOTS + 1):
         name = kwargs.get(f"person_{n}") or library.NONE
         entry = library.get("person", name)
         if entry is not None:
             persons.append((n, name, entry))
         elif name != library.NONE:
-            print(f"{LOG} person_{n}: '{name}' is not in your library - skipped.")
+            print(f"{log} person_{n}: '{name}' is not in your library - skipped.")
+    return persons
+
+
+def _persons_input(value):
+    """The `persons` input from Prompt Writer · Persons, checked: [(slot, name, entry)]."""
+    out = []
+    for item in value or []:
+        try:
+            slot, name, entry = item
+            out.append((int(slot), str(name), {f: str(entry.get(f) or "")
+                                               for f in library.KINDS["person"]["fields"]}))
+        except (TypeError, ValueError, AttributeError):
+            print(f"{LOG} persons input: unexpected entry {item!r} - skipped.")
+    return out
+
+
+def _selected(kwargs):
+    """The persons (from the `persons` input when connected, otherwise from
+    person_1..4) and the style blocks."""
+    if kwargs.get("persons") is not None:
+        persons = _persons_input(kwargs["persons"])
+    else:
+        persons = selected_persons(kwargs)
+    styles = []
     for n in range(1, STYLE_SLOTS + 1):
         name = kwargs.get(f"style_{n}") or library.NONE
         entry = library.get("style", name)
@@ -236,7 +287,8 @@ class GrokPromptForge:
         person_names = library.names("person")
         for n in range(1, PERSON_SLOTS + 1):
             optional[f"person_{n}"] = (person_names, {"default": library.NONE,
-                                                       "tooltip": PERSON_TOOLTIP.format(n=n)})
+                                                       "tooltip": PERSON_TOOLTIP.format(n=n)
+                                                                  + PERSON_LOCK_NOTE})
         optional["image_n_is_person_n"] = ("BOOLEAN", {"default": False, "tooltip": LINK_TOOLTIP})
         style_names = library.names("style")
         for n in range(1, STYLE_SLOTS + 1):
@@ -245,6 +297,8 @@ class GrokPromptForge:
         optional["archive"] = ("BOOLEAN", {"default": True, "tooltip": ARCHIVE_TOOLTIP})
         # Added in 1.2.0, again at the end: image_1..3 keep their input slots.
         optional[f"image_{IMAGE_SLOTS}"] = ("IMAGE", {"tooltip": IMAGE_TOOLTIP.format(n=IMAGE_SLOTS)})
+        # Added in 1.3.0, at the end as always.
+        optional["persons"] = ("PW_PERSONS", {"tooltip": PERSONS_INPUT_TOOLTIP})
         return {
             "required": {
                 "preset": (presets.names(), {"default": DEFAULT_PRESET, "tooltip":

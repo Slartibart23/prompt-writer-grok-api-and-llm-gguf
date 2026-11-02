@@ -28,9 +28,15 @@ Both nodes share everything else:
 
 *With "Filter: type" on Video and "Filter: task" on Generation, the preset list shows only the twelve video generation presets. The search field at the top of the list narrows it further as you type.*
 
+![Prompt Writer · Persons connected to the persons input of Prompt Writer · Grok API](docs/images/persons_node.png)
+
+*Prompt Writer · Persons chooses the template person Kw4me and the group Group_of_women. While it is connected to the writer's `persons` input, the writer's own `person_1` … `person_4` are greyed out and locked.*
+
 | Persons & style blocks | Prompt archive |
 |---|---|
-| ![Library dialog with a person's name, trigger, description and voice](docs/images/persons_dialog.png) | ![Archive dialog with search, "Use as text" and "Recast"](docs/images/archive_dialog.png) |
+| ![Library dialog with the template person K3nji and the "Add templates" button](docs/images/persons_dialog.png) | ![Archive dialog with search, "Use as text" and "Recast"](docs/images/archive_dialog.png) |
+
+*The persons dialog with the template person K3nji. "📥 Add templates" adds the ten template persons and the two groups to your library.*
 
 ![Prompt Writer · LLM GGUF with Show Prompt](docs/images/local_node.png)
 

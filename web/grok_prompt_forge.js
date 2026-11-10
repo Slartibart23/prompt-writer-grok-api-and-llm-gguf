@@ -104,7 +104,8 @@ function translateNode(node) {
     const text = texts[w.name];
     if (!text) continue;
     // remember the English texts once, to switch back to them
-    w._grokEn ??= { label: w.label, tooltip: w.tooltip ?? specTooltip(node, w.name),
+    w._grokEn ??= { label: w.label,
+                    tooltip: w._grokDetails ? specTooltip(node, w.name) : w.tooltip ?? specTooltip(node, w.name),
                     placeholder: w.inputEl?.placeholder };
     w.label = de ? text.label : w._grokEn.label;
     if (!WORD_FIELDS.includes(w.name)) w.tooltip = de ? text.tooltip : w._grokEn.tooltip;
@@ -427,7 +428,14 @@ function inheritedGetter(obj, prop) {
   return null;
 }
 
+let libraryLoading = null;
+
 function markSelections(node) {
+  // the person details on hover need the library once
+  libraryLoading ??= fetchLibrary().catch((e) => {
+    console.debug(`[${TITLE}] library not loaded:`, e);
+    libraryLoading = null;
+  });
   for (const [kind, spec] of Object.entries(LIBRARY)) {
     for (const slot of spec.slots) {
       const w = widget(node, slot);
@@ -445,7 +453,28 @@ function markSelections(node) {
       } catch (e) {
         console.debug(`[${TITLE}] could not colour ${slot}:`, e); // colour is optional
       }
+      if (kind === "person") showPersonDetails(node, w);
     }
+  }
+}
+
+// The tooltip of person_N shows the selected person's name, gender, trigger and
+// description above the field's own explanation. The explanation set by the
+// language switch is kept as the base; the rest is read at hover time.
+function showPersonDetails(node, w) {
+  try {
+    Object.defineProperty(w, "tooltip", {
+      configurable: true,
+      get() {
+        const details = this.value && this.value !== NONE ? personDetails(this.value) : "";
+        return [this._grokLocked ? t("personsLocked") : "", details,
+                this._grokBaseTip ?? specTooltip(node, this.name)].filter(Boolean).join("\n\n");
+      },
+      set(value) { this._grokBaseTip = value; },
+    });
+    w._grokDetails = true;
+  } catch (e) {
+    console.debug(`[${TITLE}] no person details on ${w.name}:`, e); // details are optional
   }
 }
 
@@ -457,8 +486,7 @@ function lockPersons(node) {
     const w = widget(node, slot);
     if (!w) continue;
     w.disabled = locked;
-    const base = lang === "de" ? NODE_TEXT_DE[slot].tooltip : specTooltip(node, slot);
-    w.tooltip = locked ? `${t("personsLocked")}\n\n${base}` : base;
+    w._grokLocked = locked; // shown at the top of the tooltip
   }
   node.setDirtyCanvas?.(true, true);
 }
@@ -525,6 +553,8 @@ const LIBRARY = {
   person: {
     tab: "tabPersons", slots: ["person_1", "person_2", "person_3", "person_4"],
     fields: [
+      { key: "name", label: "promptNameLabel", hint: "promptNameHint", rows: 1 },
+      { key: "gender", label: "genderLabel", hint: "genderHint", choices: ["", "m", "f"] },
       { key: "trigger", label: "triggerLabel", hint: "triggerHint", rows: 1 },
       { key: "description", label: "descriptionLabel", hint: "descriptionHint", rows: 5 },
       { key: "voice", label: "voiceLabel", hint: "voiceHint", rows: 2 },
@@ -536,12 +566,29 @@ const LIBRARY = {
   },
 };
 
+// The library as last loaded, for the person details shown on hover.
+let libraryCache = null;
+
 async function fetchLibrary() {
-  return (await api.fetchApi("/grok_prompt_forge/library")).json();
+  const data = await (await api.fetchApi("/grok_prompt_forge/library")).json();
+  libraryCache = data.library;
+  return data;
+}
+
+// Name, gender, trigger and description of a person entry, by its label.
+function personDetails(label) {
+  const entry = libraryCache?.persons?.[label];
+  if (!entry) return "";
+  const gender = entry.gender ? ` (${t(`gender_${entry.gender}`)})` : "";
+  const group = (entry.description || "").toLowerCase().startsWith("a group of"); // see forge_node.is_group
+  return [group ? `${t("groupHover")}${gender}` : `${t("promptNameLabel")}: ${entry.name || label}${gender}`,
+          entry.trigger ? `${t("triggerLabel")}: ${entry.trigger}` : "",
+          entry.description].filter(Boolean).join("\n");
 }
 
 // Show the new name lists on every node; renamed / deleted entries are followed.
 function updateLibraryLists(data, kind, renamed = null) {
+  libraryCache = data.library;
   const lists = { person: data.persons, style: data.styles };
   for (const node of libraryNodes()) {
     for (const k of Object.keys(LIBRARY)) {
@@ -593,9 +640,13 @@ async function openLibrary(node, startKind = "person") {
     const names = Object.keys(entries()).sort((a, b) => a.localeCompare(b));
     list.replaceChildren(
       button(t("newEntry"), () => { selected = null; renderForm(); }, { textAlign: "left" }),
-      ...names.map((n) => button(n, () => { selected = n; renderForm(); }, {
-        textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-        ...(n === selected ? { borderColor: "var(--p-primary-color, #4a90e2)" } : {}) })),
+      ...names.map((n) => {
+        const b = button(n, () => { selected = n; renderForm(); }, {
+          textAlign: "left", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          ...(n === selected ? { borderColor: "var(--p-primary-color, #4a90e2)" } : {}) });
+        if (kind === "person") b.title = personDetails(n); // details on hover
+        return b;
+      }),
       names.length ? "" : el("div", { textContent: t("nothingSaved"), style: HINT_STYLE }));
   }
 
@@ -610,9 +661,16 @@ async function openLibrary(node, startKind = "person") {
     const rows = [el("label", { textContent: t("name") }), nameInput,
       el("div", { textContent: t(isPerson ? "nameHintPerson" : "nameHintStyle"), style: HINT_STYLE })];
     for (const f of spec.fields) {
-      const input = f.rows > 1
-        ? el("textarea", { value: values[f.key] ?? "", rows: f.rows, style: { ...INPUT_STYLE, resize: "vertical" } })
-        : el("input", { value: values[f.key] ?? "", style: INPUT_STYLE });
+      let input;
+      if (f.choices) {
+        input = el("select", { style: INPUT_STYLE },
+          ...f.choices.map((c) => el("option", { value: c, textContent: t(`${f.key}_${c || "none"}`) })));
+        input.value = values[f.key] ?? "";
+      } else if (f.rows > 1) {
+        input = el("textarea", { value: values[f.key] ?? "", rows: f.rows, style: { ...INPUT_STYLE, resize: "vertical" } });
+      } else {
+        input = el("input", { value: values[f.key] ?? "", style: INPUT_STYLE });
+      }
       input.title = t(f.hint);
       inputs[f.key] = input;
       rows.push(el("label", { textContent: t(f.label) }), input, el("div", { textContent: t(f.hint), style: HINT_STYLE }));

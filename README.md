@@ -30,13 +30,17 @@ Both nodes share everything else:
 
 ![Prompt Writer · Persons connected to the persons input of Prompt Writer · Grok API](docs/images/persons_node.png)
 
-*Prompt Writer · Persons chooses the template person Kw4me and the group Group_of_women. While it is connected to the writer's `persons` input, the writer's own `person_1` … `person_4` are greyed out and locked.*
+*Prompt Writer · Persons chooses the template person Kwame and the group Group_of_women. While it is connected to the writer's `persons` input, the writer's own `person_1` … `person_4` are greyed out and locked.*
+
+![The tooltip of person_1 with the selected person's name in the prompt, gender and description](docs/images/persons_hover.png)
+
+*Hovering over a person field shows the selected entry's name in the prompt, gender and description. The field shows the label (Kwame); the prompt gets the name (Kw4me).*
 
 | Persons & style blocks | Prompt archive |
 |---|---|
-| ![Library dialog with the template person K3nji and the "Add templates" button](docs/images/persons_dialog.png) | ![Archive dialog with search, "Use as text" and "Recast"](docs/images/archive_dialog.png) |
+| ![Library dialog with label, name in the prompt, gender and the "Add templates" button](docs/images/persons_dialog.png) | ![Archive dialog with search, "Use as text" and "Recast"](docs/images/archive_dialog.png) |
 
-*The persons dialog with the template person K3nji. "📥 Add templates" adds the ten template persons and the two groups to your library.*
+*The persons dialog with the template Kenji: the label for the list, the name K3nji for the prompt, the gender and the description. "📥 Add templates" adds the ten template persons and the two groups to your library.*
 
 ![Prompt Writer · LLM GGUF with Show Prompt](docs/images/local_node.png)
 
@@ -190,17 +194,18 @@ Every target guide also ends with **an example of a good result**. It is marked 
 
 | Library entry | Fields | Used by |
 |---|---|---|
-| Person | **Name:** written into every prompt exactly as given, so every pose and action is clearly assigned; it can also act as the trigger. **Trigger:** the LoRA's trigger token, written right after the name (leave it empty if the name is the trigger). **Description:** appearance and fixed traits, binding. **Voice:** timbre, pitch, pace, accent. | `person_1` … `person_4` on the writer nodes or on Prompt Writer · Persons. The voice is used only by the models with audio: MiniMax H3 FL2VA / REF2VA, Wan 2.7 / 3.0, Seedance 1.5 / 2.0 / 2.5, Kling 3.0 / 2.6, Veo 3.1 and Grok Imagine Video. |
+| Person | **Label:** shown in the list and the selection boxes, only for your overview, e.g. "Peter with glasses" and "Peter with beard". **Name in the prompt:** written into every prompt exactly as given, e.g. "P3ter"; with a digit for a letter it works as a trigger, and several entries may share it. Empty = the label is used (entries from before 1.4.0). **Gender:** male, female or unknown; it lets pronouns and gendered details fit. **Trigger (optional):** an extra LoRA trigger for special cases, written right after the name when it differs from it. **Description:** appearance and fixed traits, binding; use the name from the prompt in it. **Voice:** timbre, pitch, pace, accent. | `person_1` … `person_4` on the writer nodes or on Prompt Writer · Persons. The voice is used only by the models with audio: MiniMax H3 FL2VA / REF2VA, Wan 2.7 / 3.0, Seedance 1.5 / 2.0 / 2.5, Kling 3.0 / 2.6, Veo 3.1 and Grok Imagine Video. |
 | Style block | **Text:** e.g. a camera look, a lighting mood or a ban list | `style_1`, `style_2`; applied to every result |
 
-- **📥 Add templates** in the dialog adds ten fictional template persons and two groups to your library. Names you already have are never changed. Each template describes only the outer appearance, in two to three detailed English sentences: origin, skin tone, age, height and build in words (image models can't show "1.88 m"), face, eyes and hair. Each name is also the trigger, with one digit for a letter.
-  - Persons: S34n (Ireland), R4fael (Brazil), S1one (Samoa), K3nji (Japan), 4rjun (India), Kw4me (Ghana), K4rim (Egypt), 0lav (Norway), 4mara (Nigeria) and J1woo (Korea).
+- **On hover:** the tooltip of `person_1` … `person_4` shows the selected person's name in the prompt, gender, trigger and description; so does an entry in the dialog's list.
+- **📥 Add templates** in the dialog adds ten fictional template persons and two groups to your library. Labels you already have are never changed. Each template describes only the outer appearance, in two to three detailed English sentences: origin, skin tone, age, height and build in words (image models can't show "1.88 m"), face, eyes and hair. The label is the real name; the name in the prompt has one digit for a letter and so works as the trigger.
+  - Persons (label → name in the prompt): Sean → S34n (Ireland), Rafael → R4fael (Brazil), Sione → S1one (Samoa), Kenji → K3nji (Japan), Arjun → 4rjun (India), Kwame → Kw4me (Ghana), Karim → K4rim (Egypt), Olav → 0lav (Norway), Amara → 4mara (Nigeria) and Jiwoo → J1woo (Korea).
   - **Group_of_men** with six and **Group_of_women** with four clearly different members, each with a name of their own.
 - **Groups:** a person entry whose description starts with "A group of" is a group in one slot. Its own name is only a label and never appears in the prompt. Instead, every member is introduced by name, and every action is assigned to a member, e.g. "B0ris lifts the crate while M1nh holds the door".
 - **Prompt Writer · Persons:** chooses the persons outside the writer nodes and passes them to the writer's `persons` input. While that input is connected, `person_1` … `person_4` on the writer are greyed out, locked and ignored; disconnect it and they work again with their old values. The slot numbers come from the Persons node, so Person 3 there is Person 3 in the prompt and pairs with `image_3`.
 - **At a glance:** a selected person turns its field **dark red**, a selected style block turns its field **dark blue**. Fields set to "(none)" look normal. The colour is display only and is not saved in the workflow.
 - **Using persons in your text:** refer to a selected person by name or as "Person 1"…"Person 4". Selected persons always appear in the result, even if the text doesn't mention them.
-  - Each person is introduced once as "name, trigger, description".
+  - Each person is introduced once as "name, trigger, description". The label is never written.
   - After that, every pose, action, gaze and line of dialogue is attributed to a person by name, with no ambiguous "she" or "the woman" when several persons are present.
   - Tag models (Pony, Illustrious, SDXL) get the name first, then the trigger, then the description as tags.
 - **`image_n_is_person_n`** (off by default) pairs each person with the image input of the same number: `person_1` = `image_1`, `person_2` = `image_2`, `person_3` = `image_3`, `person_4` = `image_4`.

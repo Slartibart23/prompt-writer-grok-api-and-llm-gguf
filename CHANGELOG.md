@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0 — 2026-11-10
+
+- **Label and name are separate:** a person entry has a **label** for the list and the selection boxes (e.g. "Peter with glasses", "Peter with beard") and a **name in the prompt** (e.g. "P3ter"). Several entries may share a name and differ in their description. Entries without a name keep working as before: their label is the name.
+- **Gender** (male / female / unknown) as a new field; it goes into the prompt so pronouns and gendered details fit, and groups get "all members are male / female".
+- **On hover:** the tooltip of `person_1` … `person_4` shows the selected person's name, gender, trigger and description; so does an entry in the persons dialog's list.
+- **Templates:** labels are now the real names (Kenji, Kwame, Amara …), the names in the prompt stay K3nji, Kw4me, 4mara …; every template has its gender. "📥 Add templates" adds them under the new labels; template entries added with 1.3.0 (labelled K3nji etc.) stay in your library until you delete them.
+
 ## 1.3.0 — 2026-11-02
 
 - **New node Prompt Writer · Persons:** chooses up to four persons from your library outside the writer nodes. Its `persons` output goes to the new `persons` input of Prompt Writer · Grok API and LLM GGUF; one Persons node can feed several writers. While the input is connected, the writer's own `person_1` … `person_4` are greyed out, locked and ignored. The slot numbers come from the Persons node, also for `image_n_is_person_n`. The new input sits at the end of the writer nodes, so saved workflows keep their values and connections.

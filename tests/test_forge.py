@@ -343,7 +343,12 @@ class LibraryTests(unittest.TestCase):
                                            "voice": "", "bogus": "x"})
         self.assertEqual(library.names("person"), [library.NONE, "Alice"])
         self.assertEqual(library.get("person", "Alice"),
-                         {"trigger": "ohwx woman", "description": "red hair", "voice": ""})
+                         {"name": "", "gender": "", "trigger": "ohwx woman",
+                          "description": "red hair", "voice": ""})
+        library.save("person", "Alice", {"name": "4lice", "gender": "Female"})
+        self.assertEqual(library.get("person", "Alice")["gender"], "f")  # normalised
+        library.save("person", "Alice", {"gender": "x"})
+        self.assertEqual(library.get("person", "Alice")["gender"], "")
         library.save("person", "Alice B.", {"trigger": "ohwx"}, old_name="Alice")
         self.assertEqual(library.names("person"), [library.NONE, "Alice B."])
         self.assertTrue(library.delete("person", "Alice B."))
@@ -356,22 +361,27 @@ class LibraryTests(unittest.TestCase):
                 library.save("style", bad, {"text": "x"})
 
     def test_templates_are_added_once_and_never_overwrite(self):
-        library.save("person", "K3nji", {"description": "my own K3nji"})
+        library.save("person", "Kenji", {"description": "my own Kenji"})
         self.assertEqual(library.import_entries(person_templates.TEMPLATES), (11, 0, 1))
-        self.assertEqual(library.get("person", "K3nji")["description"], "my own K3nji")
+        self.assertEqual(library.get("person", "Kenji")["description"], "my own Kenji")
         self.assertEqual(library.import_entries(person_templates.TEMPLATES), (0, 0, 12))
         entries = person_templates.TEMPLATES["persons"]
         self.assertEqual(len(entries), 12)
-        for name, entry in entries.items():
+        self.assertEqual(entries["Kenji"]["name"], "K3nji")
+        for label, entry in entries.items():
             group = forge_node.is_group(entry)
-            self.assertEqual(group, name.startswith("Group_of_"), name)
-            # a single person's name is the trigger; no measurements image models can't show
-            self.assertEqual(entry["trigger"], "" if group else name)
-            self.assertNotRegex(entry["description"], r"\b\d+\b", name)
-            self.assertFalse(entry["voice"], name)
+            self.assertEqual(group, label.startswith("Group_of_"), label)
+            # no measurements image models can't show, no voice, a gender for every entry
+            self.assertNotRegex(entry["description"], r"\b\d+\b", label)
+            self.assertFalse(entry["voice"], label)
+            self.assertIn(entry["gender"], ("m", "f"), label)
+            self.assertFalse(entry["trigger"], label)
             if not group:
-                self.assertRegex(name, r"\d", name)
-                self.assertTrue(entry["description"].startswith(name), name)
+                # the label is the real name, the prompt name has a digit and opens the description
+                self.assertNotRegex(label, r"\d", label)
+                self.assertRegex(entry["name"], r"\d", label)
+                self.assertTrue(entry["description"].startswith(entry["name"]), label)
+        self.assertEqual([e["gender"] for e in entries.values()].count("f"), 3)  # 2 women + group
 
     def test_import_keeps_or_replaces(self):
         library.save("style", "Film", {"text": "mine"})
@@ -413,6 +423,21 @@ class PersonRuleTests(unittest.TestCase):
         self.assertNotIn("labels only", system)
         self.assertIn("- shot on 35mm film, grain", system)
         self.assertLess(system.index("## Persons"), system.index("## Style blocks"))
+
+    def test_prompt_uses_the_name_not_the_label(self):
+        library.save("person", "Peter with glasses", {"name": "P3ter", "gender": "m",
+                                                      "description": "P3ter wears round glasses"})
+        library.save("person", "Peter with beard", {"name": "P3ter", "gender": "m",
+                                                    "description": "P3ter has a full beard"})
+        system = self.system_of(person_1="Peter with beard")
+        self.assertIn("Person 1:\n- Name: P3ter - write it exactly like this.", system)
+        self.assertIn("- Gender: male", system)
+        self.assertIn("P3ter has a full beard", system)
+        self.assertNotIn("Peter with", system)  # the label never reaches the prompt
+        # an entry from before 1.4.0 has no name: its label is the name, no gender line
+        system = self.system_of(person_1="Bob")
+        self.assertIn("- Name: Bob", system)
+        self.assertNotIn("- Gender:", system)
 
     def test_image_link_follows_slots_and_switch(self):
         img = np.zeros((1, 8, 8, 3), dtype=np.float32)
@@ -486,6 +511,7 @@ class PersonRuleTests(unittest.TestCase):
         self.assertIn('Person 1 - a GROUP (label "Group_of_men", never write it)', system)
         self.assertIn("Introduce every member once by name", system)
         self.assertIn("B0ris", system)
+        self.assertIn("- All members are male.", system)
         self.assertNotIn("- Name: Group_of_men", system)
         self.assertIn("Person 2:\n- Name: Alice", system)
 

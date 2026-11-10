@@ -3,9 +3,13 @@
 Stored in ComfyUI/user/grok_prompt_forge/library.json - never in the node
 pack, so personal characters stay on your machine and survive updates.
 
-    person: name -> {"trigger", "description", "voice"}
-    style:  name -> {"text"}
-"""
+    person: label -> {"name", "gender", "trigger", "description", "voice"}
+    style:  label -> {"text"}
+
+The label is what the selection boxes show ("Peter with glasses"). A person's
+"name" is what the prompt writes ("P3ter"); several entries may share it. An
+entry without a name (from before 1.4.0) uses its label as the name. gender is
+"m", "f" or "" (unknown)."""
 
 import json
 import os
@@ -15,7 +19,7 @@ from .api import user_dir
 
 NONE = "(none)"
 KINDS = {
-    "person": {"key": "persons", "fields": ("trigger", "description", "voice")},
+    "person": {"key": "persons", "fields": ("name", "gender", "trigger", "description", "voice")},
     "style": {"key": "styles", "fields": ("text",)},
 }
 MAX_NAME = 80
@@ -60,7 +64,15 @@ def _write(data):
 
 
 def _clean(kind, values):
-    return {f: str(values.get(f) or "").strip() for f in KINDS[kind]["fields"]}
+    out = {f: str(values.get(f) or "").strip() for f in KINDS[kind]["fields"]}
+    if "gender" in out:
+        out["gender"] = {"m": "m", "male": "m", "f": "f", "female": "f"}.get(out["gender"].lower(), "")
+    return out
+
+
+def prompt_name(label, entry):
+    """The name a person entry writes into the prompt."""
+    return entry.get("name") or label
 
 
 def _check_name(name):

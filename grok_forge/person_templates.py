@@ -3,9 +3,10 @@
 Fictional characters that differ clearly in origin, skin tone, age, height,
 build and hair. Only the outer appearance is described, in words an image model
 can show: no numbers for height or age, no clothing (that belongs to the
-scene). Each name is also the trigger, with one digit for a letter. A
-description that starts with "A group of" makes the entry a group of named
-persons (see forge_node.is_group); the group's own name is only a label."""
+scene). The label is the real name (Kenji); the name written into the prompt
+has one digit for a letter (K3nji) and so works as a trigger. A description
+that starts with "A group of" makes the entry a group of named persons (see
+forge_node.is_group); the group's label is not written into the prompt."""
 
 _PERSONS = {
     "S34n": "S34n is an Irish man in his early twenties with very pale, freckled skin that "
@@ -82,9 +83,19 @@ _GROUPS = {
         "face and short natural grey hair.",
 }
 
-# In the format of an exported library (library.import_entries). A single
-# person's name is also their trigger; a group's name is only a label.
+# prompt name -> (label = real name, gender)
+_LABELS = {
+    "S34n": ("Sean", "m"), "R4fael": ("Rafael", "m"), "S1one": ("Sione", "m"),
+    "K3nji": ("Kenji", "m"), "4rjun": ("Arjun", "m"), "Kw4me": ("Kwame", "m"),
+    "K4rim": ("Karim", "m"), "0lav": ("Olav", "m"), "4mara": ("Amara", "f"),
+    "J1woo": ("Jiwoo", "f"),
+}
+_GROUP_GENDERS = {"Group_of_men": "m", "Group_of_women": "f"}
+
+# In the format of an exported library (library.import_entries): label -> entry.
 TEMPLATES = {"persons": {
-    **{name: {"trigger": name, "description": text, "voice": ""} for name, text in _PERSONS.items()},
-    **{name: {"trigger": "", "description": text, "voice": ""} for name, text in _GROUPS.items()},
+    **{_LABELS[name][0]: {"name": name, "gender": _LABELS[name][1], "trigger": "",
+                          "description": text, "voice": ""} for name, text in _PERSONS.items()},
+    **{label: {"name": "", "gender": _GROUP_GENDERS[label], "trigger": "", "description": text,
+               "voice": ""} for label, text in _GROUPS.items()},
 }}

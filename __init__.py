@@ -11,7 +11,7 @@ from .grok_forge.local_node import LocalPromptForgeGGUF
 from .grok_forge.persons_node import PromptWriterPersons
 from .grok_forge.show_node import GrokShowPrompt
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 NODE_CLASS_MAPPINGS = {
     "GrokPromptForge": GrokPromptForge,

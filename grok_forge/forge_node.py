@@ -18,9 +18,10 @@ PERSON_SLOTS = 4
 STYLE_SLOTS = 2
 
 PERSON_TOOLTIP = (
-    "Person {n} from your library (button '👤 Persons & styles...'). Name, LoRA "
-    "trigger, description and voice go into the prompt and are binding; the name "
-    "always appears, so every pose and action is clearly assigned to this person. "
+    "Person {n} from your library (button '👤 Persons & styles...'), chosen by its label. "
+    "The entry's name (not the label), gender, LoRA trigger, description and voice go "
+    "into the prompt and are binding; the name always appears, so every pose and "
+    "action is clearly assigned to this person. "
     "In your text, refer to the person by name or as 'Person {n}'. (none) = no person. "
     "A library entry whose description starts with 'A group of' is a group of named "
     "persons in one slot.")
@@ -86,7 +87,8 @@ def length_rule(min_words, max_words):
 def persons_rule(persons, image_slots, link_images):
     """System-prompt block for the selected persons.
 
-    persons: [(slot, name, entry)]; image_slots: numbers of connected image inputs."""
+    persons: [(slot, label, entry)]; image_slots: numbers of connected image inputs. The
+    label only names the library entry; the prompt uses the entry's name."""
     if not persons:
         return ""
     lines = ["## Persons (binding)",
@@ -110,17 +112,23 @@ def persons_rule(persons, image_slots, link_images):
                      "own. The group's label is not a name: never write it. Introduce every "
                      "member once by name with their description, and assign every pose and "
                      "action to a member by name.")
-    for slot, name, entry in persons:
+    for slot, label, entry in persons:
+        gender = GENDERS.get(entry.get("gender", ""), "")
         if is_group(entry):
-            lines.append(f"\nPerson {slot} - a GROUP (label \"{name}\", never write it):")
+            lines.append(f"\nPerson {slot} - a GROUP (label \"{label}\", never write it):")
             lines.append(f"- Members (binding; every member appears, each under their own "
                          f"name, in tag lists as tags): {entry['description']}")
+            if gender:
+                lines.append(f"- All members are {gender}.")
             if link_images and slot in image_slots:
                 lines.append(f"- Image {slot} shows this group. Take the members' looks from "
                              "it, matched to the descriptions above.")
             continue
+        name = library.prompt_name(label, entry)
         lines.append(f"\nPerson {slot}:")
         lines.append(f"- Name: {name} - write it exactly like this.")
+        if gender:
+            lines.append(f"- Gender: {gender} - use matching pronouns and gendered words.")
         trigger = entry["trigger"]
         if trigger and trigger.lower() != name.lower():
             lines.append(f"- Trigger: {trigger} - write it exactly like this right after "
@@ -151,6 +159,9 @@ def styles_rule(styles):
              "Apply every block below to the result, in the target model's prompt style:"]
     lines += [f"- {entry['text']}" for _, entry in styles if entry["text"]]
     return "\n".join(lines) if len(lines) > 2 else ""
+
+
+GENDERS = {"m": "male", "f": "female"}
 
 
 def is_group(entry):

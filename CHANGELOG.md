@@ -4,7 +4,7 @@
 
 - **Stronger styles:** with a style block selected, the prompt now opens and closes with the medium and technique, and every element - persons, clothes, objects, background - is described in the language of the style, not only named once. This overrides the order of the model guides, so paintings and drawings no longer drift into photos.
 - **Sharper style templates** with the styles' own technical terms (impasto, chiaroscuro, craquelure, hatching, eraser marks ...), especially Oil painting, Rembrandt, Pencil sketch, Van Gogh, Line drawing and GTA VI.
-- **New style templates:** *Manga* (black-and-white ink, screentones, speed lines - unlike *Anime*, the colour look of animation) and *Hentai* (explicit adult anime look with clearly adult characters).
+- **New style templates:** *Manga* (inked manga lines, screentones and speed lines in full colour, like a manga colour page - unlike *Anime*, the look of animation) and *Hentai* (explicit adult anime look with clearly adult characters).
 - "📥 Add templates" updates style blocks that still hold an earlier template text unchanged.
 
 ## 1.5.0 — 2026-11-14

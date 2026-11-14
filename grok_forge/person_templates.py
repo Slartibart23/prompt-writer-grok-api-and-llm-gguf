@@ -138,10 +138,10 @@ _STYLES = {
         "mouths, smooth cel shading with crisp, flat shadow shapes, and a bright, saturated "
         "colour palette with painted anime backgrounds.",
     "Manga":
-        "Japanese manga page, drawn by hand in black ink on white paper. Bold brush-pen "
-        "lines, large expressive manga eyes, dense solid blacks, screentone dot shading, "
-        "dramatic speed lines and crisp hatching, framed as a single manga panel in pure "
-        "black and white.",
+        "Full-colour Japanese manga illustration in the look of a manga colour page or "
+        "volume cover, inked by hand and coloured with alcohol markers. Bold brush-pen "
+        "outlines, large expressive manga eyes, screentone dot textures, dynamic speed lines "
+        "and crisp hatching, filled with vivid colours and layered marker shading.",
     "Hentai":
         "Explicit Japanese hentai illustration, drawn and coloured digitally in the style of "
         "adult anime. Adult characters with mature faces and fully grown adult body "
@@ -203,6 +203,10 @@ TEMPLATES = {
 # Style texts of earlier builds. A style block that still holds one of them
 # unchanged is updated by add_to_library; your own edits are never touched.
 _OUTDATED_STYLES = {
+    "Japanese manga page, drawn by hand in black ink on white paper. Bold brush-pen "
+    "lines, large expressive manga eyes, dense solid blacks, screentone dot shading, "
+    "dramatic speed lines and crisp hatching, framed as a single manga panel in pure "
+    "black and white.",
     "2D cartoon in the style of The Simpsons TV series, drawn and coloured as hand-made "
     "animation. Bright yellow skin, large round eyes with small black pupils, overbites, "
     "four-fingered hands, thick black outlines and flat, saturated colours.",

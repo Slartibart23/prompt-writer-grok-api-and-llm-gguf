@@ -17,7 +17,8 @@
 // - the language switch at the top shows the nodes in English or German
 //   (display only, English after every page load; see grok_prompt_forge_i18n.js)
 
-import { LANGUAGES, LOCAL_TEXT_DE, NODE_TEXT_DE, PERSONS_TEXT_DE, SHOW_TEXT_DE, STRINGS } from "./grok_prompt_forge_i18n.js";
+import { LANGUAGES, LOCAL_TEXT_DE, NODE_TEXT_DE, PERSONS_TEXT_DE, SHOW_TEXT_DE, STRINGS,
+         SYSTEM_TEXT_DE } from "./grok_prompt_forge_i18n.js";
 
 const { app } = window.comfyAPI.app;
 const { api } = window.comfyAPI.api;
@@ -27,12 +28,14 @@ const LOCAL_NODE = "LocalPromptForgeGGUF"; // same presets, persons and archive,
 const SHOW_NODE = "GrokShowPrompt";
 const PERSONS_NODE = "PromptWriterPersons"; // chooses the persons for one or more writer nodes
 const FORGE_NODES = [NODE, LOCAL_NODE];
-const OUR_NODES = [...FORGE_NODES, SHOW_NODE, PERSONS_NODE];
+const SYSTEM_NODE = "PromptWriterSystemPrompt"; // your own system prompts with a label
+const OUR_NODES = [...FORGE_NODES, SHOW_NODE, PERSONS_NODE, SYSTEM_NODE];
 const TEXTS_DE = {
   [NODE]: NODE_TEXT_DE,
   [LOCAL_NODE]: { ...NODE_TEXT_DE, ...LOCAL_TEXT_DE },
   [SHOW_NODE]: SHOW_TEXT_DE,
   [PERSONS_NODE]: PERSONS_TEXT_DE,
+  [SYSTEM_NODE]: SYSTEM_TEXT_DE,
 };
 const FIELDS = ["system_prompt", "negative_prompt", "temperature", "top_p", "max_tokens"];
 const WORD_FIELDS = ["min_words", "max_words"];
@@ -603,6 +606,40 @@ function updateLibraryLists(data, kind, renamed = null) {
   }
 }
 
+// "Peter" -> "P3ter": the first a, e, i or o becomes 4, 3, 1 or 0, so the name
+// works as a trigger (same rule as the template persons).
+const DIGITS = { a: "4", e: "3", i: "1", o: "0" };
+const triggerName = (label) => label.replace(/[aeio]/i, (c) => DIGITS[c.toLowerCase()]);
+
+// A new person is filled in from its label as you type it: name and trigger in
+// trigger form, gender male, a description that opens with the name. A field
+// you change yourself is left alone; renaming also renames the name in the
+// description (and in the trigger, while it equals the name).
+function fillPersonDefaults(labelInput, inputs, isNew) {
+  const auto = { name: isNew, trigger: isNew, description: isNew };
+  for (const key of Object.keys(auto)) {
+    inputs[key].addEventListener("input", () => { auto[key] = false; });
+  }
+  if (isNew) inputs.gender.value = "m";
+  let lastName = inputs.name.value;
+  const opening = () => `${inputs.name.value} is a ${inputs.gender.value === "f" ? "woman" : "man"} `;
+  const follow = () => {
+    const name = inputs.name.value;
+    if (auto.trigger || (lastName && inputs.trigger.value === lastName)) inputs.trigger.value = name;
+    if (auto.description) inputs.description.value = name ? opening() : "";
+    else if (lastName && name && lastName !== name) {
+      inputs.description.value = inputs.description.value.split(lastName).join(name);
+    }
+    lastName = name;
+  };
+  labelInput.addEventListener("input", () => {
+    if (auto.name) inputs.name.value = triggerName(labelInput.value.trim());
+    follow();
+  });
+  inputs.name.addEventListener("input", follow);
+  inputs.gender.addEventListener("change", () => { if (auto.description) follow(); });
+}
+
 async function postJson(url, body) {
   const resp = await api.fetchApi(url, {
     method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body),
@@ -675,6 +712,7 @@ async function openLibrary(node, startKind = "person") {
       inputs[f.key] = input;
       rows.push(el("label", { textContent: t(f.label) }), input, el("div", { textContent: t(f.hint), style: HINT_STYLE }));
     }
+    if (isPerson) fillPersonDefaults(nameInput, inputs, !selected);
     const save = button(t("save"), async () => {
       try {
         const vals = Object.fromEntries(Object.entries(inputs).map(([k, i]) => [k, i.value]));
@@ -753,6 +791,55 @@ async function openLibrary(node, startKind = "person") {
 
   function render() { renderTabs(); renderForm(); renderFooter(); }
   render();
+}
+
+// ----------------------------------------------- Prompt Writer · System Prompt
+// Your saved system prompts live in ComfyUI/user/grok_prompt_forge/system_prompts.json.
+// "Load..." puts one into the node's label and text, "Save now" stores label and
+// text at once, "Delete" removes the label from the library.
+async function fetchSystemPrompts() {
+  return (await (await api.fetchApi("/grok_prompt_forge/system_prompts")).json()).prompts || {};
+}
+
+async function openSystemPrompts(node) {
+  const prompts = await fetchSystemPrompts();
+  const { body, close } = modal(t("systemTitle"), "720px");
+  const labels = Object.keys(prompts);
+  body.append(el("div", { style: HINT_STYLE, textContent: labels.length ? t("systemPick") : t("systemEmpty") }),
+    el("div", { style: { display: "flex", flexDirection: "column", gap: "6px" } },
+      ...labels.map((label) => {
+        const b = button(label, () => {
+          setValue(node, "label", label);
+          setValue(node, "text", prompts[label]);
+          node.setDirtyCanvas?.(true, true);
+          close();
+          toast("success", t("systemLoaded"), label);
+        }, { textAlign: "left" });
+        b.title = prompts[label]; // the text on hover
+        return b;
+      })));
+}
+
+async function saveSystemPrompt(node) {
+  const label = String(widget(node, "label")?.value ?? "").trim();
+  const text = String(widget(node, "text")?.value ?? "");
+  if (!label) return toast("warn", t("systemNotSaved"), t("systemNeedsLabel"));
+  const existing = await fetchSystemPrompts();
+  if (label in existing && existing[label] !== text.trim() && !(await confirmBox(t("systemOverwrite", label)))) return;
+  try {
+    await postJson("/grok_prompt_forge/system_prompts", { label, text });
+    toast("success", t("systemSaved"), label);
+  } catch (e) { toast("error", t("systemNotSaved"), String(e.message ?? e)); }
+}
+
+async function deleteSystemPrompt(node) {
+  const label = String(widget(node, "label")?.value ?? "").trim();
+  if (!label || !(label in (await fetchSystemPrompts()))) return toast("info", t("systemNotInLibrary"), label);
+  if (!(await confirmBox(t("systemConfirmDelete", label)))) return;
+  try {
+    await postJson("/grok_prompt_forge/system_prompts/delete", { label });
+    toast("success", t("deleted"), label);
+  } catch (e) { toast("error", t("notDeleted"), String(e.message ?? e)); }
 }
 
 // ------------------------------------------------------------------ archive
@@ -898,6 +985,25 @@ app.registerExtension({
           this.properties.lastText = Array.isArray(text) ? text.join("\n") : String(text);
           renderShown(this);
         }
+        return r;
+      };
+      return;
+    }
+    if (nodeData?.name === SYSTEM_NODE) {
+      const onCreated = nodeType.prototype.onNodeCreated;
+      nodeType.prototype.onNodeCreated = function () {
+        const r = onCreated?.apply(this, arguments);
+        addLanguageSwitch(this);
+        addButton(this, "btnSystemLoad", openSystemPrompts);
+        addButton(this, "btnSystemSave", saveSystemPrompt);
+        addButton(this, "btnSystemDelete", deleteSystemPrompt);
+        applyLanguage(this);
+        return r;
+      };
+      const onConfigureSystem = nodeType.prototype.onConfigure;
+      nodeType.prototype.onConfigure = function () {
+        const r = onConfigureSystem?.apply(this, arguments);
+        applyLanguage(this);
         return r;
       };
       return;

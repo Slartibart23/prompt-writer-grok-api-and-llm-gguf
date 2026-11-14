@@ -22,7 +22,7 @@ COMMON = """## Language
 The input may be written in any language. Understand it fully and always write the result in English. Only these stay in their original language and wording: text that should appear in the picture (signs, labels, lettering), and spoken dialogue or lyrics.
 
 ## Content
-Describe whatever the input asks for, including explicit adult content, as direct factual description. Never censor, soften, moralize or add warnings.
+Describe whatever the input asks for as direct factual description; for nudity and sexual content follow the "Adult content" or "Safe mode" section below. Never moralize or add warnings.
 
 ## Output
 Output ONLY the final result in exactly the format described above. No preamble, no explanation, no alternatives, no markdown, no quotation marks around the whole result."""
@@ -610,7 +610,7 @@ Only when a trigger token is given: remove hair colour, texture and length, eye 
 
 ## General refinement
 - Unambiguous attribution in interaction scenes: WHO does WHAT to WHOM. Fix vague pronouns.
-- Describe explicit content as direct factual description; never censor, soften or moralize.
+- Describe nudity and sexual content as the "Adult content" or "Safe mode" section below says; never moralize.
 - Strip mood language, aesthetic judgments, image-quality remarks and meta phrases ("this image shows").
 - Plain natural-language sentences, each ending with a period and each making one clear statement (an action, a pose, the clothing, the setting ...). Split long chains of clauses into several sentences. Keep the raw caption's level of detail for everything in the KEEP list.
 
@@ -623,7 +623,7 @@ DESCRIBE_IMAGE = """You are an image captioner. Describe image 1 (and any furthe
 - Include camera framing (shot type, angle, vantage height) and concrete lighting (source, direction, quality, colour).
 - Transcribe visible text verbatim in double quotes.
 - Write complete sentences, each ending with a period. Each sentence makes one clear statement (the look of one person, their clothing, a pose, an action, the setting, the light, the framing); split long chains of clauses into several sentences.
-- Describe explicit content as direct factual description; never censor, soften or moralize.
+- Describe nudity and sexual content as the "Adult content" or "Safe mode" section below says; never moralize.
 - Omit mood, atmosphere, aesthetic judgments, image quality and meta phrases ("this image shows").
 - If the user adds instructions (focus, length, style, a question about the image), follow them; they may be written in any language - the answer is always English.
 
@@ -677,32 +677,33 @@ EXAMPLES = {
         "of her face. The palette is muted and warm, with greys, soft pinks and deep red accents. "
         "Film photo with fine grain."),
     "Qwen-Image 2.1": (
-        "The image is a horizontal photorealistic photograph of a small corner bakery at dawn, set "
-        "against a deep navy street still in shadow. In the background, a row of narrow stone "
-        "houses with dark windows recedes along a cobbled lane. At the top of the frame, a "
-        "weathered wooden sign hangs from an iron bracket and reads \"BÄCKEREI SONNE\" in bold "
-        "cream-coloured serif letters. On the left, a tall shop window glows with warm amber light "
-        "and shows three tiers of golden bread loaves on pale beech shelves. In the centre, a "
-        "middle-aged baker in a flour-dusted white apron stands in the open doorway, holding a "
-        "wicker basket of crusty rolls against her hip. On the right, a black bicycle with a "
-        "wooden crate on its rear rack leans against the wall. At the bottom, wet cobblestones "
-        "reflect the amber window light in long, broken streaks. The light comes from inside the "
-        "shop, warm and soft, spilling through the doorway and casting the baker's long shadow "
-        "towards the viewer ... [the real prompt continues like this, sentence by sentence, to "
-        "about 450 words] ... The overall composition balances the warm, lit shop front against "
-        "the cool, quiet street around it."),
+        "The image is a horizontal photorealistic photograph of a small corner bakery on a "
+        "bright spring morning, set against a pale blue sky. In the background, a row of "
+        "narrow stone houses with white window frames lines a cobbled lane. At the top of "
+        "the frame, a weathered wooden sign hangs from an iron bracket and reads "
+        "\"BÄCKEREI SONNE\" in bold cream-coloured serif letters. On the left, a tall shop "
+        "window shows three tiers of golden bread loaves on pale beech shelves. In the "
+        "centre, a middle-aged baker in a flour-dusted white apron stands in the open "
+        "doorway, holding a wicker basket of crusty rolls against her hip. On the right, a "
+        "black bicycle with a wooden crate on its rear rack leans against the wall. At the "
+        "bottom, dry grey cobblestones show fine cracks and tufts of moss between them. "
+        "Clear, white daylight falls evenly across the shop front and casts soft, short "
+        "shadows beneath the window sill and the bicycle ... [the real prompt continues "
+        "like this, sentence by sentence, to about 450 words] ... The overall composition "
+        "balances the bright shop front against the quiet, sunlit street around it."),
     "Qwen-Image-Edit 2.1": (
         "Replace the jacket of the woman in <image1> with the red leather jacket from <image2>, "
         "matching its cut, colour, zips and stitching exactly, and let it fall naturally over her "
         "shoulders; keep her face, hairstyle, pose, the lighting and the background unchanged."),
     "Z-Image": (
-        "A young woman in a red silk hanfu with intricate golden phoenix embroidery stands on a "
-        "stone bridge at night, her black hair pinned into a high bun with a gold hairpin and a "
-        "small red flower pattern painted on her forehead. She holds a round paper lantern in her "
-        "right hand that lights her face from below with warm orange light, and looks calmly to "
-        "the left. Behind her, a tiered pagoda stands in silhouette against a dark blue sky, with "
-        "softly blurred lantern lights reflected in the river. The medium shot is taken at eye "
-        "level with sharp focus on her face. The image is photorealistic."),
+        "A young woman in a red silk hanfu with intricate golden phoenix embroidery stands "
+        "on a stone bridge in a park on a clear day. Her black hair is pinned into a high "
+        "bun with a gold hairpin, and a small red flower pattern is painted on her "
+        "forehead. She holds a round paper fan in her right hand and looks calmly to the "
+        "left. Behind her, a tiered pagoda stands against a pale blue sky, and willow "
+        "branches hang over the calm river. Clear, white daylight lights her face evenly "
+        "and casts soft shadows on the stones. The medium shot is taken at eye level with "
+        "sharp focus on her face. The image is photorealistic."),
     "FLUX": (
         "A soaking wet tiger cub takes shelter under a broad banana leaf in a rainy jungle. Water "
         "drips from its whiskers, and its eyes are wide and alert. Heavy rain falls around it in "
@@ -710,44 +711,47 @@ EXAMPLES = {
         "overcast and diffused. The image is a close-up nature photograph, shot on a 100mm macro "
         "lens with a shallow depth of field."),
     "Illustrious": (
-        "masterpiece, best quality, amazing quality, absurdres, 1girl, solo, long silver hair, red "
-        "eyes, black hooded cloak, holding lantern, looking at viewer, upper body, night, forest, "
-        "fireflies, rim lighting, depth of field"),
+        "masterpiece, best quality, amazing quality, absurdres, 1girl, solo, long silver "
+        "hair, red eyes, black hooded cloak, holding book, looking at viewer, upper body, "
+        "day, forest, sunlight, natural lighting, depth of field"),
     "Pony": (
         "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, "
         "rating_safe, a girl with short pink hair in a yellow raincoat jumps over a puddle on a "
         "rainy city street, smiling, 1girl, solo, yellow raincoat, rubber boots, jumping, puddle, "
         "rain, city street, dynamic pose, full body"),
     "SDXL": (
-        "photograph of an elderly fisherman mending a net on a wooden pier at dawn, weathered "
-        "skin, grey wool sweater, coils of rope at his feet, soft golden side light, mist over "
-        "the harbor, 85mm lens, shallow depth of field, film grain"),
+        "photograph of an elderly fisherman mending a net on a wooden pier in the morning, "
+        "weathered skin, grey wool sweater, coils of rope at his feet, clear natural "
+        "daylight, calm harbor, 85mm lens, shallow depth of field, film grain"),
     "Wan 2.2": (
-        "Text-to-video:\nSunset time, Warm colors, Side lighting, Medium shot. A young surfer "
-        "with wet sun-bleached hair and a black wetsuit carries a white surfboard across the sand "
-        "towards the waves. Her stride quickens into a jog as the foam washes over her ankles; "
-        "she lifts the board, steps into the water and paddles out while palm fronds sway in "
-        "the wind behind her. The camera tracks alongside her, then holds as she paddles away.\n\n"
-        "Image-to-video (start frame attached):\nThe woman turns her head towards the window and "
-        "smiles, then lifts the cup and takes a slow sip while steam rises from it. The curtain "
-        "moves gently in the breeze. The camera pushes in slowly."),
+        "Text-to-video:\nDay time, Daylight, Soft lighting, Medium shot. A young surfer "
+        "with wet sun-bleached hair and a black wetsuit carries a white surfboard across "
+        "the sand towards the waves. Her stride quickens into a jog as the foam washes "
+        "over her ankles. She lifts the board, steps into the water and paddles out while "
+        "palm fronds sway in the wind behind her. The camera tracks alongside her, then "
+        "holds as she paddles away.\n\nImage-to-video (start frame attached):\nThe woman "
+        "turns her head towards the window and smiles. She lifts the cup and takes a slow "
+        "sip while steam rises from it. The curtain moves gently in the breeze. The camera "
+        "pushes in slowly."),
     "Wan 2.7": (
-        "A cosy late-night diner with red vinyl booths and a long chrome counter. A tired "
-        "waitress in her fifties with grey hair pinned up refills the coffee of a young man in a "
-        "denim jacket who sits alone at the counter. She leans on the counter and says, in a "
-        "warm, slow, slightly raspy voice with a southern accent: \"Long night, honey?\" He looks "
-        "up, smiles wearily and nods. Pendant lamps give warm practical light, and neon glows "
-        "through the window. The camera frames a medium two-shot at eye level and pushes in "
-        "slowly. Sound: a fridge hums, coffee pours and rain taps against the window. No "
-        "background music. Generate single shot."),
+        "A small roadside diner with red vinyl booths and a long chrome counter on a "
+        "bright afternoon. A tired waitress in her fifties with grey hair pinned up "
+        "refills the coffee of a young man in a denim jacket who sits alone at the "
+        "counter. She leans on the counter and says, in a warm, slow, slightly raspy voice "
+        "with a southern accent: \"Long day, honey?\" He looks up, smiles wearily and "
+        "nods. Clear daylight falls through the large front windows and lights the room "
+        "evenly. The camera frames a medium two-shot at eye level and pushes in slowly. "
+        "Sound: a fridge hums, coffee pours and a car passes outside. No background music. "
+        "Generate single shot."),
     "Wan 3.0": (
-        "A rooftop garden in a city lies under strings of lights at dusk. Shot 1 [0-4s]: Wide "
-        "shot. A man in a white shirt waters tomato plants while the skyline glows orange behind "
-        "him. The camera trucks slowly to the right. Shot 2 [4-8s]: Close-up. His daughter, about "
-        "ten, runs in holding a ripe tomato. She says, excited and quick, in a bright child's "
-        "voice: \"Look, the first one!\" Shot 3 [8-12s]: Medium shot, static camera. He kneels, "
-        "takes the tomato and laughs. Sound: traffic hums in the distance, water splashes on the "
-        "leaves and birds sing. A soft acoustic guitar plays in the background."),
+        "A rooftop garden in a city on a clear, sunny afternoon. Shot 1 [0-4s]: Wide shot. "
+        "A man in a white shirt waters tomato plants while the skyline stands bright under "
+        "a pale blue sky behind him. The camera trucks slowly to the right. Shot 2 [4-8s]: "
+        "Close-up. His daughter, about ten, runs in holding a ripe tomato. She says, "
+        "excited and quick, in a bright child's voice: \"Look, the first one!\" Shot 3 "
+        "[8-12s]: Medium shot, static camera. He kneels, takes the tomato and laughs. "
+        "Sound: traffic hums in the distance, water splashes on the leaves and birds sing. "
+        "A soft acoustic guitar plays in the background."),
     "MiniMax H3 FL2VA": (
         "How the reference pictures align with the target video — Picture 1 (from Shot 1) aligns "
         "with the 0.00-second mark of the target video; Picture 2 (from Shot 1) aligns with the "
@@ -763,43 +767,37 @@ EXAMPLES = {
         "her fingers and water dripping into a bucket.\n\n"
         "non_diegetic_music: N/A"),
     "MiniMax H3 REF2VA": (
-        "subject_definitions:\n"
-        "<Subject 1> is the elderly man in <Picture 1>, with white hair, round glasses and a "
-        "brown corduroy jacket.\n"
-        "<Subject 2> is the old bookshop in <Picture 2>, with floor-to-ceiling wooden shelves and "
-        "a green reading lamp.\n\n"
-        "summary:\n"
-        "[reference generation] <Subject 1> closes up <Subject 2> for the night and finds a "
-        "forgotten letter inside a returned book.\n\n"
-        "retention_analysis:\n"
-        "<Subject 1> (appears in [Shot 1], [Shot 2]): fully_preserved - white hair, round "
-        "glasses and brown corduroy jacket are kept.\n"
-        "<Subject 2> (appears in [Shot 1], [Shot 2]): fully_preserved - wooden shelves and the "
-        "green reading lamp are kept.\n\n"
-        "detailed_description:\n"
-        "The target video is in a quiet, realistic style with warm lamplight.\n"
-        "[Shot 1] A medium wide shot shows <Subject 2> after closing time, ... [the real "
-        "description continues shot by shot, 350-500 words] ...\n"
-        "[Shot 2] At 00:05.000, the shot cuts to a close-up of <Subject 1> (S1) unfolding the "
-        "letter; he murmurs in a soft, cracked voice, <d>[English] After all these years.</d>\n\n"
-        "overall_soundscape:\n"
-        "Pages rustling, the creak of the wooden floor and rain on the shop window.\n\n"
-        "non_diegetic_music:\n"
-        "A slow solo piano with long pauses, fading out at the end."),
+        "subject_definitions:\n<Subject 1> is the elderly man in <Picture 1>, with white "
+        "hair, round glasses and a brown corduroy jacket.\n<Subject 2> is the old bookshop "
+        "in <Picture 2>, with floor-to-ceiling wooden shelves and a green reading "
+        "lamp.\n\nsummary:\n[reference generation] <Subject 1> opens <Subject 2> in the "
+        "morning and finds a forgotten letter inside a returned "
+        "book.\n\nretention_analysis:\n<Subject 1> (appears in [Shot 1], [Shot 2]): "
+        "fully_preserved - white hair, round glasses and brown corduroy jacket are "
+        "kept.\n<Subject 2> (appears in [Shot 1], [Shot 2]): fully_preserved - wooden "
+        "shelves and the green reading lamp are kept.\n\ndetailed_description:\nThe target "
+        "video is in a quiet, realistic style lit by clear daylight from the shop "
+        "windows.\n[Shot 1] A medium wide shot shows <Subject 2> in the morning, ... [the "
+        "real description continues shot by shot, 350-500 words] ...\n[Shot 2] At "
+        "00:05.000, the shot cuts to a close-up of <Subject 1> (S1) unfolding the letter; "
+        "he murmurs in a soft, cracked voice, <d>[English] After all these "
+        "years.</d>\n\noverall_soundscape:\nPages rustling, the creak of the wooden floor "
+        "and birdsong through the open door.\n\nnon_diegetic_music:\nA slow solo piano "
+        "with long pauses, fading out at the end."),
     "Seedream 5.0": (
-        "A vertical poster for a summer jazz festival by the sea. A saxophonist in a white linen "
-        "suit plays on a small wooden stage at sunset, the orange sky mirrored in the calm water "
-        "behind him and strings of warm bulbs swaying above a dancing crowd. It is a flat retro "
-        "screen-print illustration in coral, teal and cream with a fine paper grain. At the top, "
-        "the title \"BLUE TIDE JAZZ\" stands in bold rounded letters. At the bottom, \"12-14 July "
-        "· Harbour Stage\" is written in small white capitals."),
+        "A vertical poster for a summer jazz festival by the sea. A saxophonist in a white "
+        "linen suit plays on a small wooden stage on a bright afternoon, the calm blue "
+        "water sparkling behind him and a dancing crowd in front of the stage. It is a "
+        "flat retro screen-print illustration in coral, teal and cream with a fine paper "
+        "grain. At the top, the title \"BLUE TIDE JAZZ\" stands in bold rounded letters. "
+        "At the bottom, \"12-14 July · Harbour Stage\" is written in small white capitals."),
     "Seedream 4.5 / 4.0": (
-        "A tiny ramen stall in a narrow alley at night, seen from the street at eye level. An "
-        "elderly cook in a white headband ladles broth into a red bowl while two office workers "
-        "in loosened ties sit on stools at the counter. Steam rises into the light of a paper "
-        "lantern that reads \"RAMEN\". Wet cobblestones reflect the warm glow, and a cat sleeps on "
-        "a crate by the door. It is a realistic photograph with soft warm light and a shallow "
-        "depth of field."),
+        "A tiny ramen stall in a narrow alley at lunchtime, seen from the street at eye "
+        "level. An elderly cook in a white headband ladles broth into a red bowl while two "
+        "office workers in loosened ties sit on stools at the counter. Steam rises past a "
+        "paper sign that reads \"RAMEN\". Clear daylight falls into the alley and lights "
+        "the counter evenly, and a cat sleeps on a crate by the door. It is a realistic "
+        "photograph with natural colours and a shallow depth of field."),
     "Seedream Edit": (
         "Dress the woman in Image 1 in the green wool coat from Image 2, matching its collar, "
         "buttons and length, and hang the brown leather bag from Image 3 on her left shoulder; "
@@ -816,67 +814,65 @@ EXAMPLES = {
         "Exact text, verbatim, no extra characters.\n"
         "Constraints: No watermark, no other text and no logos."),
     "Nano Banana": (
-        "Create a photorealistic close-up of an elderly watchmaker at his cluttered workbench, "
-        "leaning over an open pocket watch with a jeweller's loupe in his right eye and fine "
-        "tweezers lifting a tiny brass gear. Warm light from a green-shaded desk lamp falls across "
-        "his hands and the scattered springs, while the shop behind him fades into soft shadow "
-        "with rows of wall clocks. The shot is taken with an 85mm lens at eye level and a shallow "
-        "depth of field. The colours are rich and film-like, with deep greens and warm brass "
-        "tones."),
+        "Create a photorealistic close-up of an elderly watchmaker at his cluttered "
+        "workbench by a large window, leaning over an open pocket watch with a jeweller's "
+        "loupe in his right eye and fine tweezers lifting a tiny brass gear. Clear, white "
+        "daylight from the window falls evenly across his hands and the scattered springs, "
+        "while the shop behind him shows rows of wall clocks in soft focus. The shot is "
+        "taken with an 85mm lens at eye level and a shallow depth of field. The colours "
+        "are natural, with deep greens and warm brass tones."),
     "Grok Imagine Image": (
-        "A red vintage scooter stands on its kickstand on a narrow cobbled street in a hillside "
-        "town at midday. Its chrome mirrors and cracked leather seat catch the light, and a wicker "
-        "basket of lemons is strapped to the rear rack. Realistic travel photograph. Hard midday "
-        "sun casts short, crisp shadows across the stones and keeps the scooter clearly readable. "
-        "The palette is warm, with red paint and ochre and pale yellow walls. The view is a low "
-        "three-quarter angle from the left, with the scooter centred in the lower half of the "
-        "frame."),
+        "A red vintage scooter stands on its kickstand on a narrow cobbled street in a "
+        "hillside town. Its chrome mirrors and cracked leather seat catch the light, and a "
+        "wicker basket of lemons is strapped to the rear rack. Realistic travel "
+        "photograph. Clear, white daylight casts soft, short shadows across the stones and "
+        "keeps the scooter clearly readable. The palette is warm, with red paint and ochre "
+        "and pale yellow walls. The view is a low three-quarter angle from the left, with "
+        "the scooter centred in the lower half of the frame."),
     "Flux 3": (
         "Editorial photograph of a ceramic teapot on a bleached oak table beside a window, "
         "afternoon light falling in from the left and casting a long soft shadow. A small paper "
         "tag tied to the handle reads \"OPEN LATE\" in bold black sans-serif capitals. The teapot "
         "is framed slightly from above with an 85mm lens and a shallow depth of field."),
     "Kling 3.0": (
-        "A street vendor in a yellow raincoat serves a hungry delivery rider at a rainy night "
-        "market lined with neon signs, in a cinematic, realistic style.\n"
-        "[Shot 1: Wide shot, 3s] The vendor in the yellow raincoat stirs a steaming pot under a "
-        "dripping awning while scooters splash past. The camera trucks slowly to the right.\n"
-        "[Shot 2: Medium shot, 3s] The delivery rider in a black helmet stops at the stall and "
-        "lifts his visor. Rider (tired, English): \"Anything still hot?\"\n"
-        "[Shot 3: Close-up, 4s] The vendor in the yellow raincoat ladles soup into a bowl and "
-        "smiles. Vendor (warm tone, English): \"Best soup in the city.\" The camera pushes in "
-        "slowly.\n"
-        "The wet street reflects warm and magenta neon light, and the depth of field is shallow. "
-        "Ambient: rain drums on the tarpaulin, oil sizzles and traffic hums in the distance."),
+        "A street vendor in a yellow apron serves a hungry delivery rider at a busy market "
+        "street on a bright day, in a cinematic, realistic style.\n[Shot 1: Wide shot, 3s] "
+        "The vendor in the yellow apron stirs a steaming pot under a striped awning while "
+        "scooters pass by. The camera trucks slowly to the right.\n[Shot 2: Medium shot, "
+        "3s] The delivery rider in a black helmet stops at the stall and lifts his visor. "
+        "Rider (tired, English): \"Anything still hot?\"\n[Shot 3: Close-up, 4s] The "
+        "vendor in the yellow apron ladles soup into a bowl and smiles. Vendor (warm tone, "
+        "English): \"Best soup in the city.\" The camera pushes in slowly.\nClear daylight "
+        "lights the street evenly, the colours are natural and the depth of field is "
+        "shallow. Ambient: chatter, sizzling oil and traffic in the distance."),
     "Veo 3.1": (
-        "A low-angle tracking shot follows a lighthouse keeper in a heavy wool coat up a spiral "
-        "iron staircase at dusk. A lantern swings in his hand and throws warm light across the "
-        "curved stone walls. He stops at a narrow window, wipes the fogged glass with his sleeve "
-        "and looks out at dark waves rolling in. He says quietly, \"The storm is early.\" The "
-        "image has a shallow depth of field and a weathered documentary look. Cold blue light "
-        "outside contrasts with the warm lantern glow. SFX: boots ring on the iron steps. Ambient "
-        "noise: wind whistles through the tower."),
+        "A low-angle tracking shot follows a lighthouse keeper in a heavy wool coat up a "
+        "spiral iron staircase on a clear morning. Daylight falls through the narrow "
+        "windows across the curved stone walls. He stops at a window, wipes the "
+        "salt-crusted glass with his sleeve and looks out at the waves rolling in. He says "
+        "quietly, \"The storm is coming.\" The image has a shallow depth of field and a "
+        "weathered documentary look with natural colours. SFX: boots ring on the iron "
+        "steps. Ambient noise: wind whistles through the tower."),
     "Grok Imagine Video": (
-        "A woman in a long grey coat stands on a rain-soaked rooftop at night, city lights glowing "
-        "behind her. She slowly turns towards the camera, rain dripping from her hair, as the "
-        "camera pushes in. Neon signs reflect in the puddles at her feet. She says softly, \"You "
-        "came back.\" Light rain falls steadily, thunder rumbles in the distance and the city "
-        "hums below."),
+        "A woman in a long grey coat stands on a rooftop on a bright morning, the city "
+        "spread out behind her under a pale sky. She slowly turns towards the camera as "
+        "the wind moves her hair, and the camera pushes in. Clear daylight lights her face "
+        "evenly. She says softly, \"You came back.\" Wind, distant traffic and the hum of "
+        "the city."),
     "Seedance 2.5": (
-        "An old fisherman teaches his granddaughter to tie a knot on a windy harbour pier at "
-        "dusk, filmed as a realistic coastal drama in handheld medium shots.\n"
-        "0s-4s: Medium shot. The fisherman, in his seventies with a grey beard and a yellow oilskin "
-        "jacket, sits on an upturned crate and slowly loops a thick rope around his fingers; the "
-        "girl, about eight, in a red raincoat, leans in to watch. Gulls cry and waves slap against "
-        "the pilings.\n"
-        "4s-8s: Close-up of their hands. The girl copies the loop, pulls too hard and the rope "
-        "slips; she laughs. The fisherman's line (warm, amused, low raspy voice): \"Gently. The sea "
-        "is never in a hurry.\"\n"
-        "8s-12s: The camera pulls back slowly to a wide shot as she holds up a finished knot and he "
-        "nods, smiling, fishing boats rocking in the grey water behind them.\n"
-        "The handheld camera sways slightly throughout. The colours are natural, the overcast "
-        "light is soft and the details are rich. Only wind and harbour sounds are heard, no BGM. "
-        "No subtitles."),
+        "An old fisherman teaches his granddaughter to tie a knot on a windy harbour pier "
+        "on a clear morning, filmed as a realistic coastal drama in handheld medium "
+        "shots.\n0s-4s: Medium shot. The fisherman, in his seventies with a grey beard and "
+        "a yellow oilskin jacket, sits on an upturned crate and slowly loops a thick rope "
+        "around his fingers; the girl, about eight, in a red raincoat, leans in to watch. "
+        "Gulls cry and waves slap against the pilings.\n4s-8s: Close-up of their hands. "
+        "The girl copies the loop, pulls too hard and the rope slips; she laughs. The "
+        "fisherman's line (warm, amused, low raspy voice): \"Gently. The sea is never in a "
+        "hurry.\"\n8s-12s: The camera pulls back slowly to a wide shot as she holds up a "
+        "finished knot and he nods, smiling, fishing boats rocking in the blue water "
+        "behind them.\nThe handheld camera sways slightly throughout. The colours are "
+        "natural, the daylight is clear and even, and the details are rich. Only wind and "
+        "harbour sounds are heard, no BGM. No subtitles."),
     "Seedance 2.0": (
         "A young barista in a black apron prepares a latte for an elderly regular in a small "
         "sunlit café. Shot 1: Medium shot, fixed camera. She slowly pours steamed milk into the "
@@ -897,22 +893,20 @@ EXAMPLES = {
         "calmly: \"Then it was waiting for you.\" Rain patters on the window and a record crackles "
         "softly in the background."),
     "Seedance Reference": (
-        "Image 1 is Mara, the woman with short silver hair and a black leather jacket - use her "
-        "face and outfit. Image 2 is the rooftop location - use the place and its neon light. "
-        "Audio 1 is Mara's voice timbre.\n"
-        "Mara hands her old partner a sealed envelope on a rain-wet rooftop at night, filmed as a "
-        "tense neon thriller with a slow camera.\n"
-        "Shot 1: A wide shot shows the rooftop from Image 2 as the camera pushes in slowly. Mara "
-        "(Image 1) walks to the "
-        "edge, rain glinting in the neon light, and stops beside a man in a grey trench coat who "
-        "stands with his back to the camera.\n"
-        "Shot 2: Medium close-up of Mara. She pulls an envelope from her jacket and holds it out "
-        "without looking at him. Mara's line (cold, quiet, the voice of Audio 1): \"Last job. Then "
-        "we're even.\"\n"
-        "Shot 3: Close-up of the envelope changing hands; the camera holds still as distant "
-        "sirens rise.\n"
-        "Mara's face and outfit stay consistent with Image 1 throughout; no duplicate characters. "
-        "Rain falls, traffic hums in the distance and a low synth drone plays. No subtitles."),
+        "Image 1 is Mara, the woman with short silver hair and a black leather jacket - "
+        "use her face and outfit. Image 2 is the rooftop location - use the place and its "
+        "view. Audio 1 is Mara's voice timbre.\nMara hands her old partner a sealed "
+        "envelope on a rooftop on a bright afternoon, filmed as a tense thriller with a "
+        "slow camera.\nShot 1: A wide shot shows the rooftop from Image 2 as the camera "
+        "pushes in slowly. Mara (Image 1) walks to the edge, the wind tugging at her "
+        "jacket, and stops beside a man in a grey trench coat who stands with his back to "
+        "the camera.\nShot 2: Medium close-up of Mara. She pulls an envelope from her "
+        "jacket and holds it out without looking at him. Mara's line (cold, quiet, the "
+        "voice of Audio 1): \"Last job. Then we're even.\"\nShot 3: Close-up of the "
+        "envelope changing hands; the camera holds still as distant sirens rise.\nClear "
+        "daylight lights the scene evenly. Mara's face and outfit stay consistent with "
+        "Image 1 throughout; no duplicate characters. Wind and distant traffic, a low "
+        "synth drone. No subtitles."),
 }
 
 # German texts for the node's language switch (web/grok_prompt_forge_i18n.js).

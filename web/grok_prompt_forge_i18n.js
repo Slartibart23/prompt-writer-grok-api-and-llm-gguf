@@ -108,6 +108,28 @@ export const NODE_TEXT_DE = {
     "sind person_1..person_4 an diesem Node gesperrt und werden ignoriert; es zählen die " +
     "Slotnummern des Persons-Nodes (Person 3 dort = Person 3 hier, auch für 'Bild N = " +
     "Person N')." },
+  system: { label: "Systemprompt", tooltip:
+    "Optional: 'Prompt Writer · System Prompt' anschließen, um einen deiner gespeicherten (oder " +
+    "einen temporären) Systemprompt zu verwenden. Modus 'replace' nimmt ihn statt des " +
+    "Systemprompts der Auswahl, Modus 'append' hängt ihn als zusätzliche verbindliche " +
+    "Anweisungen an." },
+  light: { label: "Licht", tooltip:
+    "Das Licht der Szene, sofern dein Text nichts anderes sagt (dein Text hat immer Vorrang).\n" +
+    "daylight: klares, weißes, natürliches Tageslicht mit weichen Schatten und echten Farben - " +
+    "keine dramatische Beleuchtung, keine goldene Stunde, kein Neon, kein Color Grading.\n" +
+    "night: tiefe Nacht; die Szene ist sehr dunkel und nur von einer einzigen schwachen " +
+    "Lichtquelle beleuchtet (Mondlicht, oder eine Kerze, ein Handydisplay ..., wenn dein Text " +
+    "eine nennt).\n" +
+    "free: keine Lichtregel; Auswahl, Stil-Baustein oder dein Text bestimmen das Licht.\n" +
+    "Das legt nur das Licht fest, nicht das Medium: mit einem Stil wie Cartoon bleibt das Bild " +
+    "ein Cartoon." },
+  safe: { label: "safe", tooltip:
+    "Aus (Standard): Sexuelles und Nacktheit werden explizit und präzise beschrieben - Posen, " +
+    "Handlungen, wer wen wo berührt, Kleidungszustand und Körperflüssigkeiten.\n" +
+    "An: Sexuelles wird nur angedeutet - Nacktheit ohne explizite Details, keine expliziten " +
+    "Handlungen, keine Körperflüssigkeiten. Für API-Modelle mit Inhaltsfilter (Seedream, " +
+    "Seedance, GPT Image, Nano Banana, Grok Imagine, Flux 3, Kling, Veo) oder wenn das " +
+    "Ergebnis jugendfrei bleiben muss." },
   trigger_word: { label: "Trigger-Wort", tooltip:
     "Nur für 'Caption > LoRA training caption': der Trigger des LoRAs für das Hauptmotiv " +
     "(ersetzt {trigger} im Systemprompt). Leer lassen für Captions ohne Trigger." },
@@ -186,6 +208,26 @@ export const LOCAL_TEXT_DE = {
     "für Karten, die für das ganze Modell zu klein sind." },
   top_k: { label: "top_k", tooltip:
     "Berücksichtigt nur die k wahrscheinlichsten nächsten Wörter. Qwen empfiehlt 20; 0 = aus." },
+};
+
+// German texts of the Prompt Writer · System Prompt node.
+export const SYSTEM_TEXT_DE = {
+  label: { label: "Bezeichnung", tooltip:
+    "Name dieses Systemprompts in deiner Bibliothek. '📂 Laden...' wählt einen gespeicherten; " +
+    "eine neue Bezeichnung legt beim Speichern einen neuen Eintrag an." },
+  text: { label: "Text", tooltip:
+    "Der Systemprompt oder die zusätzlichen Anweisungen. Leer = dieser Node tut nichts." },
+  mode: { label: "Modus", tooltip:
+    "append: wird an den Systemprompt der Auswahl angehängt, als zusätzliche verbindliche " +
+    "Anweisungen (z. B. eigene Regeln zusätzlich zu einem Modell-Leitfaden).\n" +
+    "replace: wird statt des Systemprompts der Auswahl verwendet." },
+  save: { label: "speichern", tooltip:
+    "An: der Text wird bei jedem Lauf unter der Bezeichnung in deiner Bibliothek gespeichert " +
+    "(ComfyUI/user/grok_prompt_forge/system_prompts.json) und lässt sich in jedem Workflow " +
+    "wieder laden.\n" +
+    "Aus: temporär - nur für diesen Lauf, die Bibliothek bleibt unverändert. '💾 Jetzt " +
+    "speichern' speichert sofort, ohne Lauf." },
+  "output:system": { label: "Systemprompt" },
 };
 
 // German texts of the Prompt Writer · Persons node.
@@ -285,10 +327,23 @@ export const STRINGS = {
     exportLibrary: "⬇ Export library",
     exportTitle: "Download all persons and style blocks as one JSON file, e.g. to move them to another ComfyUI install.",
     addTemplates: "📥 Add templates",
-    templatesTitle: "Adds 10 template persons and 2 groups (Group_of_men, Group_of_women) to your library. Names you already have are never changed.",
+    templatesTitle: "Adds 10 template persons, 2 groups (Group_of_men, Group_of_women) and 10 style blocks (Natural daylight, Cartoon, Oil painting ...) to your library. Labels you already have are never changed.",
     templatesAdded: "Templates added",
     templatesResult: (a, s) => `${a} added, ${s} already in your library`,
     templatesFailed: "Templates not added",
+    btnSystemLoad: "📂 Load...",
+    btnSystemSave: "💾 Save now",
+    btnSystemDelete: "🗑 Delete from library",
+    systemTitle: "Prompt Writer · saved system prompts",
+    systemPick: "Click a system prompt to put its label and text into the node. Hover over one to read it.",
+    systemEmpty: "No saved system prompts yet. Write one in the node and press '💾 Save now', or switch 'save' on.",
+    systemLoaded: "System prompt loaded",
+    systemSaved: "System prompt saved",
+    systemNotSaved: "System prompt not saved",
+    systemNeedsLabel: "Enter a label first.",
+    systemOverwrite: (l) => `Replace the saved system prompt "${l}" with this text?`,
+    systemNotInLibrary: "Not in your library",
+    systemConfirmDelete: (l) => `Delete the system prompt "${l}" from your library?`,
     personsLocked: "Locked: the connected 'Prompt Writer · Persons' node chooses the persons.",
     importLibrary: "⬆ Import...",
     importTitle: "Add persons and style blocks from an exported JSON file.",
@@ -389,10 +444,23 @@ export const STRINGS = {
     exportLibrary: "⬇ Bibliothek exportieren",
     exportTitle: "Alle Personen und Stil-Bausteine als eine JSON-Datei herunterladen, z. B. für eine andere ComfyUI-Installation.",
     addTemplates: "📥 Vorlagen hinzufügen",
-    templatesTitle: "Fügt deiner Bibliothek 10 Vorlage-Personen und 2 Gruppen (Group_of_men, Group_of_women) hinzu. Namen, die du schon hast, bleiben unverändert.",
+    templatesTitle: "Fügt deiner Bibliothek 10 Vorlage-Personen, 2 Gruppen (Group_of_men, Group_of_women) und 10 Stil-Bausteine (Natural daylight, Cartoon, Oil painting ...) hinzu. Bezeichnungen, die du schon hast, bleiben unverändert.",
     templatesAdded: "Vorlagen hinzugefügt",
     templatesResult: (a, s) => `${a} hinzugefügt, ${s} schon in deiner Bibliothek`,
     templatesFailed: "Vorlagen nicht hinzugefügt",
+    btnSystemLoad: "📂 Laden...",
+    btnSystemSave: "💾 Jetzt speichern",
+    btnSystemDelete: "🗑 Aus Bibliothek löschen",
+    systemTitle: "Prompt Writer · gespeicherte Systemprompts",
+    systemPick: "Einen Systemprompt anklicken, um Bezeichnung und Text in den Node zu übernehmen. Beim Überfahren erscheint der Text.",
+    systemEmpty: "Noch keine gespeicherten Systemprompts. Einen im Node schreiben und '💾 Jetzt speichern' drücken oder 'speichern' einschalten.",
+    systemLoaded: "Systemprompt geladen",
+    systemSaved: "Systemprompt gespeichert",
+    systemNotSaved: "Systemprompt nicht gespeichert",
+    systemNeedsLabel: "Bitte zuerst eine Bezeichnung eingeben.",
+    systemOverwrite: (l) => `Den gespeicherten Systemprompt "${l}" durch diesen Text ersetzen?`,
+    systemNotInLibrary: "Nicht in deiner Bibliothek",
+    systemConfirmDelete: (l) => `Den Systemprompt "${l}" aus deiner Bibliothek löschen?`,
     personsLocked: "Gesperrt: der angeschlossene Node 'Prompt Writer · Persons' wählt die Personen.",
     importLibrary: "⬆ Importieren...",
     importTitle: "Personen und Stil-Bausteine aus einer exportierten JSON-Datei hinzufügen.",

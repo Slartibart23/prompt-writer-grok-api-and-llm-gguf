@@ -1,6 +1,6 @@
 """HTTP routes used by web/grok_prompt_forge.js (all under /grok_prompt_forge/)."""
 
-from . import archive, library, models, person_templates, presets
+from . import archive, library, models, person_templates, presets, system_prompts
 
 LOG = "[Prompt Writer]"
 
@@ -94,6 +94,29 @@ def register():
         except Exception as e:
             return web.json_response({"error": str(e)}, status=400)
         return web.json_response(dict(library_payload(), added=added, skipped=skipped))
+
+    # --------------------------------------------------------- system prompts
+    @srv.routes.get("/grok_prompt_forge/system_prompts")
+    async def grok_forge_system_prompts(request):
+        return web.json_response({"prompts": system_prompts.load()}, headers=no_store)
+
+    @srv.routes.post("/grok_prompt_forge/system_prompts")
+    async def grok_forge_save_system_prompt(request):
+        try:
+            body = await request.json()
+            label = system_prompts.save(body.get("label"), body.get("text"))
+        except Exception as e:
+            return web.json_response({"error": str(e)}, status=400)
+        return web.json_response({"label": label, "prompts": system_prompts.load()})
+
+    @srv.routes.post("/grok_prompt_forge/system_prompts/delete")
+    async def grok_forge_delete_system_prompt(request):
+        try:
+            body = await request.json()
+            removed = system_prompts.delete(body.get("label") or "")
+        except Exception as e:
+            return web.json_response({"error": str(e)}, status=400)
+        return web.json_response({"removed": removed, "prompts": system_prompts.load()})
 
     @srv.routes.get("/grok_prompt_forge/archive")
     async def grok_forge_archive(request):

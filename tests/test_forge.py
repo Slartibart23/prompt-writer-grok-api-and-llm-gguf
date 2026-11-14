@@ -46,6 +46,7 @@ _install_stubs()
 PACK_MODULE = _load_pack()
 from grokpack.grok_forge import api, archive, builtin_presets, forge_node, library, models, presets  # noqa: E402
 from grokpack.grok_forge import local_models, local_node, person_templates, persons_node  # noqa: E402
+from grokpack.grok_forge import system_prompt_node, system_prompts  # noqa: E402
 
 
 def tearDownModule():
@@ -126,6 +127,12 @@ class BuiltinPresetTests(unittest.TestCase):
                 example = builtin_presets.EXAMPLES[t["label"]]
                 self.assertRegex(example.rstrip(), r'[.!?]"?\)?$', t["label"])
         self.assertIn("120-250 words", builtin_presets.BUILTIN["Generation ▸ Krea 2"]["system_prompt"])
+
+    def test_examples_use_natural_daylight(self):
+        # the default light is clear daylight: no example may teach dramatic light
+        text = json.dumps(builtin_presets.EXAMPLES).lower()
+        for word in ("neon", "lantern", "sunset", "dusk", "golden hour", "candle", "lamplight"):
+            self.assertNotIn(word, text)
 
     def test_api_models_without_negative_prompt(self):
         for target in ("Seedream 5.0", "Seedance 2.5", "GPT Image", "Nano Banana", "Flux 3",
@@ -322,16 +329,81 @@ class ForgeNodeTests(unittest.TestCase):
         self.assertEqual(order[:len(v310)], v310)
         self.assertEqual(order[len(v310):], ["person_1", "person_2", "person_3", "person_4",
                                              "image_n_is_person_n", "style_1", "style_2",
-                                             "archive", "image_4", "persons"])
+                                             "archive", "image_4", "persons", "system",
+                                             "light", "safe"])
         self.assertTrue(forge_node.GrokPromptForge.VALIDATE_INPUTS(
             "unknown", "unknown", person_1="Nobody", style_2="Gone"))
 
 
 def _reset_user_files():
-    for name in ("library.json", "archive.jsonl"):
+    for name in ("library.json", "archive.jsonl", "system_prompts.json"):
         path = os.path.join(api.user_dir(), name)
         if os.path.exists(path):
             os.remove(path)
+
+
+class RulesAndSystemPromptTests(unittest.TestCase):
+    def setUp(self):
+        _reset_user_files()
+        self.node = forge_node.GrokPromptForge()
+        self.base = dict(preset=builtin_presets.DEFAULT_PRESET, text="zwei Menschen im Bett",
+                         system_prompt="PRESET SYSTEM", negative_prompt="", model=api.DEFAULT_MODEL,
+                         temperature=0.8, top_p=0.95, max_tokens=8192, api_key="k")
+
+    def system_of(self, **kw):
+        with mock.patch("requests.post", return_value=ok("result")) as post:
+            self.node.forge(**dict(self.base, **kw))
+        return post.call_args.kwargs["json"]["messages"][0]["content"]
+
+    def test_light_defaults_to_daylight_and_can_be_night_or_free(self):
+        self.assertIn("clear, white, natural daylight", self.system_of())  # old workflows too
+        night = self.system_of(light="night")
+        self.assertIn("deep night", night)
+        self.assertIn("one single, faint light source", night)
+        self.assertNotIn("## Light", self.system_of(light="free"))
+        spec = forge_node.GrokPromptForge.INPUT_TYPES()["optional"]
+        self.assertEqual(spec["light"][0], ["daylight", "night", "free"])
+        self.assertEqual(spec["light"][1]["default"], "daylight")
+        self.assertFalse(spec["safe"][1]["default"])
+
+    def test_explicit_by_default_safe_on_request(self):
+        explicit = self.system_of()
+        self.assertIn("## Adult content", explicit)
+        self.assertIn("body fluids", explicit)
+        self.assertIn("All persons in nude or sexual content are adults", explicit)
+        self.assertNotIn("## Safe mode", explicit)
+        safe = self.system_of(safe=True)
+        self.assertIn("## Safe mode", safe)
+        self.assertIn("only implied", safe)
+        self.assertNotIn("## Adult content", safe)
+        self.assertIn("All persons in intimate scenes are adults", safe)
+
+    def test_system_input_appends_or_replaces(self):
+        own = {"label": "Mine", "text": "ALWAYS MENTION THE CAT", "mode": "append"}
+        system = self.system_of(system=own)
+        self.assertTrue(system.startswith("PRESET SYSTEM\n\n## Additional instructions (binding)\n"
+                                          "ALWAYS MENTION THE CAT"))
+        system = self.system_of(system=dict(own, mode="replace"))
+        self.assertTrue(system.startswith("ALWAYS MENTION THE CAT"))
+        self.assertNotIn("PRESET SYSTEM", system)
+        self.assertTrue(self.system_of(system=dict(own, text="  ")).startswith("PRESET SYSTEM"))
+        self.system_of(system=own)
+        self.assertEqual(archive.entries()[0]["system_prompt"], "Mine")
+        self.assertEqual(archive.entries()[0]["light"], "daylight")
+
+    def test_system_prompt_node_saves_only_when_asked(self):
+        node = system_prompt_node.PromptWriterSystemPrompt()
+        (out,) = node.build(label="Temp", text="just this run", mode="replace", save=False)
+        self.assertEqual(out, {"label": "Temp", "text": "just this run", "mode": "replace"})
+        self.assertIsNone(system_prompts.get("Temp"))
+        node.build(label=" Kept ", text="keep me", mode="append", save=True)
+        self.assertEqual(system_prompts.load(), {"Kept": "keep me"})
+        self.assertTrue(system_prompts.delete("Kept"))
+        self.assertFalse(system_prompts.delete("Kept"))
+        with self.assertRaises(ValueError):
+            system_prompts.save("", "text")
+        with self.assertRaises(ValueError):
+            system_prompts.save("Empty", "   ")
 
 
 class LibraryTests(unittest.TestCase):
@@ -362,9 +434,9 @@ class LibraryTests(unittest.TestCase):
 
     def test_templates_are_added_once_and_never_overwrite(self):
         library.save("person", "Kenji", {"description": "my own Kenji"})
-        self.assertEqual(library.import_entries(person_templates.TEMPLATES), (11, 0, 1))
+        self.assertEqual(library.import_entries(person_templates.TEMPLATES), (21, 0, 1))  # 11 persons + 10 styles
         self.assertEqual(library.get("person", "Kenji")["description"], "my own Kenji")
-        self.assertEqual(library.import_entries(person_templates.TEMPLATES), (0, 0, 12))
+        self.assertEqual(library.import_entries(person_templates.TEMPLATES), (0, 0, 22))
         entries = person_templates.TEMPLATES["persons"]
         self.assertEqual(len(entries), 12)
         self.assertEqual(entries["Kenji"]["name"], "K3nji")
@@ -375,13 +447,32 @@ class LibraryTests(unittest.TestCase):
             self.assertNotRegex(entry["description"], r"\b\d+\b", label)
             self.assertFalse(entry["voice"], label)
             self.assertIn(entry["gender"], ("m", "f"), label)
-            self.assertFalse(entry["trigger"], label)
+            self.assertEqual(entry["trigger"], "" if group else entry["name"], label)
             if not group:
                 # the label is the real name, the prompt name has a digit and opens the description
                 self.assertNotRegex(label, r"\d", label)
                 self.assertRegex(entry["name"], r"\d", label)
                 self.assertTrue(entry["description"].startswith(entry["name"]), label)
         self.assertEqual([e["gender"] for e in entries.values()].count("f"), 3)  # 2 women + group
+        # the prompt name swaps only the first a, e, i or o of the label
+        digits = {"a": "4", "e": "3", "i": "1", "o": "0"}
+        for label, entry in entries.items():
+            if not forge_node.is_group(entry):
+                pos = next(i for i, c in enumerate(label) if c.lower() in digits)
+                expected = label[:pos] + digits[label[pos].lower()] + label[pos + 1:]
+                self.assertEqual(entry["name"], expected, label)
+
+    def test_style_templates(self):
+        styles = person_templates.TEMPLATES["styles"]
+        self.assertEqual(len(styles), 10)
+        self.assertIn("Natural daylight", styles)
+        for label, entry in styles.items():
+            text = entry["text"]
+            self.assertLess(len(text.split()), 60, label)  # short and concrete
+            photo = label in ("Natural daylight", "Vintage film photo")
+            self.assertEqual("not a photograph" in text, not photo, label)
+        library.import_entries(person_templates.TEMPLATES)
+        self.assertIn("Cartoon", library.names("style"))
 
     def test_import_keeps_or_replaces(self):
         library.save("style", "Film", {"text": "mine"})
@@ -691,7 +782,8 @@ class LocalModelTests(unittest.TestCase):
         for new in ("thinking", "unload_after_run", "context_length", "gpu_layers", "top_k"):
             self.assertIn(new, spec["optional"])
         # image_4 (1.2.0) comes after the local options, so their saved values keep their place
-        self.assertEqual(names[-7:], [*local_node.LOCAL_OPTIONS, "image_4", "persons"])
+        self.assertEqual(names[-10:], [*local_node.LOCAL_OPTIONS, "image_4", "persons", "system",
+                                       "light", "safe"])
         self.assertEqual(spec["required"]["model"][0], local_models.model_labels())
         self.assertTrue(local_node.LocalPromptForgeGGUF.VALIDATE_INPUTS("x", "y", person_1="z"))
 
@@ -720,6 +812,7 @@ class PackTests(unittest.TestCase):
             "LocalPromptForgeGGUF": "Prompt Writer · LLM GGUF",
             "GrokShowPrompt": "Prompt Writer · Show Prompt",
             "PromptWriterPersons": "Prompt Writer · Persons",
+            "PromptWriterSystemPrompt": "Prompt Writer · System Prompt",
             "GrokSystemPromptLoader": "Prompt Writer · System Prompt Loader",
             "GrokTextFileLoader": "Prompt Writer · Text File Loader",
         })

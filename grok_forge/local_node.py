@@ -63,8 +63,9 @@ class LocalPromptForgeGGUF:
         max_side = optional["max_side"]
         optional["max_side"] = (max_side[0], dict(max_side[1], default=1024))
         optional.update(LOCAL_OPTIONS)
-        # added later (image_4 in 1.2.0, persons in 1.3.0): after everything else
-        for later in ("image_4", "persons"):
+        # added later (image_4 in 1.2.0, persons in 1.3.0, system / light / safe in
+        # 1.5.0): after everything else, in that order
+        for later in ("image_4", "persons", "system", "light", "safe"):
             optional[later] = optional.pop(later)
         return {"required": required, "optional": optional}
 

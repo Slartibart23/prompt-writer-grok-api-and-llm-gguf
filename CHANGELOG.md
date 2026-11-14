@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.5.0 — 2026-11-14
+
+- **New node Prompt Writer · System Prompt:** your own system prompt with a label, connected to the new `system` input of the writer nodes. Mode `append` adds it to the preset's system prompt, mode `replace` uses it instead. With `save` on it is kept in `ComfyUI/user/grok_prompt_forge/system_prompts.json` (not in the workflow), off it is temporary. Buttons to load (with the text on hover), save now and delete.
+- **`light` on the writer nodes:** `daylight` (default) asks for clear, white, natural daylight without drama; `night` for deep darkness with one faint light source; `free` sets nothing. Your text always wins; the medium is never changed by it. The example results of all presets now use natural daylight.
+- **Adult content:** explicit by default and precise - who does what to whom with which body part, contact points, positions, state of undress and body fluids by name. All persons in such content are adults. The new switch **`safe`** (default off) only implies sexual content instead, e.g. for the API models with content filters.
+- **New persons are filled in from their label:** "Peter" suggests the name and trigger "P3ter" (first a, e, i or o becomes a digit), gender male and a description that starts with the name. Your own changes are kept; renaming also renames the name in the description.
+- **Style templates:** "📥 Add templates" now also adds ten style blocks - Natural daylight, Cartoon, Oil painting, Line drawing, Watercolour, Pencil sketch, Anime, Comic book, 3D render, Vintage film photo. Every non-photographic style says outright that it is not a photograph.
+- Template persons: the trigger is now the name (K3nji …); Sean's name is S3an, following the first-letter rule.
+- New inputs and widgets sit at the end of the writer nodes, so saved workflows keep their values and connections.
+
 ## 1.4.0 — 2026-11-10
 
 - **Label and name are separate:** a person entry has a **label** for the list and the selection boxes (e.g. "Peter with glasses", "Peter with beard") and a **name in the prompt** (e.g. "P3ter"). Several entries may share a name and differ in their description. Entries without a name keep working as before: their label is the name.

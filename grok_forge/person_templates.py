@@ -9,7 +9,7 @@ that starts with "A group of" makes the entry a group of named persons (see
 forge_node.is_group); the group's label is not written into the prompt."""
 
 _PERSONS = {
-    "S34n": "S34n is an Irish man in his early twenties with very pale, freckled skin that "
+    "S3an": "S3an is an Irish man in his early twenties with very pale, freckled skin that "
             "reddens easily on his cheeks and nose. He is tall and very slim, with narrow "
             "shoulders, long arms and a boyish face with a pointed chin. His bright copper-red "
             "hair falls in loose, unruly curls to his ears, and his eyes are a clear green under "
@@ -83,19 +83,69 @@ _GROUPS = {
         "face and short natural grey hair.",
 }
 
-# prompt name -> (label = real name, gender)
+# prompt name -> (label = real name, gender). The prompt name swaps the first a, e, i
+# or o of the real name for 4, 3, 1 or 0 (see web/grok_prompt_forge.js triggerName).
 _LABELS = {
-    "S34n": ("Sean", "m"), "R4fael": ("Rafael", "m"), "S1one": ("Sione", "m"),
+    "S3an": ("Sean", "m"), "R4fael": ("Rafael", "m"), "S1one": ("Sione", "m"),
     "K3nji": ("Kenji", "m"), "4rjun": ("Arjun", "m"), "Kw4me": ("Kwame", "m"),
     "K4rim": ("Karim", "m"), "0lav": ("Olav", "m"), "4mara": ("Amara", "f"),
     "J1woo": ("Jiwoo", "f"),
 }
 _GROUP_GENDERS = {"Group_of_men": "m", "Group_of_women": "f"}
 
+# Style blocks: short and concrete, only visible features. Every style that is not a
+# photograph says so outright, so no model mistakes it for a realistic photo. The
+# light is set separately on the writer node (light: daylight / night / free).
+_STYLES = {
+    "Natural daylight":
+        "Photorealistic photograph with an entirely natural look. Clear, white, neutral daylight "
+        "lights the scene evenly. Shadows are soft and realistic, colours are true to life and "
+        "unsaturated. No dramatic lighting, no golden hour, no colour grading, no vignette and no "
+        "artificial effects.",
+    "Cartoon":
+        "Hand-drawn 2D cartoon illustration, clearly not a photograph. Bold black outlines, flat "
+        "bright colours and simple cel shading. Slightly exaggerated, rounded shapes and "
+        "expressive faces. No photorealistic skin, textures or lighting.",
+    "Oil painting":
+        "Traditional oil painting on canvas, clearly not a photograph. Visible brushstrokes and "
+        "thick impasto in the highlights. Rich but natural colours, softly blended on the canvas. "
+        "The fine weave of the canvas shows through in the thin, dark areas.",
+    "Line drawing":
+        "Clean black ink line drawing on plain white paper, clearly not a photograph. Contours "
+        "only, drawn with confident lines of even weight. No shading, no colour and no background "
+        "texture.",
+    "Watercolour":
+        "Watercolour painting on textured white paper, clearly not a photograph. Soft, "
+        "transparent washes of colour that bleed into each other at the edges. Visible paper "
+        "grain and areas of untouched white paper.",
+    "Pencil sketch":
+        "Graphite pencil sketch on off-white sketchbook paper, clearly not a photograph. Loose "
+        "construction lines, hatched and cross-hatched shading, and smudged soft tones. "
+        "Monochrome grey only.",
+    "Anime":
+        "Japanese anime illustration, clearly not a photograph. Clean line art, large expressive "
+        "eyes, smooth cel shading with crisp shadow shapes and a bright, clean colour palette. No "
+        "photorealistic textures.",
+    "Comic book":
+        "Western comic book panel, clearly not a photograph. Strong black ink lines, halftone dot "
+        "shading and bold, saturated flat colours. Dynamic composition with clear shapes.",
+    "3D render":
+        "Stylised 3D CGI render, a computer-generated image and clearly not a photograph. Smooth "
+        "rounded shapes, soft subsurface materials and clean studio-like surfaces, like a modern "
+        "animated feature film.",
+    "Vintage film photo":
+        "Photograph shot on 35mm colour film in the 1970s. Fine film grain, slightly faded warm "
+        "colours and soft contrast. Natural, unposed framing.",
+}
+
 # In the format of an exported library (library.import_entries): label -> entry.
-TEMPLATES = {"persons": {
-    **{_LABELS[name][0]: {"name": name, "gender": _LABELS[name][1], "trigger": "",
-                          "description": text, "voice": ""} for name, text in _PERSONS.items()},
-    **{label: {"name": "", "gender": _GROUP_GENDERS[label], "trigger": "", "description": text,
-               "voice": ""} for label, text in _GROUPS.items()},
-}}
+# A single person's name is also their trigger.
+TEMPLATES = {
+    "persons": {
+        **{_LABELS[name][0]: {"name": name, "gender": _LABELS[name][1], "trigger": name,
+                              "description": text, "voice": ""} for name, text in _PERSONS.items()},
+        **{label: {"name": "", "gender": _GROUP_GENDERS[label], "trigger": "",
+                   "description": text, "voice": ""} for label, text in _GROUPS.items()},
+    },
+    "styles": {label: {"text": text} for label, text in _STYLES.items()},
+}

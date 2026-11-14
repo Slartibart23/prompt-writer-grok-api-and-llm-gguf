@@ -10,14 +10,16 @@ from .grok_forge.loader_nodes import GrokSystemPromptLoader, GrokTextFileLoader
 from .grok_forge.local_node import LocalPromptForgeGGUF
 from .grok_forge.persons_node import PromptWriterPersons
 from .grok_forge.show_node import GrokShowPrompt
+from .grok_forge.system_prompt_node import PromptWriterSystemPrompt
 
-__version__ = "1.4.0"
+__version__ = "1.5.0"
 
 NODE_CLASS_MAPPINGS = {
     "GrokPromptForge": GrokPromptForge,
     "LocalPromptForgeGGUF": LocalPromptForgeGGUF,
     "GrokShowPrompt": GrokShowPrompt,
     "PromptWriterPersons": PromptWriterPersons,
+    "PromptWriterSystemPrompt": PromptWriterSystemPrompt,
     "GrokSystemPromptLoader": GrokSystemPromptLoader,
     "GrokTextFileLoader": GrokTextFileLoader,
 }
@@ -26,6 +28,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
     "LocalPromptForgeGGUF": "Prompt Writer · LLM GGUF",
     "GrokShowPrompt": "Prompt Writer · Show Prompt",
     "PromptWriterPersons": "Prompt Writer · Persons",
+    "PromptWriterSystemPrompt": "Prompt Writer · System Prompt",
     "GrokSystemPromptLoader": "Prompt Writer · System Prompt Loader",
     "GrokTextFileLoader": "Prompt Writer · Text File Loader",
 }

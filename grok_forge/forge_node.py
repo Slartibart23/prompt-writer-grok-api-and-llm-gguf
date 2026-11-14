@@ -55,6 +55,53 @@ ARCHIVE_TOOLTIP = (
 BINDING_RULE = """## The user's input is binding
 Every explicit wish or instruction in the user's input must be carried out in the result - subjects, details, actions, style, wording, text to render, things to leave out, counts. If it conflicts with the guidance above, the user's input wins. Only the output format and the English-output rule stay as described above."""
 
+LIGHTS = ["daylight", "night", "free"]
+LIGHT_TOOLTIP = (
+    "The light of the scene, unless your text says otherwise (your text always wins).\n"
+    "daylight: clear, white, natural daylight with soft shadows and true colours - no "
+    "dramatic lighting, no golden hour, no neon, no colour grading.\n"
+    "night: deep night; the scene is very dark and lit only by one faint light source "
+    "(moonlight, or a candle, a phone screen ... if your text names one).\n"
+    "free: no rule about light; the preset, a style block or your text decides.\n"
+    "This only sets the light, not the medium: with a style such as Cartoon the picture "
+    "stays a cartoon.")
+SAFE_TOOLTIP = (
+    "Off (default): sexual and nude content is written explicitly and precisely - poses, "
+    "actions, who touches whom where, states of undress and body fluids.\n"
+    "On: sexual content is only implied - nudity without explicit detail, no explicit sex "
+    "acts, no body fluids. Use it for API models that filter adult content (Seedream, "
+    "Seedance, GPT Image, Nano Banana, Grok Imagine, Flux 3, Kling, Veo) or whenever the "
+    "result must stay safe for work.")
+SYSTEM_INPUT_TOOLTIP = (
+    "Optional: connect 'Prompt Writer · System Prompt' to use one of your saved system "
+    "prompts (or a temporary one). Mode 'replace' uses it instead of the preset's system "
+    "prompt, mode 'append' adds it to the preset's system prompt as extra binding "
+    "instructions.")
+
+# Appended to every system prompt (see prepare): the light, and how adult content is written.
+LIGHT_RULES = {
+    "daylight": """## Light (binding unless the user's input names other light)
+Light the scene with clear, white, natural daylight: bright and even, with soft shadows. No dramatic or moody lighting, no golden hour, no sunset glow, no neon, no candlelight, no coloured gels, no colour grading, no vignette. This rule sets only the light, never the medium or its colours: an illustration, painting or render stays one, with its own palette. When no style block and no input names a medium, the picture is a natural, photorealistic photograph with true-to-life, unsaturated colours.""",
+    "night": """## Light (binding unless the user's input names other light)
+It is deep night and the scene is very dark. Most of the frame falls into black shadow. The persons and key objects are grazed by one single, faint light source only - weak moonlight, or the small light source the user's input names (a candle, a phone screen, a lamp). No neon, no glow, no bright sky, no colour grading. This rule sets only the light, never the medium.""",
+    "free": "",
+}
+
+ADULT_RULE = """## Adult content (applies only when the input asks for nudity or sexual content)
+- All persons in nude or sexual content are adults, and are described as adults. Never sexualise anyone who could be read as a minor.
+- Write it explicitly and precisely, with plain anatomical words - never vague, coy or euphemistic.
+- Assign every pose and action exactly: who does what to whom, with which body part, where the bodies touch, who lies, kneels, sits or stands, how the limbs are placed, and where each person looks. Name sex positions with their common terms.
+- Give each person's state of dress or undress, and which body parts are visible.
+- Name body fluids clearly when they are part of the scene (sweat, saliva, vaginal wetness, semen, squirt ...) and describe where they are and how they look (glistening, dripping, smeared, pooled).
+- Choose framing and camera angle so the described action is actually visible.
+- Tag models: use the matching explicit Danbooru tags and the explicit rating tag. Video models: describe the movement, its rhythm and the transitions between poses.
+- Add nothing explicit that the input does not ask for."""
+
+SAFE_RULE = """## Safe mode (binding)
+- Keep every result safe for work. Nudity and sexual content are only implied: tasteful framing, covered or turned-away bodies, no visible genitals, no explicit sex acts, no body fluids.
+- Keep the scene, persons, poses and mood the input asks for as far as this allows; suggest intimacy through closeness, glances and touch instead of explicit detail.
+- All persons in intimate scenes are adults."""
+
 WORDS_TOOLTIP = (
     "Optional length of the generated prompt in words: min_words / max_words. "
     "0 = off (the preset's own length guidance applies). When set, the range is "
@@ -310,6 +357,10 @@ class GrokPromptForge:
         optional[f"image_{IMAGE_SLOTS}"] = ("IMAGE", {"tooltip": IMAGE_TOOLTIP.format(n=IMAGE_SLOTS)})
         # Added in 1.3.0, at the end as always.
         optional["persons"] = ("PW_PERSONS", {"tooltip": PERSONS_INPUT_TOOLTIP})
+        # Added in 1.5.0.
+        optional["system"] = ("PW_SYSTEM", {"tooltip": SYSTEM_INPUT_TOOLTIP})
+        optional["light"] = (LIGHTS, {"default": "daylight", "tooltip": LIGHT_TOOLTIP})
+        optional["safe"] = ("BOOLEAN", {"default": False, "tooltip": SAFE_TOOLTIP})
         return {
             "required": {
                 "preset": (presets.names(), {"default": DEFAULT_PRESET, "tooltip":
@@ -423,10 +474,19 @@ class GrokPromptForge:
 class Job:
     """Everything one run sends to the model, apart from the model settings."""
 
-    def __init__(self, text, negative, images, persons, styles, system):
+    def __init__(self, text, negative, images, persons, styles, system, extras=None):
         self.text, self.negative = text, negative
         self.images, self.persons, self.styles = images, persons, styles
         self.system = system
+        self.extras = extras or {}  # light, safe, system prompt label - for the archive
+
+
+def _system_input(value):
+    """The `system` input from Prompt Writer · System Prompt: (label, text, mode) or None."""
+    if not isinstance(value, dict) or not str(value.get("text") or "").strip():
+        return None
+    mode = value.get("mode") if value.get("mode") in ("replace", "append") else "append"
+    return str(value.get("label") or "").strip(), str(value["text"]).strip(), mode
 
 
 def prepare(text, negative_prompt, system_prompt, custom_system_prompt, trigger_word,
@@ -445,13 +505,24 @@ def prepare(text, negative_prompt, system_prompt, custom_system_prompt, trigger_
     system = system_prompt
     if custom_system_prompt and custom_system_prompt.strip():
         system = custom_system_prompt
+    own = _system_input(slots.get("system"))
+    if own and own[2] == "replace":
+        system = own[1]
+    elif own:
+        system = f"{system.strip()}\n\n## Additional instructions (binding)\n{own[1]}"
     system = system.replace("{trigger}", (trigger_word or "").strip() or NO_TRIGGER)
+    # light and safe come from widgets added in 1.5.0; older callers get the defaults
+    light = slots.get("light") if slots.get("light") in LIGHTS else "daylight"
+    safe = bool(slots.get("safe", False))
     rules = [BINDING_RULE,
              persons_rule(persons, {n for n, _ in images}, image_n_is_person_n),
              styles_rule(styles),
+             LIGHT_RULES[light],
+             SAFE_RULE if safe else ADULT_RULE,
              length_rule(min_words, max_words)]
     system = "\n\n".join(part for part in [system.strip(), *rules] if part)
-    return Job(text, negative, images, persons, styles, system)
+    extras = {"light": light, "safe": safe, "system_prompt": own[0] if own else ""}
+    return Job(text, negative, images, persons, styles, system, extras)
 
 
 def user_content(text, images, max_side, log=LOG):
@@ -489,6 +560,6 @@ def archive_result(job, preset, model, result, temperature, top_p, min_words, ma
             "images": [n for n, _ in job.images], "prompt": result,
             "negative_prompt": job.negative, "temperature": float(temperature),
             "top_p": float(top_p), "min_words": int(min_words or 0),
-            "max_words": int(max_words or 0)})
+            "max_words": int(max_words or 0), **job.extras})
     except OSError as e:
         print(f"{log} could not write the archive: {e}")

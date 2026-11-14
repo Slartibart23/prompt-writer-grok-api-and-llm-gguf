@@ -80,12 +80,15 @@ SYSTEM_INPUT_TOOLTIP = (
 
 # Appended to every system prompt (see prepare): the light, and how adult content is written.
 LIGHT_RULES = {
-    "daylight": """## Light (binding unless the user's input or a style block names other light)
-Light the scene with clear, white, natural daylight: bright and even, with soft shadows. Keep away from dramatic or moody lighting, golden hour, sunset glow, neon, candlelight, coloured gels, colour grading and vignettes. Write the light in the prompt only as the light that is there ("clear, even daylight from the window") - never name the kinds of light that are left out. This rule sets only the light, never the medium or its colours: an illustration, painting or render stays one, with its own palette. When no style block and no input names a medium, the picture is a natural, photorealistic photograph with true-to-life, unsaturated colours.""",
-    "night": """## Light (binding unless the user's input or a style block names other light)
+    "daylight": """## Light (binding unless the user's input or the style block names other light)
+Light the scene with clear, white, natural daylight: bright and even, with soft shadows. Keep away from dramatic or moody lighting, golden hour, sunset glow, neon, candlelight, coloured gels, colour grading and vignettes. Write the light in the prompt only as the light that is there ("clear, even daylight from the window") - never name the kinds of light that are left out. This rule sets only the light, never the medium or its colours: an illustration, painting or render stays one, with its own palette.""",
+    "night": """## Light (binding unless the user's input or the style block names other light)
 It is deep night and the scene is very dark. Most of the frame falls into black shadow. The persons and key objects are grazed by one single, faint light source only - weak moonlight, or the small light source the user's input names (a candle, a phone screen, a lamp). Keep away from neon, glow, a bright sky and colour grading. Write the light in the prompt only as the light that is there - never name the kinds of light that are left out. This rule sets only the light, never the medium.""",
     "free": "",
 }
+# Only with light "daylight" and no style block: the default medium.
+PHOTO_DEFAULT = """## Medium
+Unless the user's input names a medium, the picture is a natural, photorealistic photograph with true-to-life, unsaturated colours."""
 
 ADULT_RULE = """## Adult content (applies only when the input asks for nudity or sexual content)
 - All persons in nude or sexual content are adults, and are described as adults. Never sexualise anyone who could be read as a minor.
@@ -202,16 +205,26 @@ def styles_rule(styles):
     """System-prompt block for the selected style blocks: [(name, entry)]."""
     if not styles:
         return ""
-    lines = ["## Style blocks (binding)",
-             "Apply every block below to the result, in the target model's prompt style. "
-             "Describe the style only in positive terms: say what the picture is and how it "
-             "was made (painted, drawn, inked, computer-generated, rendered) and name its "
-             "visible features. Never write what the picture is not and never name a quality "
-             "that is left out - not even negated (no \"not a photograph\", \"no realism\", "
-             "\"non-photorealistic\"): every word in a prompt pulls the image towards it. A "
-             "painted, drawn or rendered style replaces the photographic look completely:"]
-    lines += [f"- {entry['text']}" for _, entry in styles if entry["text"]]
-    return "\n".join(lines) if len(lines) > 2 else ""
+    texts = [f"- {entry['text']}" for _, entry in styles if entry["text"]]
+    if not texts:
+        return ""
+    return "\n".join([
+        "## Style block (binding - it overrides the order and the look in the model guide above)",
+        "A style block is selected. It defines the whole picture; a painted, drawn or rendered "
+        "style replaces the photographic look completely.",
+        "- Open the prompt with the medium and technique of the style (\"A rough graphite "
+        "pencil sketch of ...\", \"A Dutch Golden Age oil painting of ...\") and close it "
+        "with them again.",
+        "- Describe every element in the language of the style, not only once: the persons, "
+        "their faces and clothes, the objects and the background are all rendered in it "
+        "(\"his jacket built from thick, swirling strokes of ochre paint\", \"the trees as "
+        "loose hatched grey shapes\"). Use the style's own technical terms generously.",
+        "- Describe the style only in positive terms: say what the picture is and how it was "
+        "made (painted, drawn, inked, computer-generated, rendered) and name its visible "
+        "features. Never write what the picture is not and never name a quality that is "
+        "left out - not even negated (no \"not a photograph\", \"no realism\", "
+        "\"non-photorealistic\"): every word in a prompt pulls the image towards it.",
+        "", "The selected style:", *texts])
 
 
 GENDERS = {"m": "male", "f": "female"}
@@ -524,6 +537,7 @@ def prepare(text, negative_prompt, system_prompt, custom_system_prompt, trigger_
              persons_rule(persons, {n for n, _ in images}, image_n_is_person_n),
              styles_rule(styles),
              LIGHT_RULES[light],
+             PHOTO_DEFAULT if light == "daylight" and not styles else "",
              SAFE_RULE if safe else ADULT_RULE,
              length_rule(min_words, max_words)]
     system = "\n\n".join(part for part in [system.strip(), *rules] if part)

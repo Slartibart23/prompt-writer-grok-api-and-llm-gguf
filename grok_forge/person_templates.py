@@ -102,63 +102,91 @@ _GROUP_GENDERS = {"Group_of_men": "m", "Group_of_women": "f"}
 # light is set separately on the writer node (light: daylight / night / free).
 _STYLES = {
     "Natural daylight":
-        "Natural photograph in clear, white, neutral daylight. The light falls evenly from the "
-        "sky or a window and leaves soft shadows. The colours are true to life, calm and lightly "
-        "saturated, just as the eye sees them.",
+        "Natural photograph in clear, white, neutral daylight. The light falls evenly from "
+        "the sky or a window and leaves soft shadows. The colours are true to life, calm and "
+        "lightly saturated, just as the eye sees them.",
     "Cartoon":
-        "Hand-drawn 2D cartoon illustration. Bold black outlines, flat bright colours and simple "
-        "cel shading. Rounded, slightly exaggerated shapes and big expressive faces, drawn and "
-        "coloured by hand.",
+        "Hand-drawn 2D cartoon illustration, drawn and coloured by hand like a classic "
+        "animated cartoon. Every form is outlined in bold, clean black ink and filled with "
+        "flat, bright colour. Simple two-tone cel shading, rounded and slightly exaggerated "
+        "shapes, and big expressive cartoon faces with large eyes.",
     "Oil painting":
-        "Traditional oil painting on canvas, painted by hand with brushes. Visible brushstrokes "
-        "and thick impasto in the highlights. Rich colours blended softly on the canvas, with the "
-        "fine weave of the canvas showing in the thin, dark areas.",
+        "Traditional oil painting on stretched canvas, painted by hand with bristle brushes "
+        "and a palette knife. Every surface is built from visible, directional brushstrokes, "
+        "thick impasto ridges in the highlights and thin translucent glazes in the shadows. "
+        "The canvas weave shows through the paint, and the varnish gives the whole painting a"
+        " soft sheen.",
     "Line drawing":
-        "Clean black ink line drawing on plain white paper. Contours drawn with confident lines "
-        "of even weight. Pure black lines on a bright white page.",
+        "Minimalist black ink line art, drawn by hand with a fine pen on bright white paper. "
+        "Every person and object exists only as a crisp outline of even line weight. Large "
+        "areas of empty white paper and clean graphic contours, in the look of a hand-inked "
+        "illustration.",
     "Watercolour":
-        "Watercolour painting on textured white paper, painted by hand. Soft, transparent washes "
-        "of colour that bleed into each other at the edges. Visible paper grain and open areas of "
-        "bright white paper.",
+        "Watercolour painting, painted by hand on cold-pressed white paper. Every shape is "
+        "made of soft, transparent washes that bleed into each other, with wet-in-wet blooms,"
+        " granulating pigment and hard dried edges. Large areas of glowing white paper and "
+        "visible paper texture throughout.",
     "Pencil sketch":
-        "Graphite pencil sketch on off-white sketchbook paper, drawn by hand. Loose construction "
-        "lines, hatched and cross-hatched shading and smudged soft tones, all in shades of grey.",
+        "Rough graphite pencil sketch, drawn by hand in a sketchbook on off-white paper. "
+        "Every form is built from visible pencil strokes: loose construction lines, hatching "
+        "and cross-hatching in the shadows, smudged soft graphite tones and eraser marks. "
+        "Unfinished, fading edges and grey graphite on paper throughout, with the paper grain"
+        " visible.",
     "Anime":
-        "Japanese anime illustration, drawn and coloured digitally. Clean line art, large "
-        "expressive eyes, smooth cel shading with crisp shadow shapes and a bright, clean colour "
-        "palette.",
+        "Japanese anime illustration in the look of a modern anime film, drawn and coloured "
+        "digitally. Clean, thin line art, large glossy expressive eyes, simplified noses and "
+        "mouths, smooth cel shading with crisp, flat shadow shapes, and a bright, saturated "
+        "colour palette with painted anime backgrounds.",
+    "Manga":
+        "Japanese manga page, drawn by hand in black ink on white paper. Bold brush-pen "
+        "lines, large expressive manga eyes, dense solid blacks, screentone dot shading, "
+        "dramatic speed lines and crisp hatching, framed as a single manga panel in pure "
+        "black and white.",
+    "Hentai":
+        "Explicit Japanese hentai illustration, drawn and coloured digitally in the style of "
+        "adult anime. Adult characters with mature faces and fully grown adult body "
+        "proportions, glossy anime eyes, smooth cel shading with soft gradients, flushed skin"
+        " with shiny highlights, detailed anatomy and bold, clean line art.",
     "Comic book":
-        "Western comic book panel, inked and coloured by hand. Strong black ink lines, halftone "
-        "dot shading and bold, saturated flat colours in a dynamic composition.",
+        "Western comic book panel, inked and coloured by hand. Heavy black ink outlines and "
+        "feathered hatching, halftone dot shading, bold flat saturated colours and a dynamic,"
+        " action-packed composition, like a printed superhero comic.",
     "3D render":
         "Stylised 3D CGI render, a computer-generated image in the look of a modern animated "
-        "feature film. Smooth rounded shapes, soft subsurface materials and clean, simplified "
-        "surfaces.",
+        "feature film. Every person and object is a smooth, rounded 3D model with soft "
+        "subsurface materials, simplified clean surfaces and gentle studio-like rendering.",
     "Vintage film photo":
-        "Photograph shot on 35mm colour film in the 1970s. Fine film grain, slightly faded warm "
-        "colours and soft contrast. Natural, unposed framing.",
+        "Photograph shot on 35mm colour film in the 1970s. Fine film grain, slightly faded "
+        "warm colours and soft contrast. Natural, unposed framing.",
     "Van Gogh":
-        "Oil painting in the style of Vincent van Gogh, painted by hand in thick impasto. Bold, "
-        "swirling brushstrokes that follow every form, vivid complementary colours such as "
-        "cobalt blue and chrome yellow, and raised ridges of paint across the whole canvas.",
+        "Post-impressionist oil painting by Vincent van Gogh, painted by hand in thick "
+        "impasto like The Starry Night and his self-portraits. Every surface - faces, "
+        "clothes, ground and sky - is built from short, bold, swirling brushstrokes that "
+        "follow the forms. Vivid complementary colours such as cobalt blue, chrome yellow and"
+        " emerald green, with raised ridges of paint across the whole canvas.",
     "Rembrandt":
-        "Oil painting in the style of Rembrandt van Rijn, painted by hand in the manner of the "
-        "Dutch Golden Age. Warm earthy browns, ochres and golds, a deep dark background and one "
-        "soft beam of light that models the faces, with rich glazes and visible brushwork.",
+        "Dutch Golden Age oil painting by Rembrandt van Rijn, painted by hand in the manner "
+        "of the seventeenth century. Strong chiaroscuro: one warm beam of light carves the "
+        "faces and hands out of a deep umber darkness. Warm earthy browns, ochres and golds, "
+        "layered glazes, visible brushwork in the highlights and an aged amber varnish with "
+        "fine craquelure.",
     "Simpsons":
-        "2D cartoon in the style of The Simpsons TV series, drawn and coloured as hand-made "
-        "animation. Bright yellow skin, large round eyes with small black pupils, overbites, "
-        "four-fingered hands, thick black outlines and flat, saturated colours.",
+        "2D cartoon in the style of The Simpsons TV series, drawn and coloured as classic "
+        "hand-made cel animation. Every character has bright yellow skin, large round bulging"
+        " eyes with small black pupils, an overbite, four-fingered hands and thick black "
+        "outlines, in flat, saturated Springfield colours.",
     "Pixar":
-        "Computer-animated 3D image in the style of a Pixar feature film, a CGI render. Large "
-        "expressive eyes, soft rounded stylised proportions, smooth glowing skin shading, "
-        "simplified detailed textures and bright, cheerful colours.",
+        "Computer-animated 3D image in the style of a Pixar feature film, a CGI render. Every"
+        " character is a stylised 3D model with large expressive eyes, soft rounded "
+        "proportions and smooth subsurface-scattered skin, in a bright, cheerful, carefully "
+        "lit animated-movie world.",
     "GTA VI":
-        "Digital illustration in the style of the Grand Theft Auto VI cover art and loading "
-        "screens, painted digitally. Bold stylised figures with crisp outlines, smooth painterly "
-        "shading, saturated Miami colours of teal, magenta and orange, and a poster-like "
-        "composition.",
+        "Digital illustration in the style of a Grand Theft Auto loading screen and the GTA "
+        "VI cover art, painted digitally. Bold stylised figures with crisp graphic outlines "
+        "and cel-shaded, posterised colour areas, smooth painterly gradients, saturated Miami"
+        " colours of teal, magenta and orange, and a striking poster composition.",
 }
+
 
 # In the format of an exported library (library.import_entries): label -> entry.
 # A single person's name is also their trigger.
@@ -172,40 +200,79 @@ TEMPLATES = {
     "styles": {label: {"text": text} for label, text in _STYLES.items()},
 }
 
-# The style texts of the first 1.5.0 build. A style block that still holds one of
-# them unchanged is updated by add_to_library; your own edits are never touched.
+# Style texts of earlier builds. A style block that still holds one of them
+# unchanged is updated by add_to_library; your own edits are never touched.
 _OUTDATED_STYLES = {
-    'Photorealistic photograph with an entirely natural look. Clear, white, neutral '
-    'daylight lights the scene evenly. Shadows are soft and realistic, colours are true '
-    'to life and unsaturated. No dramatic lighting, no golden hour, no colour grading, no'
-    ' vignette and no artificial effects.',
-    'Hand-drawn 2D cartoon illustration, clearly not a photograph. Bold black outlines, '
-    'flat bright colours and simple cel shading. Slightly exaggerated, rounded shapes and'
-    ' expressive faces. No photorealistic skin, textures or lighting.',
-    'Traditional oil painting on canvas, clearly not a photograph. Visible brushstrokes '
-    'and thick impasto in the highlights. Rich but natural colours, softly blended on the'
-    ' canvas. The fine weave of the canvas shows through in the thin, dark areas.',
-    'Clean black ink line drawing on plain white paper, clearly not a photograph. '
-    'Contours only, drawn with confident lines of even weight. No shading, no colour and '
-    'no background texture.',
-    'Watercolour painting on textured white paper, clearly not a photograph. Soft, '
-    'transparent washes of colour that bleed into each other at the edges. Visible paper '
-    'grain and areas of untouched white paper.',
-    'Graphite pencil sketch on off-white sketchbook paper, clearly not a photograph. '
-    'Loose construction lines, hatched and cross-hatched shading, and smudged soft tones.'
-    ' Monochrome grey only.',
-    'Japanese anime illustration, clearly not a photograph. Clean line art, large '
-    'expressive eyes, smooth cel shading with crisp shadow shapes and a bright, clean '
-    'colour palette. No photorealistic textures.',
-    'Western comic book panel, clearly not a photograph. Strong black ink lines, halftone'
-    ' dot shading and bold, saturated flat colours. Dynamic composition with clear '
-    'shapes.',
-    'Stylised 3D CGI render, a computer-generated image and clearly not a photograph. '
-    'Smooth rounded shapes, soft subsurface materials and clean studio-like surfaces, '
-    'like a modern animated feature film.',
-    'Photograph shot on 35mm colour film in the 1970s. Fine film grain, slightly faded '
-    'warm colours and soft contrast. Natural, unposed framing.',
+    "2D cartoon in the style of The Simpsons TV series, drawn and coloured as hand-made "
+    "animation. Bright yellow skin, large round eyes with small black pupils, overbites, "
+    "four-fingered hands, thick black outlines and flat, saturated colours.",
+    "Clean black ink line drawing on plain white paper, clearly not a photograph. "
+    "Contours only, drawn with confident lines of even weight. No shading, no colour and "
+    "no background texture.",
+    "Clean black ink line drawing on plain white paper. Contours drawn with confident "
+    "lines of even weight. Pure black lines on a bright white page.",
+    "Computer-animated 3D image in the style of a Pixar feature film, a CGI render. Large"
+    " expressive eyes, soft rounded stylised proportions, smooth glowing skin shading, "
+    "simplified detailed textures and bright, cheerful colours.",
+    "Digital illustration in the style of the Grand Theft Auto VI cover art and loading "
+    "screens, painted digitally. Bold stylised figures with crisp outlines, smooth "
+    "painterly shading, saturated Miami colours of teal, magenta and orange, and a "
+    "poster-like composition.",
+    "Graphite pencil sketch on off-white sketchbook paper, clearly not a photograph. "
+    "Loose construction lines, hatched and cross-hatched shading, and smudged soft tones."
+    " Monochrome grey only.",
+    "Graphite pencil sketch on off-white sketchbook paper, drawn by hand. Loose "
+    "construction lines, hatched and cross-hatched shading and smudged soft tones, all in"
+    " shades of grey.",
+    "Hand-drawn 2D cartoon illustration, clearly not a photograph. Bold black outlines, "
+    "flat bright colours and simple cel shading. Slightly exaggerated, rounded shapes and"
+    " expressive faces. No photorealistic skin, textures or lighting.",
+    "Hand-drawn 2D cartoon illustration. Bold black outlines, flat bright colours and "
+    "simple cel shading. Rounded, slightly exaggerated shapes and big expressive faces, "
+    "drawn and coloured by hand.",
+    "Japanese anime illustration, clearly not a photograph. Clean line art, large "
+    "expressive eyes, smooth cel shading with crisp shadow shapes and a bright, clean "
+    "colour palette. No photorealistic textures.",
+    "Japanese anime illustration, drawn and coloured digitally. Clean line art, large "
+    "expressive eyes, smooth cel shading with crisp shadow shapes and a bright, clean "
+    "colour palette.",
+    "Oil painting in the style of Rembrandt van Rijn, painted by hand in the manner of "
+    "the Dutch Golden Age. Warm earthy browns, ochres and golds, a deep dark background "
+    "and one soft beam of light that models the faces, with rich glazes and visible "
+    "brushwork.",
+    "Oil painting in the style of Vincent van Gogh, painted by hand in thick impasto. "
+    "Bold, swirling brushstrokes that follow every form, vivid complementary colours such"
+    " as cobalt blue and chrome yellow, and raised ridges of paint across the whole "
+    "canvas.",
+    "Photorealistic photograph with an entirely natural look. Clear, white, neutral "
+    "daylight lights the scene evenly. Shadows are soft and realistic, colours are true "
+    "to life and unsaturated. No dramatic lighting, no golden hour, no colour grading, no"
+    " vignette and no artificial effects.",
+    "Stylised 3D CGI render, a computer-generated image and clearly not a photograph. "
+    "Smooth rounded shapes, soft subsurface materials and clean studio-like surfaces, "
+    "like a modern animated feature film.",
+    "Stylised 3D CGI render, a computer-generated image in the look of a modern animated "
+    "feature film. Smooth rounded shapes, soft subsurface materials and clean, simplified"
+    " surfaces.",
+    "Traditional oil painting on canvas, clearly not a photograph. Visible brushstrokes "
+    "and thick impasto in the highlights. Rich but natural colours, softly blended on the"
+    " canvas. The fine weave of the canvas shows through in the thin, dark areas.",
+    "Traditional oil painting on canvas, painted by hand with brushes. Visible "
+    "brushstrokes and thick impasto in the highlights. Rich colours blended softly on the"
+    " canvas, with the fine weave of the canvas showing in the thin, dark areas.",
+    "Watercolour painting on textured white paper, clearly not a photograph. Soft, "
+    "transparent washes of colour that bleed into each other at the edges. Visible paper "
+    "grain and areas of untouched white paper.",
+    "Watercolour painting on textured white paper, painted by hand. Soft, transparent "
+    "washes of colour that bleed into each other at the edges. Visible paper grain and "
+    "open areas of bright white paper.",
+    "Western comic book panel, clearly not a photograph. Strong black ink lines, halftone"
+    " dot shading and bold, saturated flat colours. Dynamic composition with clear "
+    "shapes.",
+    "Western comic book panel, inked and coloured by hand. Strong black ink lines, "
+    "halftone dot shading and bold, saturated flat colours in a dynamic composition.",
 }
+
 
 
 def add_to_library():

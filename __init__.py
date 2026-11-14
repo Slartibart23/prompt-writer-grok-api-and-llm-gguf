@@ -12,7 +12,7 @@ from .grok_forge.persons_node import PromptWriterPersons
 from .grok_forge.show_node import GrokShowPrompt
 from .grok_forge.system_prompt_node import PromptWriterSystemPrompt
 
-__version__ = "1.5.0"
+__version__ = "1.5.1"
 
 NODE_CLASS_MAPPINGS = {
     "GrokPromptForge": GrokPromptForge,

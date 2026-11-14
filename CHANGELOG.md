@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.1 — 2026-11-14
+
+- **Stronger styles:** with a style block selected, the prompt now opens and closes with the medium and technique, and every element - persons, clothes, objects, background - is described in the language of the style, not only named once. This overrides the order of the model guides, so paintings and drawings no longer drift into photos.
+- **Sharper style templates** with the styles' own technical terms (impasto, chiaroscuro, craquelure, hatching, eraser marks ...), especially Oil painting, Rembrandt, Pencil sketch, Van Gogh, Line drawing and GTA VI.
+- **New style templates:** *Manga* (black-and-white ink, screentones, speed lines - unlike *Anime*, the colour look of animation) and *Hentai* (explicit adult anime look with clearly adult characters).
+- "📥 Add templates" updates style blocks that still hold an earlier template text unchanged.
+
 ## 1.5.0 — 2026-11-14
 
 - **New node Prompt Writer · System Prompt:** your own system prompt with a label, connected to the new `system` input of the writer nodes. Mode `append` adds it to the preset's system prompt, mode `replace` uses it instead. With `save` on it is kept in `ComfyUI/user/grok_prompt_forge/system_prompts.json` (not in the workflow), off it is temporary. Buttons to load (with the text on hover), save now and delete.

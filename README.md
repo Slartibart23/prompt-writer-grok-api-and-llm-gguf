@@ -22,7 +22,7 @@ Both nodes share everything else:
 
 ![Prompt Writer · System Prompt, Prompt Writer · Grok API with the Cartoon style and Show Prompt](docs/images/nodes_overview.png)
 
-*Prompt Writer · Grok API turns a German idea into a Krea 2 prompt with the style block "Cartoon" and `light` on daylight. Prompt Writer · System Prompt adds a saved rule of its own ("Always mention the cat"). Show Prompt shows the real result: a cartoon that says it is not a photograph, with the cat, in clear daylight.*
+*Prompt Writer · Grok API turns a German idea into a Krea 2 prompt with the style block "Cartoon" and `light` on daylight. Prompt Writer · System Prompt adds a saved rule of its own ("Always mention the cat"). Show Prompt shows the real result: "a hand-drawn 2D cartoon illustration ... drawn and coloured by hand", with the cat, in clear daylight - described only in positive words.*
 
 ![The preset list filtered to video models and generation](docs/images/preset_filter.png)
 
@@ -40,7 +40,7 @@ Both nodes share everything else:
 |---|---|
 | ![Library dialog with label, name in the prompt, gender and the "Add templates" button](docs/images/persons_dialog.png) | ![Archive dialog with search, "Use as text" and "Recast"](docs/images/archive_dialog.png) |
 
-*The persons dialog with the template Kenji: the label for the list, the name K3nji for the prompt, the gender and the description. "📥 Add templates" adds the template persons, the two groups and ten style blocks to your library.*
+*The persons dialog with the template Kenji: the label for the list, the name K3nji for the prompt, the gender and the description. "📥 Add templates" adds the template persons, the two groups and fifteen style blocks to your library.*
 
 ![Prompt Writer · LLM GGUF](docs/images/local_node.png)
 
@@ -203,10 +203,10 @@ Every target guide also ends with **an example of a good result**. It is marked 
 
 - **New persons are filled in for you:** type the label (e.g. "Peter") and the dialog suggests the name in the prompt and the trigger ("P3ter": the first a, e, i or o becomes 4, 3, 1 or 0), the gender male and a description that starts with "P3ter is a man". Every suggestion is editable; a field you change yourself is left alone. Renaming the name later also renames it in the description and in a trigger that equals it.
 - **On hover:** the tooltip of `person_1` … `person_4` shows the selected person's name in the prompt, gender, trigger and description; so does an entry in the dialog's list.
-- **📥 Add templates** in the dialog adds ten fictional template persons, two groups and ten style blocks to your library. Labels you already have are never changed. Each template describes only the outer appearance, in two to three detailed English sentences: origin, skin tone, age, height and build in words (image models can't show "1.88 m"), face, eyes and hair. The label is the real name; the name in the prompt (also the trigger) has one digit for a letter.
+- **📥 Add templates** in the dialog adds ten fictional template persons, two groups and fifteen style blocks to your library. Labels you already have are never changed. Each template describes only the outer appearance, in two to three detailed English sentences: origin, skin tone, age, height and build in words (image models can't show "1.88 m"), face, eyes and hair. The label is the real name; the name in the prompt (also the trigger) has one digit for a letter.
   - Persons (label → name in the prompt): Sean → S3an (Ireland), Rafael → R4fael (Brazil), Sione → S1one (Samoa), Kenji → K3nji (Japan), Arjun → 4rjun (India), Kwame → Kw4me (Ghana), Karim → K4rim (Egypt), Olav → 0lav (Norway), Amara → 4mara (Nigeria) and Jiwoo → J1woo (Korea).
   - **Group_of_men** with six and **Group_of_women** with four clearly different members, each with a name of their own.
-  - Style blocks: **Natural daylight**, **Cartoon**, **Oil painting**, **Line drawing**, **Watercolour**, **Pencil sketch**, **Anime**, **Comic book**, **3D render** and **Vintage film photo**. Each is a few short, concrete sentences. Every style that is not a photograph says so outright ("clearly not a photograph", "a computer-generated CGI render"), so the result is never mistaken for a realistic photo.
+  - Style blocks: **Natural daylight**, **Cartoon**, **Oil painting**, **Line drawing**, **Watercolour**, **Pencil sketch**, **Anime**, **Comic book**, **3D render**, **Vintage film photo**, **Van Gogh**, **Rembrandt**, **Simpsons**, **Pixar** and **GTA VI**. Each is a few short, concrete sentences in positive words only: it says what the picture is and how it was made (painted by hand, drawn, inked, computer-generated, rendered) and names its visible features. None of them mentions what the picture is *not* - image models are pulled towards every word in a prompt, so even "not realistic" brings realism back.
 - **Groups:** a person entry whose description starts with "A group of" is a group in one slot. Its own name is only a label and never appears in the prompt. Instead, every member is introduced by name, and every action is assigned to a member, e.g. "B0ris lifts the crate while M1nh holds the door".
 - **Prompt Writer · Persons:** chooses the persons outside the writer nodes and passes them to the writer's `persons` input. While that input is connected, `person_1` … `person_4` on the writer are greyed out, locked and ignored; disconnect it and they work again with their old values. The slot numbers come from the Persons node, so Person 3 there is Person 3 in the prompt and pairs with `image_3`.
 - **At a glance:** a selected person turns its field **dark red**, a selected style block turns its field **dark blue**. Fields set to "(none)" look normal. The colour is display only and is not saved in the workflow.

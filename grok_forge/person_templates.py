@@ -8,6 +8,8 @@ has one digit for a letter (K3nji) and so works as a trigger. A description
 that starts with "A group of" makes the entry a group of named persons (see
 forge_node.is_group); the group's label is not written into the prompt."""
 
+from . import library
+
 _PERSONS = {
     "S3an": "S3an is an Irish man in his early twenties with very pale, freckled skin that "
             "reddens easily on his cheeks and nose. He is tall and very slim, with narrow "
@@ -93,49 +95,69 @@ _LABELS = {
 }
 _GROUP_GENDERS = {"Group_of_men": "m", "Group_of_women": "f"}
 
-# Style blocks: short and concrete, only visible features. Every style that is not a
-# photograph says so outright, so no model mistakes it for a realistic photo. The
+# Style blocks: short and concrete, only visible features, and only positive words.
+# A style says what the picture is and how it was made (painted, drawn, computer-
+# generated ...) - never what it is not: image models are pulled towards every word
+# in a prompt, negated or not, so "not realistic" would bring realism back. The
 # light is set separately on the writer node (light: daylight / night / free).
 _STYLES = {
     "Natural daylight":
-        "Photorealistic photograph with an entirely natural look. Clear, white, neutral daylight "
-        "lights the scene evenly. Shadows are soft and realistic, colours are true to life and "
-        "unsaturated. No dramatic lighting, no golden hour, no colour grading, no vignette and no "
-        "artificial effects.",
+        "Natural photograph in clear, white, neutral daylight. The light falls evenly from the "
+        "sky or a window and leaves soft shadows. The colours are true to life, calm and lightly "
+        "saturated, just as the eye sees them.",
     "Cartoon":
-        "Hand-drawn 2D cartoon illustration, clearly not a photograph. Bold black outlines, flat "
-        "bright colours and simple cel shading. Slightly exaggerated, rounded shapes and "
-        "expressive faces. No photorealistic skin, textures or lighting.",
+        "Hand-drawn 2D cartoon illustration. Bold black outlines, flat bright colours and simple "
+        "cel shading. Rounded, slightly exaggerated shapes and big expressive faces, drawn and "
+        "coloured by hand.",
     "Oil painting":
-        "Traditional oil painting on canvas, clearly not a photograph. Visible brushstrokes and "
-        "thick impasto in the highlights. Rich but natural colours, softly blended on the canvas. "
-        "The fine weave of the canvas shows through in the thin, dark areas.",
+        "Traditional oil painting on canvas, painted by hand with brushes. Visible brushstrokes "
+        "and thick impasto in the highlights. Rich colours blended softly on the canvas, with the "
+        "fine weave of the canvas showing in the thin, dark areas.",
     "Line drawing":
-        "Clean black ink line drawing on plain white paper, clearly not a photograph. Contours "
-        "only, drawn with confident lines of even weight. No shading, no colour and no background "
-        "texture.",
+        "Clean black ink line drawing on plain white paper. Contours drawn with confident lines "
+        "of even weight. Pure black lines on a bright white page.",
     "Watercolour":
-        "Watercolour painting on textured white paper, clearly not a photograph. Soft, "
-        "transparent washes of colour that bleed into each other at the edges. Visible paper "
-        "grain and areas of untouched white paper.",
+        "Watercolour painting on textured white paper, painted by hand. Soft, transparent washes "
+        "of colour that bleed into each other at the edges. Visible paper grain and open areas of "
+        "bright white paper.",
     "Pencil sketch":
-        "Graphite pencil sketch on off-white sketchbook paper, clearly not a photograph. Loose "
-        "construction lines, hatched and cross-hatched shading, and smudged soft tones. "
-        "Monochrome grey only.",
+        "Graphite pencil sketch on off-white sketchbook paper, drawn by hand. Loose construction "
+        "lines, hatched and cross-hatched shading and smudged soft tones, all in shades of grey.",
     "Anime":
-        "Japanese anime illustration, clearly not a photograph. Clean line art, large expressive "
-        "eyes, smooth cel shading with crisp shadow shapes and a bright, clean colour palette. No "
-        "photorealistic textures.",
+        "Japanese anime illustration, drawn and coloured digitally. Clean line art, large "
+        "expressive eyes, smooth cel shading with crisp shadow shapes and a bright, clean colour "
+        "palette.",
     "Comic book":
-        "Western comic book panel, clearly not a photograph. Strong black ink lines, halftone dot "
-        "shading and bold, saturated flat colours. Dynamic composition with clear shapes.",
+        "Western comic book panel, inked and coloured by hand. Strong black ink lines, halftone "
+        "dot shading and bold, saturated flat colours in a dynamic composition.",
     "3D render":
-        "Stylised 3D CGI render, a computer-generated image and clearly not a photograph. Smooth "
-        "rounded shapes, soft subsurface materials and clean studio-like surfaces, like a modern "
-        "animated feature film.",
+        "Stylised 3D CGI render, a computer-generated image in the look of a modern animated "
+        "feature film. Smooth rounded shapes, soft subsurface materials and clean, simplified "
+        "surfaces.",
     "Vintage film photo":
         "Photograph shot on 35mm colour film in the 1970s. Fine film grain, slightly faded warm "
         "colours and soft contrast. Natural, unposed framing.",
+    "Van Gogh":
+        "Oil painting in the style of Vincent van Gogh, painted by hand in thick impasto. Bold, "
+        "swirling brushstrokes that follow every form, vivid complementary colours such as "
+        "cobalt blue and chrome yellow, and raised ridges of paint across the whole canvas.",
+    "Rembrandt":
+        "Oil painting in the style of Rembrandt van Rijn, painted by hand in the manner of the "
+        "Dutch Golden Age. Warm earthy browns, ochres and golds, a deep dark background and one "
+        "soft beam of light that models the faces, with rich glazes and visible brushwork.",
+    "Simpsons":
+        "2D cartoon in the style of The Simpsons TV series, drawn and coloured as hand-made "
+        "animation. Bright yellow skin, large round eyes with small black pupils, overbites, "
+        "four-fingered hands, thick black outlines and flat, saturated colours.",
+    "Pixar":
+        "Computer-animated 3D image in the style of a Pixar feature film, a CGI render. Large "
+        "expressive eyes, soft rounded stylised proportions, smooth glowing skin shading, "
+        "simplified detailed textures and bright, cheerful colours.",
+    "GTA VI":
+        "Digital illustration in the style of the Grand Theft Auto VI cover art and loading "
+        "screens, painted digitally. Bold stylised figures with crisp outlines, smooth painterly "
+        "shading, saturated Miami colours of teal, magenta and orange, and a poster-like "
+        "composition.",
 }
 
 # In the format of an exported library (library.import_entries): label -> entry.
@@ -149,3 +171,53 @@ TEMPLATES = {
     },
     "styles": {label: {"text": text} for label, text in _STYLES.items()},
 }
+
+# The style texts of the first 1.5.0 build. A style block that still holds one of
+# them unchanged is updated by add_to_library; your own edits are never touched.
+_OUTDATED_STYLES = {
+    'Photorealistic photograph with an entirely natural look. Clear, white, neutral '
+    'daylight lights the scene evenly. Shadows are soft and realistic, colours are true '
+    'to life and unsaturated. No dramatic lighting, no golden hour, no colour grading, no'
+    ' vignette and no artificial effects.',
+    'Hand-drawn 2D cartoon illustration, clearly not a photograph. Bold black outlines, '
+    'flat bright colours and simple cel shading. Slightly exaggerated, rounded shapes and'
+    ' expressive faces. No photorealistic skin, textures or lighting.',
+    'Traditional oil painting on canvas, clearly not a photograph. Visible brushstrokes '
+    'and thick impasto in the highlights. Rich but natural colours, softly blended on the'
+    ' canvas. The fine weave of the canvas shows through in the thin, dark areas.',
+    'Clean black ink line drawing on plain white paper, clearly not a photograph. '
+    'Contours only, drawn with confident lines of even weight. No shading, no colour and '
+    'no background texture.',
+    'Watercolour painting on textured white paper, clearly not a photograph. Soft, '
+    'transparent washes of colour that bleed into each other at the edges. Visible paper '
+    'grain and areas of untouched white paper.',
+    'Graphite pencil sketch on off-white sketchbook paper, clearly not a photograph. '
+    'Loose construction lines, hatched and cross-hatched shading, and smudged soft tones.'
+    ' Monochrome grey only.',
+    'Japanese anime illustration, clearly not a photograph. Clean line art, large '
+    'expressive eyes, smooth cel shading with crisp shadow shapes and a bright, clean '
+    'colour palette. No photorealistic textures.',
+    'Western comic book panel, clearly not a photograph. Strong black ink lines, halftone'
+    ' dot shading and bold, saturated flat colours. Dynamic composition with clear '
+    'shapes.',
+    'Stylised 3D CGI render, a computer-generated image and clearly not a photograph. '
+    'Smooth rounded shapes, soft subsurface materials and clean studio-like surfaces, '
+    'like a modern animated feature film.',
+    'Photograph shot on 35mm colour film in the 1970s. Fine film grain, slightly faded '
+    'warm colours and soft contrast. Natural, unposed framing.',
+}
+
+
+def add_to_library():
+    """Add the templates to your library: new labels are added, style blocks that
+    still hold an outdated template text unchanged are updated, everything else
+    is left alone. Returns (added, updated, kept)."""
+    styles = library.load()["styles"]
+    updated = 0
+    for label, entry in TEMPLATES["styles"].items():
+        current = styles.get(label)
+        if current and current["text"] in _OUTDATED_STYLES and current["text"] != entry["text"]:
+            library.save("style", label, entry)
+            updated += 1
+    added, _, skipped = library.import_entries(TEMPLATES, False)
+    return added, updated, skipped - updated

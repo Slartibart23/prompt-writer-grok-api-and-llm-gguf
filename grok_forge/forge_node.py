@@ -80,10 +80,10 @@ SYSTEM_INPUT_TOOLTIP = (
 
 # Appended to every system prompt (see prepare): the light, and how adult content is written.
 LIGHT_RULES = {
-    "daylight": """## Light (binding unless the user's input names other light)
-Light the scene with clear, white, natural daylight: bright and even, with soft shadows. No dramatic or moody lighting, no golden hour, no sunset glow, no neon, no candlelight, no coloured gels, no colour grading, no vignette. This rule sets only the light, never the medium or its colours: an illustration, painting or render stays one, with its own palette. When no style block and no input names a medium, the picture is a natural, photorealistic photograph with true-to-life, unsaturated colours.""",
-    "night": """## Light (binding unless the user's input names other light)
-It is deep night and the scene is very dark. Most of the frame falls into black shadow. The persons and key objects are grazed by one single, faint light source only - weak moonlight, or the small light source the user's input names (a candle, a phone screen, a lamp). No neon, no glow, no bright sky, no colour grading. This rule sets only the light, never the medium.""",
+    "daylight": """## Light (binding unless the user's input or a style block names other light)
+Light the scene with clear, white, natural daylight: bright and even, with soft shadows. Keep away from dramatic or moody lighting, golden hour, sunset glow, neon, candlelight, coloured gels, colour grading and vignettes. Write the light in the prompt only as the light that is there ("clear, even daylight from the window") - never name the kinds of light that are left out. This rule sets only the light, never the medium or its colours: an illustration, painting or render stays one, with its own palette. When no style block and no input names a medium, the picture is a natural, photorealistic photograph with true-to-life, unsaturated colours.""",
+    "night": """## Light (binding unless the user's input or a style block names other light)
+It is deep night and the scene is very dark. Most of the frame falls into black shadow. The persons and key objects are grazed by one single, faint light source only - weak moonlight, or the small light source the user's input names (a candle, a phone screen, a lamp). Keep away from neon, glow, a bright sky and colour grading. Write the light in the prompt only as the light that is there - never name the kinds of light that are left out. This rule sets only the light, never the medium.""",
     "free": "",
 }
 
@@ -203,7 +203,13 @@ def styles_rule(styles):
     if not styles:
         return ""
     lines = ["## Style blocks (binding)",
-             "Apply every block below to the result, in the target model's prompt style:"]
+             "Apply every block below to the result, in the target model's prompt style. "
+             "Describe the style only in positive terms: say what the picture is and how it "
+             "was made (painted, drawn, inked, computer-generated, rendered) and name its "
+             "visible features. Never write what the picture is not and never name a quality "
+             "that is left out - not even negated (no \"not a photograph\", \"no realism\", "
+             "\"non-photorealistic\"): every word in a prompt pulls the image towards it. A "
+             "painted, drawn or rendered style replaces the photographic look completely:"]
     lines += [f"- {entry['text']}" for _, entry in styles if entry["text"]]
     return "\n".join(lines) if len(lines) > 2 else ""
 

@@ -88,12 +88,13 @@ def register():
 
     @srv.routes.post("/grok_prompt_forge/library/templates")
     async def grok_forge_templates(request):
-        # adds the template persons; names you already have are never touched
+        # adds the template persons and styles; your own entries are never touched
         try:
-            added, _, skipped = library.import_entries(person_templates.TEMPLATES, False)
+            added, updated, skipped = person_templates.add_to_library()
         except Exception as e:
             return web.json_response({"error": str(e)}, status=400)
-        return web.json_response(dict(library_payload(), added=added, skipped=skipped))
+        return web.json_response(dict(library_payload(), added=added, updated=updated,
+                                      skipped=skipped))
 
     # --------------------------------------------------------- system prompts
     @srv.routes.get("/grok_prompt_forge/system_prompts")

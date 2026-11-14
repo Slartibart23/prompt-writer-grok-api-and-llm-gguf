@@ -779,7 +779,7 @@ async function openLibrary(node, startKind = "person") {
         const res = await postJson("/grok_prompt_forge/library/templates", {});
         data = res;
         updateLibraryLists(data, null);
-        toast("success", t("templatesAdded"), t("templatesResult", res.added, res.skipped));
+        toast("success", t("templatesAdded"), t("templatesResult", res.added, res.skipped, res.updated ?? 0));
         kind = "person";
         render();
       } catch (e) { toast("error", t("templatesFailed"), String(e.message ?? e)); }

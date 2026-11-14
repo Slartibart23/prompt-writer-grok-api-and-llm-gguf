@@ -434,9 +434,9 @@ class LibraryTests(unittest.TestCase):
 
     def test_templates_are_added_once_and_never_overwrite(self):
         library.save("person", "Kenji", {"description": "my own Kenji"})
-        self.assertEqual(library.import_entries(person_templates.TEMPLATES), (21, 0, 1))  # 11 persons + 10 styles
+        self.assertEqual(library.import_entries(person_templates.TEMPLATES), (26, 0, 1))  # 11 persons + 15 styles
         self.assertEqual(library.get("person", "Kenji")["description"], "my own Kenji")
-        self.assertEqual(library.import_entries(person_templates.TEMPLATES), (0, 0, 22))
+        self.assertEqual(library.import_entries(person_templates.TEMPLATES), (0, 0, 27))
         entries = person_templates.TEMPLATES["persons"]
         self.assertEqual(len(entries), 12)
         self.assertEqual(entries["Kenji"]["name"], "K3nji")
@@ -464,15 +464,40 @@ class LibraryTests(unittest.TestCase):
 
     def test_style_templates(self):
         styles = person_templates.TEMPLATES["styles"]
-        self.assertEqual(len(styles), 10)
-        self.assertIn("Natural daylight", styles)
+        self.assertEqual(len(styles), 15)
+        for label in ("Natural daylight", "Van Gogh", "Rembrandt", "Simpsons", "Pixar", "GTA VI"):
+            self.assertIn(label, styles)
+        made = ("painted", "drawn", "inked", "computer-", "cgi", "render", "digitally")
         for label, entry in styles.items():
             text = entry["text"]
             self.assertLess(len(text.split()), 60, label)  # short and concrete
-            photo = label in ("Natural daylight", "Vintage film photo")
-            self.assertEqual("not a photograph" in text, not photo, label)
+            # only positive words: a negated "realistic" would still pull towards realism
+            self.assertNotRegex(text, r"(?i)\b(not|no|non|never|without|realis\w*|photoreal\w*)\b",
+                                label)
+            if label not in ("Natural daylight", "Vintage film photo"):
+                self.assertTrue(any(m in text.lower() for m in made), label)  # says how it is made
         library.import_entries(person_templates.TEMPLATES)
         self.assertIn("Cartoon", library.names("style"))
+
+    def test_outdated_style_texts_are_updated_own_edits_kept(self):
+        outdated = next(t for t in person_templates._OUTDATED_STYLES if t.startswith("Hand-drawn 2D"))
+        library.save("style", "Cartoon", {"text": outdated})       # first 1.5.0 template text
+        library.save("style", "Oil painting", {"text": "my own oil painting"})
+        added, updated, kept = person_templates.add_to_library()
+        self.assertEqual((added, updated, kept), (25, 1, 1))
+        self.assertEqual(library.get("style", "Cartoon")["text"],
+                         person_templates.TEMPLATES["styles"]["Cartoon"]["text"])
+        self.assertEqual(library.get("style", "Oil painting")["text"], "my own oil painting")
+        self.assertEqual(person_templates.add_to_library(), (0, 0, 27))
+
+    def test_style_rule_asks_for_positive_words_only(self):
+        rule = forge_node.styles_rule([("Cartoon", {"text": "Hand-drawn cartoon."})])
+        self.assertIn("only in positive terms", rule)
+        self.assertIn("never name a quality that is left out", rule)
+        self.assertIn("- Hand-drawn cartoon.", rule)
+        light = forge_node.LIGHT_RULES["daylight"]
+        self.assertIn("never name the kinds of light that are left out", light)
+        self.assertIn("or a style block names other light", light)
 
     def test_import_keeps_or_replaces(self):
         library.save("style", "Film", {"text": "mine"})

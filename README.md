@@ -20,9 +20,13 @@ Both nodes share everything else:
 
 ## Screenshots
 
-![Prompt Writer · System Prompt, Prompt Writer · Grok API with the Cartoon style and Show Prompt](docs/images/nodes_overview.png)
+![Prompt Writer · System Prompt Library, Prompt Writer · Grok API with Seedream 5.5 and Show Prompt](docs/images/nodes_overview.png)
 
-*Prompt Writer · Grok API turns a German idea into a Krea 2 prompt with the style block "Cartoon" and `light` on daylight. Prompt Writer · System Prompt adds a saved rule of its own ("Always mention the cat"). Show Prompt shows the real result: "a hand-drawn 2D cartoon illustration ... drawn and coloured by hand", with the cat, in clear daylight - described only in positive words.*
+*Prompt Writer · System Prompt Library, filtered to image presets, supplies the system prompt "Generation ▸ Seedream 5.5" in mode `replace`, so the writer's own `system_prompt` is greyed out and read-only. Prompt Writer · Grok API turns a German idea for a jazz festival poster into a Seedream 5.5 prompt, with the template person Amara in the new `person_5`. Show Prompt shows the real result: a concert poster with the title "LAKE JAZZ" at the top, "12. JULI" at the bottom and a closing palette sentence, as the Seedream 5.5 guide asks.*
+
+![The large system prompt editor with word, character and line count](docs/images/system_editor.png)
+
+*"📝 Open editor..." on the library node opens the system prompt in a large window with a word, character and line count. "✓ Apply" puts label and text into the node; "💾 Save as..." also saves it in your library under a name of your own.*
 
 ![The preset list filtered to video models and generation](docs/images/preset_filter.png)
 
@@ -30,7 +34,7 @@ Both nodes share everything else:
 
 ![Prompt Writer · Persons connected to the persons input of Prompt Writer · Grok API](docs/images/persons_node.png)
 
-*Prompt Writer · Persons chooses the template person Kwame and the group Group_of_women. While it is connected to the writer's `persons` input, the writer's own person fields are greyed out and locked.*
+*Prompt Writer · Persons chooses the template person Kwame, the group Group_of_women and the template person Jiwoo in `person_5`. While it is connected to the writer's `persons` input, the writer's own `person_1` … `person_6` are greyed out and locked.*
 
 ![The tooltip of person_1 with the selected person's name in the prompt, gender and description](docs/images/persons_hover.png)
 

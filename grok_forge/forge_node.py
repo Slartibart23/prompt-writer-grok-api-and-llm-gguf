@@ -14,7 +14,8 @@ from .builtin_presets import BUILTIN, DEFAULT_PRESET
 LOG = "[Prompt Writer · Grok API]"
 NO_TRIGGER = "(none)"
 IMAGE_SLOTS = 4
-PERSON_SLOTS = 4
+PERSON_SLOTS = 6
+FIRST_PERSON_SLOTS = 4  # person_5 and person_6 came in 1.6.0 and sit at the end of the node
 STYLE_SLOTS = 2
 
 PERSON_TOOLTIP = (
@@ -26,14 +27,17 @@ PERSON_TOOLTIP = (
     "A library entry whose description starts with 'A group of' is a group of named "
     "persons in one slot.")
 PERSON_LOCK_NOTE = " Locked while the 'persons' input is connected."
+NO_IMAGE_NOTE = (" There are only four image inputs: person_{n} has no image of its own, so "
+                 "image_n_is_person_n does not apply to it.")
 PERSONS_INPUT_TOOLTIP = (
     "Optional: connect 'Prompt Writer · Persons' to choose the persons outside this node - "
-    "e.g. one cast for several writer nodes. While it is connected, person_1..person_4 on "
+    "e.g. one cast for several writer nodes. While it is connected, person_1..person_6 on "
     "this node are locked and ignored; the slot numbers from the Persons node count (Person 3 "
     "there = Person 3 here, also for image_n_is_person_n).")
 LINK_TOOLTIP = (
     "Pairs each person with the image input of the same number: person_1 = image_1, "
-    "person_2 = image_2, person_3 = image_3, person_4 = image_4.\n"
+    "person_2 = image_2, person_3 = image_3, person_4 = image_4. person_5 and person_6 "
+    "have no image of their own.\n"
     "On: when you load a photo of the person into the matching image input, the model is "
     "told 'this image shows this person' and takes the look from the photo. With "
     "Qwen-Image-Edit, MiniMax H3 REF2VA, Wan 2.7/3.0, Seedream, Seedance, Kling, Grok "
@@ -73,10 +77,12 @@ SAFE_TOOLTIP = (
     "Seedance, GPT Image, Nano Banana, Grok Imagine, Flux 3, Kling, Veo) or whenever the "
     "result must stay safe for work.")
 SYSTEM_INPUT_TOOLTIP = (
-    "Optional: connect 'Prompt Writer · System Prompt' to use one of your saved system "
-    "prompts (or a temporary one). Mode 'replace' uses it instead of the preset's system "
-    "prompt, mode 'append' adds it to the preset's system prompt as extra binding "
-    "instructions.")
+    "Optional: connect 'Prompt Writer · System Prompt Library' to choose the system prompt "
+    "there - from the built-in presets, your own presets or your saved system prompts. Mode "
+    "'replace' uses it instead of the system_prompt field (which is then locked), mode "
+    "'append' adds it to the system_prompt field as extra binding instructions.")
+SYSTEM_LOCK_NOTE = (" Locked while a System Prompt Library node in mode 'replace' is connected "
+                    "to the 'system' input: that node sets the system prompt.")
 
 # Appended to every system prompt (see prepare): the light, and how adult content is written.
 LIGHT_RULES = {
@@ -237,7 +243,7 @@ def is_group(entry):
 
 
 def selected_persons(kwargs, log=LOG):
-    """[(slot, name, entry)] of person_1..4 in kwargs, looked up in the library."""
+    """[(slot, name, entry)] of person_1..6 in kwargs, looked up in the library."""
     persons = []
     for n in range(1, PERSON_SLOTS + 1):
         name = kwargs.get(f"person_{n}") or library.NONE
@@ -264,7 +270,7 @@ def _persons_input(value):
 
 def _selected(kwargs):
     """The persons (from the `persons` input when connected, otherwise from
-    person_1..4) and the style blocks."""
+    person_1..6) and the style blocks."""
     if kwargs.get("persons") is not None:
         persons = _persons_input(kwargs["persons"])
     else:
@@ -278,6 +284,14 @@ def _selected(kwargs):
         elif name != library.NONE:
             print(f"{LOG} style_{n}: '{name}' is not in your library - skipped.")
     return persons, styles
+
+def person_input(names, n, note=""):
+    """The selection box of person_n (writer and Persons node)."""
+    tip = PERSON_TOOLTIP.format(n=n) + note
+    if n > IMAGE_SLOTS:
+        tip += NO_IMAGE_NOTE.format(n=n)
+    return (names, {"default": library.NONE, "tooltip": tip})
+
 
 IMAGE_TOOLTIP = (
     "Optional reference image {n} of 4. The model sees it as 'Image {n}'. Connect a "
@@ -362,10 +376,8 @@ class GrokPromptForge:
         })
         # Added in 3.2.0, again at the end.
         person_names = library.names("person")
-        for n in range(1, PERSON_SLOTS + 1):
-            optional[f"person_{n}"] = (person_names, {"default": library.NONE,
-                                                       "tooltip": PERSON_TOOLTIP.format(n=n)
-                                                                  + PERSON_LOCK_NOTE})
+        for n in range(1, FIRST_PERSON_SLOTS + 1):
+            optional[f"person_{n}"] = person_input(person_names, n, PERSON_LOCK_NOTE)
         optional["image_n_is_person_n"] = ("BOOLEAN", {"default": False, "tooltip": LINK_TOOLTIP})
         style_names = library.names("style")
         for n in range(1, STYLE_SLOTS + 1):
@@ -380,6 +392,9 @@ class GrokPromptForge:
         optional["system"] = ("PW_SYSTEM", {"tooltip": SYSTEM_INPUT_TOOLTIP})
         optional["light"] = (LIGHTS, {"default": "daylight", "tooltip": LIGHT_TOOLTIP})
         optional["safe"] = ("BOOLEAN", {"default": False, "tooltip": SAFE_TOOLTIP})
+        # Added in 1.6.0: two more persons, without image inputs of their own.
+        for n in range(FIRST_PERSON_SLOTS + 1, PERSON_SLOTS + 1):
+            optional[f"person_{n}"] = person_input(person_names, n, PERSON_LOCK_NOTE)
         return {
             "required": {
                 "preset": (presets.names(), {"default": DEFAULT_PRESET, "tooltip":
@@ -399,7 +414,7 @@ class GrokPromptForge:
                 "system_prompt": ("STRING", {"multiline": True,
                     "default": default["system_prompt"], "tooltip":
                     "Instructions that define what the model does. Filled by the preset; "
-                    "edit freely. Ignored when custom_system_prompt is connected."}),
+                    "edit freely. Ignored when custom_system_prompt is connected." + SYSTEM_LOCK_NOTE}),
                 "negative_prompt": ("STRING", {"multiline": True,
                     "default": default["negative_prompt"], "tooltip":
                     "Standard negative prompt for the target model, passed straight "
@@ -437,7 +452,7 @@ class GrokPromptForge:
 
     @classmethod
     def VALIDATE_INPUTS(cls, preset, model, person_1=None, person_2=None, person_3=None,
-                        person_4=None, style_1=None, style_2=None):
+                        person_4=None, person_5=None, person_6=None, style_1=None, style_2=None):
         # The preset only labels the values on the node, the model list is live
         # from the API and persons/styles live in your own library: a workflow
         # from another machine must still run (unknown persons are skipped).

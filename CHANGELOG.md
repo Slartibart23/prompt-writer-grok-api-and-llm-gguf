@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6.0 — 2026-11-19
+
+- **Prompt Writer · System Prompt Library** (formerly *System Prompt*) holds the whole system prompt library: the system prompts of all built-in presets, of your own presets and your saved system prompts (★). Choose one in the new **System prompt** box, narrowed by **Filter: type** and **Filter: task**; it fills `label` and `text`. The choice and the filters are display only and kept in the workflow.
+- **Large editor:** "📝 Open editor..." edits the system prompt in a large window with a word, character and line count.
+- **Save as... with a name of your own:** "💾 Save as..." asks for the name. Built-in presets are never overwritten, and "🗑 Delete my prompt" removes only your own saved prompts. The old "📂 Load..." button is replaced by the selection box.
+- Mode `replace` is now the default for new library nodes: the library sets the system prompt, while preset, negative prompt and sampling stay on the writer where the model is chosen. Saved workflows keep their mode.
+- **Locked `system_prompt`:** while a library node in mode `replace` (with text) is connected to a writer's `system` input, the writer's own `system_prompt` is greyed out and read-only, with a note in its tooltip.
+- **Seedream 5.5:** new presets "Generation ▸ Seedream 5.5" and "Caption ▸ Seedream 5.5" from the BytePlus *Dola Seedream 5.5 tutorial*: up to 10 reference images, layouts described element by element with a closing palette sentence, native transparent images ("Set a transparent background."). "Seedream Edit" covers Seedream 5.5 multi-turn editing, which lists the preserved features by name. 60 built-in presets in all.
+- **Six persons:** `person_5` and `person_6` on both writer nodes (at the end, so saved workflows keep their values) and on Prompt Writer · Persons. There are only four image inputs, so these two have no image of their own.
+
 ## 1.5.1 — 2026-11-14
 
 - **Stronger styles:** with a style block selected, the prompt now opens and closes with the medium and technique, and every element - persons, clothes, objects, background - is described in the language of the style, not only named once. This overrides the order of the model guides, so paintings and drawings no longer drift into photos.

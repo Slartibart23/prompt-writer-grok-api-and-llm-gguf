@@ -64,14 +64,14 @@ class LocalPromptForgeGGUF:
         optional["max_side"] = (max_side[0], dict(max_side[1], default=1024))
         optional.update(LOCAL_OPTIONS)
         # added later (image_4 in 1.2.0, persons in 1.3.0, system / light / safe in
-        # 1.5.0): after everything else, in that order
-        for later in ("image_4", "persons", "system", "light", "safe"):
+        # 1.5.0, person_5 / person_6 in 1.6.0): after everything else, in that order
+        for later in ("image_4", "persons", "system", "light", "safe", "person_5", "person_6"):
             optional[later] = optional.pop(later)
         return {"required": required, "optional": optional}
 
     @classmethod
     def VALIDATE_INPUTS(cls, preset, model, person_1=None, person_2=None, person_3=None,
-                        person_4=None, style_1=None, style_2=None):
+                        person_4=None, person_5=None, person_6=None, style_1=None, style_2=None):
         # Like Prompt Writer · Grok API; the model list also changes (✓ once downloaded).
         return True
 

@@ -1,11 +1,11 @@
-"""Prompt Writer · Persons: chooses up to four persons from your library outside
+"""Prompt Writer · Persons: chooses up to six persons from your library outside
 the writer nodes. Its `persons` output goes to the `persons` input of
-Prompt Writer · Grok API / LLM GGUF, which then locks its own person_1..4."""
+Prompt Writer · Grok API / LLM GGUF, which then locks its own person_1..6."""
 
 import json
 
 from . import library
-from .forge_node import PERSON_SLOTS, PERSON_TOOLTIP, selected_persons
+from .forge_node import PERSON_SLOTS, person_input, selected_persons
 
 LOG = "[Prompt Writer · Persons]"
 
@@ -17,7 +17,7 @@ class PromptWriterPersons:
     OUTPUT_TOOLTIPS = ("Connect to the 'persons' input of Prompt Writer · Grok API or "
                        "LLM GGUF - one Persons node can feed several writer nodes.",)
     FUNCTION = "select"
-    DESCRIPTION = ("Chooses up to four persons (or groups) from your library for one or more "
+    DESCRIPTION = ("Chooses up to six persons (or groups) from your library for one or more "
                    "Prompt Writer nodes. While it is connected, the writer's own person "
                    "fields are locked.")
 
@@ -25,11 +25,11 @@ class PromptWriterPersons:
     def INPUT_TYPES(cls):
         names = library.names("person")
         return {"required": {
-            f"person_{n}": (names, {"default": library.NONE, "tooltip": PERSON_TOOLTIP.format(n=n)})
-            for n in range(1, PERSON_SLOTS + 1)}}
+            f"person_{n}": person_input(names, n) for n in range(1, PERSON_SLOTS + 1)}}
 
     @classmethod
-    def VALIDATE_INPUTS(cls, person_1=None, person_2=None, person_3=None, person_4=None):
+    def VALIDATE_INPUTS(cls, person_1=None, person_2=None, person_3=None, person_4=None,
+                        person_5=None, person_6=None):
         # persons live in your own library: unknown names are skipped, not errors
         return True
 

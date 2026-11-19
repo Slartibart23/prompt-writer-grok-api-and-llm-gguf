@@ -69,7 +69,8 @@ NEG_WAN = ("色调艳丽，过曝，静态，细节模糊不清，字幕，风�
 # ByteDance Seedream (image) and Seedance (video) run through APIs (ComfyUI partner
 # nodes, BytePlus ModelArk, Venice ...) that take no negative prompt. The guides
 # follow the BytePlus ModelArk prompt guides: "Seedream 4.0-4.5 prompt guide",
-# "Seedream 5.0 pro / flash tutorial", "Dreamina Seedance 2.5 prompt guide",
+# "Seedream 5.0 pro / flash tutorial", "Dola Seedream 5.5 tutorial",
+# "Dreamina Seedance 2.5 prompt guide",
 # "Dreamina Seedance 2.0 series prompt guide" and "Seedance-1.5-pro prompt guide".
 SEEDREAM_GUIDE = """- Coherent natural language in full sentences: subject + action + environment, then style, colour, lighting and composition where they matter. Never a keyword list ("A girl in a long dress walks under a parasol along a tree-lined path, in the style of a Monet oil painting", not "girl, parasol, trees, oil painting").
 - Concise and precise beats stacked ornate adjectives: usually 40-150 words. For complex scenes describe each element concretely (position, count, colour, material, text) - but never more than 600 words, or details get lost.
@@ -169,6 +170,20 @@ TARGETS = [
 - The FLUX.2 API models also accept a JSON prompt; write prose unless the user asks for JSON.""",
     },
     {
+        "label": "Seedream 5.5",
+        "about": "ByteDance Dola Seedream 5.5 via API (natural language, 40-150 words, up to 10 "
+                 "reference images, native transparent images, text in many languages). No "
+                 "negative prompt; for a transparent result set background = transparent and "
+                 "output_format = png in the API node.",
+        "negative": "",
+        "idea": (0.7, 0.95), "caption": (0.3, 1.0), "max_tokens": 8192,
+        "guide": SEEDREAM_GUIDE + """
+- Seedream 5.5 takes up to 10 reference images ("Image 1" ... "Image 10"); say for each one what it supplies.
+- Design work (posters, packaging, stickers, standees, UI, infographics): describe the layout element by element - what sits where, its shape, material and colour - and close with the palette in one sentence ("Use vintage red, forest green, champagne gold and off-white.").
+- Transparent result (sticker, icon, logo, cut-out product, standee): describe only the subject with clean, intact edges and end with the sentence "Set a transparent background." Seedream 5.5 makes native RGBA images, also from reference images.
+- Text renders in many languages: keep text to be rendered in its original language and script, in double quotes. Short UI text, numbers and labels ("01:24 / 04:32") render verbatim.""",
+    },
+    {
         "label": "Seedream 5.0",
         "about": "ByteDance Seedream 5.0 Pro / Flash / Lite via API (natural language, 40-150 "
                  "words, text in many languages). No negative prompt.",
@@ -190,7 +205,7 @@ TARGETS = [
     {
         "label": "Seedream Edit",
         "kind": "edit",
-        "about": "ByteDance Seedream 4.0 / 4.5 / 5.0 editing and multi-image input via API "
+        "about": "ByteDance Seedream 4.0 / 4.5 / 5.0 / 5.5 editing and multi-image input via API "
                  "(edit instruction, Image 1..4). Connect the input images to image_1..image_4 "
                  "in the same order as in the Seedream node. No negative prompt.",
         "negative": "",
@@ -200,7 +215,8 @@ TARGETS = [
 - Say in one short clause what stays unchanged ("keeping her pose and expression unchanged"). Do not re-describe the parts that stay.
 - Several input images: call them "Image 1", "Image 2" ... in the order they are connected and say what comes from each ("Dress the woman in Image 1 in the outfit from Image 2", "Apply the style of Image 3 to Image 1"). With a single input image say "the image".
 - Marks drawn on the image (a red area, arrows, boxes, doodles): refer to them by colour, shape and position ("insert a sofa where the blue area is marked") and add "remove all marks" when they must not stay.
-- Coordinates (Seedream 5.0 Pro / Flash): if the user gives them, keep them unchanged as <bbox>x1 y1 x2 y2</bbox> or <point>x y</point> with values from 0 to 1000.
+- Seedream 5.5 (multi-turn editing): each turn edits the previous result. Name the one change, then list the features to preserve by name ("Preserve the identity, facial features, hairstyle, clothing, pose, background, composition and visual style of the person."). For a transparent result end with "Set a transparent background."
+- Coordinates (Seedream 5.0 Pro / Flash / 5.5): if the user gives them, keep them unchanged as <bbox>x1 y1 x2 y2</bbox> or <point>x y</point> with values from 0 to 1000.
 - New or changed text: the exact text in double quotes.
 - A NEW image built from a reference (character, style or product taken from the input) instead of an edit: first say what to take from the reference image, then describe the new scene fully.
 - No aspect ratio unless the user asks for one; no negative-prompt lists.""",
@@ -646,6 +662,7 @@ WORDS = {
     "Wan 3.0": "80-250 words (Alibaba gives no number)",
     "MiniMax H3 FL2VA": "120-250 words for integrated_multimodal_description (H3 gives no number)",
     "MiniMax H3 REF2VA": "350-500 words for detailed_description (official H3 guide)",
+    "Seedream 5.5": "40-150 words, never more than 600 (BytePlus: concise and precise beats stacked adjectives)",
     "Seedream 5.0": "40-150 words, never more than 600 (BytePlus: concise and precise beats stacked adjectives)",
     "Seedream 4.5 / 4.0": "40-150 words, never more than 600 (BytePlus: concise and precise beats stacked adjectives)",
     "Seedream Edit": "15-60 words (BytePlus: concise, unambiguous edit instructions)",
@@ -784,6 +801,13 @@ EXAMPLES = {
         "years.</d>\n\noverall_soundscape:\nPages rustling, the creak of the wooden floor "
         "and birdsong through the open door.\n\nnon_diegetic_music:\nA slow solo piano "
         "with long pauses, fading out at the end."),
+    "Seedream 5.5": (
+        "A die-cut sticker of a cheerful red fox riding a mint-green bicycle, drawn as a flat "
+        "vector illustration with thick, smooth outlines. The fox wears a yellow scarf that "
+        "flutters behind it, and a wicker basket full of oranges hangs from the handlebars. A "
+        "thin white border runs evenly around the whole sticker, with sharp and intact edges. "
+        "Below the bicycle, the words \"SUNDAY RIDE\" curve in bold rounded cream letters. "
+        "Use fox red, mint green, warm yellow and cream. Set a transparent background."),
     "Seedream 5.0": (
         "A vertical poster for a summer jazz festival by the sea. A saxophonist in a white "
         "linen suit plays on a small wooden stage on a bright afternoon, the calm blue "
@@ -925,6 +949,7 @@ WORDS_DE = {
     "Wan 3.0": "80-250 Wörter (Alibaba nennt keine Zahl)",
     "MiniMax H3 FL2VA": "120-250 Wörter für integrated_multimodal_description (H3 nennt keine Zahl)",
     "MiniMax H3 REF2VA": "350-500 Wörter für detailed_description (offizieller H3-Leitfaden)",
+    "Seedream 5.5": "40-150 Wörter, nie mehr als 600 (BytePlus: knapp und genau statt gehäufter Adjektive)",
     "Seedream 5.0": "40-150 Wörter, nie mehr als 600 (BytePlus: knapp und genau statt gehäufter Adjektive)",
     "Seedream 4.5 / 4.0": "40-150 Wörter, nie mehr als 600 (BytePlus: knapp und genau statt gehäufter Adjektive)",
     "Seedream Edit": "15-60 Wörter (BytePlus: knappe, eindeutige Edit-Anweisungen)",
@@ -982,11 +1007,15 @@ ABOUT_DE = {
     "MiniMax H3 REF2VA": "MiniMax H3 Voll-Referenz Video+Ton: image_1..image_4 = "
                          "Referenzbilder (<Picture 1..4>). Referenzvideos oder -ton im Text "
                          "erwähnen. H3 nutzt keinen Negativprompt.",
+    "Seedream 5.5": "ByteDance Dola Seedream 5.5 über API (natürliche Sprache, 40-150 Wörter, bis "
+                    "zu 10 Referenzbilder, echte transparente Bilder, Text in vielen Sprachen). Kein "
+                    "Negativprompt; für ein transparentes Ergebnis im API-Node background = "
+                    "transparent und output_format = png setzen.",
     "Seedream 5.0": "ByteDance Seedream 5.0 Pro / Flash / Lite über API (natürliche Sprache, 40-150 "
                     "Wörter, Text in vielen Sprachen). Kein Negativprompt.",
     "Seedream 4.5 / 4.0": "ByteDance Seedream 4.5 und 4.0 über API (natürliche Sprache, 40-150 "
                           "Wörter). Kein Negativprompt.",
-    "Seedream Edit": "ByteDance-Seedream-4.0-/4.5-/5.0-Bearbeitung und Mehrbild-Eingabe über API "
+    "Seedream Edit": "ByteDance-Seedream-4.0-/4.5-/5.0-/5.5-Bearbeitung und Mehrbild-Eingabe über API "
                      "(Edit-Anweisung, Image 1..4). Die Eingangsbilder in derselben Reihenfolge wie "
                      "im Seedream-Node an image_1..image_4 anschließen. Kein Negativprompt.",
     "Seedance 2.5": "ByteDance Seedance 2.5 über API (4-30 s, eigener Ton und Dialog in 10+ "

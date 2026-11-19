@@ -5,10 +5,13 @@
 //   (ComfyUI/user/grok_prompt_forge/presets.json), "Delete preset" removes it
 // - "Refresh model list" loads the current model ids from the xAI API
 // - "Persons & styles..." edits your library (ComfyUI/user/grok_prompt_forge/
-//   library.json) with export / import and template persons; person_1..4 and
+//   library.json) with export / import and template persons; person_1..6 and
 //   style_1..2 follow it
 // - Prompt Writer · Persons chooses the persons outside the writer nodes; while
-//   a writer's `persons` input is connected, its own person_1..4 are locked
+//   a writer's `persons` input is connected, its own person_1..6 are locked
+// - Prompt Writer · System Prompt Library chooses the system prompt from the whole
+//   library (filters, large editor, "Save as...", "Delete"); while it is connected
+//   in mode "replace", the writer's own system_prompt is locked
 // - "Load from archive..." puts an archived prompt into the text field
 // - Prompt Writer · Show Prompt shows a text with its word / tag / sentence / character
 //   count (display only, never re-runs anything)
@@ -28,7 +31,7 @@ const LOCAL_NODE = "LocalPromptForgeGGUF"; // same presets, persons and archive,
 const SHOW_NODE = "GrokShowPrompt";
 const PERSONS_NODE = "PromptWriterPersons"; // chooses the persons for one or more writer nodes
 const FORGE_NODES = [NODE, LOCAL_NODE];
-const SYSTEM_NODE = "PromptWriterSystemPrompt"; // your own system prompts with a label
+const SYSTEM_NODE = "PromptWriterSystemPrompt"; // the system prompt library
 const OUR_NODES = [...FORGE_NODES, SHOW_NODE, PERSONS_NODE, SYSTEM_NODE];
 const TEXTS_DE = {
   [NODE]: NODE_TEXT_DE,
@@ -124,7 +127,10 @@ function translateNode(node) {
     else if (slot.label === text.label) slot.label = undefined;
   }
   if (isShow) renderShown(node);
-  else if (FORGE_NODES.includes(type)) {
+  else if (type === SYSTEM_NODE) {
+    showSystemFilters(node);
+    refreshSystemChoices(node);
+  } else if (FORGE_NODES.includes(type)) {
     showFilters(node);
     showWordHint(node);
     lockPersons(node);
@@ -189,7 +195,7 @@ function allNodes() {
   return graphNodes().filter((n) => OUR_NODES.some((t) => isType(n, t)));
 }
 
-// nodes with person_1..4 / style_1..2 selection boxes
+// nodes with person_1..6 / style_1..2 selection boxes
 function libraryNodes() {
   return graphNodes().filter((n) => [...FORGE_NODES, PERSONS_NODE].some((t) => isType(n, t)));
 }
@@ -481,7 +487,7 @@ function showPersonDetails(node, w) {
   }
 }
 
-// While the `persons` input of a writer node is connected, its own person_1..4
+// While the `persons` input of a writer node is connected, its own person_1..6
 // are locked (greyed out, ignored): Prompt Writer · Persons chooses them.
 function lockPersons(node) {
   const locked = !!node.inputs?.some((i) => i.name === "persons" && i.link != null);
@@ -554,7 +560,7 @@ function modal(title, width = "820px") {
 // -------------------------------------------------- persons & style blocks
 const LIBRARY = {
   person: {
-    tab: "tabPersons", slots: ["person_1", "person_2", "person_3", "person_4"],
+    tab: "tabPersons", slots: ["person_1", "person_2", "person_3", "person_4", "person_5", "person_6"],
     fields: [
       { key: "name", label: "promptNameLabel", hint: "promptNameHint", rows: 1 },
       { key: "gender", label: "genderLabel", hint: "genderHint", choices: ["", "m", "f"] },
@@ -793,53 +799,273 @@ async function openLibrary(node, startKind = "person") {
   render();
 }
 
-// ----------------------------------------------- Prompt Writer · System Prompt
-// Your saved system prompts live in ComfyUI/user/grok_prompt_forge/system_prompts.json.
-// "Load..." puts one into the node's label and text, "Save now" stores label and
-// text at once, "Delete" removes the label from the library.
+// ---------------------------------------- Prompt Writer · System Prompt Library
+// One selection box holds the whole library: the system prompts of the built-in
+// presets, of your own presets and your saved system prompts (★, kept in
+// ComfyUI/user/grok_prompt_forge/system_prompts.json). Choosing one puts its label
+// and text into the node. Two filter boxes narrow the list. All of this is display
+// only: the choice and the filters live in node.properties, the node sends only
+// label, text and mode. "Save as..." asks for a name of your own (built-in presets
+// are never overwritten), "Delete" removes only your own saved prompts.
+const MARK = "★ ";
+const SYS_LIBRARY = "grok_system_library";
+const SYS_FILTERS = {
+  group: { widget: "grok_sys_filter_group", label: "filterType", tip: "sysFilterTypeTip",
+           keys: ["all", "image", "edit", "video", "tools", "own", "saved"] },
+  task: { widget: "grok_sys_filter_task", label: "filterTask", tip: "sysFilterTaskTip",
+          keys: ["all", "generation", "caption"] },
+};
+const cleanLabel = (label) => String(label ?? "").trim().replace(/^(★\s*)+/, "").trim();
+
 async function fetchSystemPrompts() {
   return (await (await api.fetchApi("/grok_prompt_forge/system_prompts")).json()).prompts || {};
 }
 
-async function openSystemPrompts(node) {
-  const prompts = await fetchSystemPrompts();
-  const { body, close } = modal(t("systemTitle"), "720px");
-  const labels = Object.keys(prompts);
-  body.append(el("div", { style: HINT_STYLE, textContent: labels.length ? t("systemPick") : t("systemEmpty") }),
-    el("div", { style: { display: "flex", flexDirection: "column", gap: "6px" } },
-      ...labels.map((label) => {
-        const b = button(label, () => {
-          setValue(node, "label", label);
-          setValue(node, "text", prompts[label]);
-          node.setDirtyCanvas?.(true, true);
-          close();
-          toast("success", t("systemLoaded"), label);
-        }, { textAlign: "left" });
-        b.title = prompts[label]; // the text on hover
-        return b;
-      })));
+let savedPromptsPromise = null;
+function loadSavedPrompts(force = false) {
+  if (force || !savedPromptsPromise) {
+    savedPromptsPromise = fetchSystemPrompts().catch((e) => {
+      console.warn(`[${TITLE}] saved system prompts not available:`, e);
+      savedPromptsPromise = null;
+      return {};
+    });
+  }
+  return savedPromptsPromise;
 }
 
-async function saveSystemPrompt(node) {
-  const label = String(widget(node, "label")?.value ?? "").trim();
+// [{ choice, label, text, group, task }] - your saved prompts first, then all presets
+async function systemEntries() {
+  const [list, saved] = await Promise.all([loadPresets(), loadSavedPrompts()]);
+  return [
+    ...Object.entries(saved).map(([label, text]) => ({
+      choice: MARK + label, label, text, group: "saved", task: "any" })),
+    ...list.filter((p) => p.system_prompt).map((p) => ({
+      choice: p.name, label: p.name, text: p.system_prompt, group: presetGroup(p), task: presetTask(p) })),
+  ];
+}
+
+function sysFilterValue(node, which) {
+  const value = node.properties?.systemFilter?.[which];
+  return SYS_FILTERS[which].keys.includes(value) ? value : "all";
+}
+
+async function refreshSystemChoices(node) {
+  const w = widget(node, SYS_LIBRARY);
+  if (!w) return;
+  const entries = await systemEntries();
+  const group = sysFilterValue(node, "group");
+  const task = sysFilterValue(node, "task");
+  const choices = entries
+    .filter((e) => (group === "all" || e.group === group)
+      && (task === "all" || e.task === task || e.task === "any"))
+    .map((e) => e.choice);
+  node._grokSysEntries = entries;
+  const current = node.properties?.systemChoice;
+  w.value = current && entries.some((e) => e.choice === current) ? current : t("sysChoose");
+  w.options.values = choices.includes(w.value) || w.value === t("sysChoose") ? choices : [w.value, ...choices];
+  node.setDirtyCanvas?.(true, true);
+}
+
+function systemNodes() {
+  return graphNodes().filter((n) => isType(n, SYSTEM_NODE));
+}
+
+async function updateSystemLists() {
+  await loadSavedPrompts(true);
+  for (const node of systemNodes()) await refreshSystemChoices(node);
+}
+
+function showSystemFilters(node) {
+  for (const [which, spec] of Object.entries(SYS_FILTERS)) {
+    const w = widget(node, spec.widget);
+    if (!w) continue;
+    w.options.values = spec.keys.map((k) => t(optionKey(k)));
+    w.value = t(optionKey(sysFilterValue(node, which)));
+  }
+  const lib = widget(node, SYS_LIBRARY);
+  if (lib && !node.properties?.systemChoice) lib.value = t("sysChoose");
+}
+
+function chooseSystemPrompt(node, choice) {
+  const entry = (node._grokSysEntries || []).find((e) => e.choice === choice);
+  if (!entry) return;
+  node.properties ??= {};
+  node.properties.systemChoice = choice;
+  setValue(node, "label", entry.label);
+  setValue(node, "text", entry.text);
+  node.setDirtyCanvas?.(true, true);
+}
+
+function setupSystemNode(node) {
+  node.properties ??= {};
+  const labelWidget = widget(node, "label");
+  const added = [];
+  for (const [which, spec] of Object.entries(SYS_FILTERS)) {
+    const w = node.addWidget("combo", spec.widget, t(optionKey("all")), (value) => {
+      const key = spec.keys.find((k) => Object.values(STRINGS).some((s) => s[optionKey(k)] === value)) ?? "all";
+      node.properties.systemFilter = { ...node.properties.systemFilter, [which]: key };
+      refreshSystemChoices(node);
+    }, { values: [], serialize: false });
+    w.serialize = false;
+    w._grokText = spec.label;
+    w._grokTip = spec.tip;
+    added.push(w);
+  }
+  const lib = node.addWidget("combo", SYS_LIBRARY, t("sysChoose"), (value) => {
+    chooseSystemPrompt(node, value);
+  }, { values: [], serialize: false });
+  lib.serialize = false;
+  lib._grokText = "sysLibrary";
+  lib._grokTip = "sysLibraryTip";
+  added.push(lib);
+  // above label / text / mode / save, below the language switch
+  for (const w of added) node.widgets.splice(node.widgets.indexOf(w), 1);
+  node.widgets.splice(node.widgets.indexOf(labelWidget), 0, ...added);
+
+  addButton(node, "btnSystemEditor", openSystemEditor);
+  addButton(node, "btnSystemSave", saveSystemPromptAs);
+  addButton(node, "btnSystemDelete", deleteSystemPrompt);
+  const min = node.computeSize();
+  node.setSize([Math.max(node.size[0], min[0], 420), Math.max(node.size[1], min[1], 420)]);
+}
+
+async function openSystemEditor(node) {
+  const { body, close } = modal(t("sysEditorTitle"), "1100px");
+  const labelInput = el("input", { value: String(widget(node, "label")?.value ?? ""), style: INPUT_STYLE });
+  const area = el("textarea", { value: String(widget(node, "text")?.value ?? ""), spellcheck: false, style: {
+    ...INPUT_STYLE, height: "62vh", resize: "vertical", fontFamily: "ui-monospace, Consolas, monospace",
+    fontSize: "13px", lineHeight: "1.45", whiteSpace: "pre-wrap" } });
+  const counter = el("div", { style: { ...HINT_STYLE, margin: "6px 0 0" } });
+  const count = () => {
+    const [words, , , chars] = countText(area.value);
+    counter.textContent = t("sysCount", words, chars, area.value ? area.value.split("\n").length : 0);
+  };
+  area.addEventListener("input", count);
+  count();
+  const apply = () => {
+    setValue(node, "label", labelInput.value);
+    setValue(node, "text", area.value);
+    node.setDirtyCanvas?.(true, true);
+  };
+  body.append(
+    el("div", { style: HINT_STYLE, textContent: t("sysEditorHint") }),
+    el("div", { style: { fontWeight: "bold", margin: "4px 0" }, textContent: t("name") }), labelInput,
+    el("div", { style: { fontWeight: "bold", margin: "10px 0 4px" }, textContent: t("textLabel") }), area,
+    counter,
+    el("div", { style: { display: "flex", gap: "8px", marginTop: "12px", justifyContent: "flex-end" } },
+      button(t("sysCancel"), close),
+      button(t("btnSystemSave"), async () => {
+        apply();
+        if (await saveSystemPromptAs(node)) close();
+      }),
+      button(t("sysApply"), () => { apply(); close(); }, { fontWeight: "bold" })));
+  area.focus();
+  area.setSelectionRange(0, 0); // start reading at the top
+  area.scrollTop = 0;
+}
+
+async function askSystemName(defaultValue) {
+  const dialog = app.extensionManager?.dialog;
+  if (dialog?.prompt) {
+    return dialog.prompt({ title: t("sysSaveTitle"), message: t("sysSaveName"), defaultValue });
+  }
+  return window.prompt(t("sysSaveName"), defaultValue);
+}
+
+// true when saved
+async function saveSystemPromptAs(node) {
   const text = String(widget(node, "text")?.value ?? "");
-  if (!label) return toast("warn", t("systemNotSaved"), t("systemNeedsLabel"));
+  if (!text.trim()) { toast("warn", t("systemNotSaved"), t("sysEmptyText")); return false; }
+  const builtins = new Set((await loadPresets()).filter((p) => p.builtin).map((p) => p.name));
+  const current = cleanLabel(widget(node, "label")?.value);
+  const name = cleanLabel(await askSystemName(builtins.has(current) ? "" : current));
+  if (!name) return false;
+  if (builtins.has(name)) { toast("warn", t("systemNotSaved"), t("sysBuiltinName", name)); return false; }
   const existing = await fetchSystemPrompts();
-  if (label in existing && existing[label] !== text.trim() && !(await confirmBox(t("systemOverwrite", label)))) return;
+  if (name in existing && existing[name] !== text.trim() && !(await confirmBox(t("systemOverwrite", name)))) return false;
   try {
-    await postJson("/grok_prompt_forge/system_prompts", { label, text });
-    toast("success", t("systemSaved"), label);
-  } catch (e) { toast("error", t("systemNotSaved"), String(e.message ?? e)); }
+    await postJson("/grok_prompt_forge/system_prompts", { label: name, text });
+  } catch (e) {
+    toast("error", t("systemNotSaved"), String(e.message ?? e));
+    return false;
+  }
+  setValue(node, "label", name);
+  node.properties ??= {};
+  node.properties.systemChoice = MARK + name;
+  await updateSystemLists();
+  toast("success", t("systemSaved"), name);
+  return true;
 }
 
 async function deleteSystemPrompt(node) {
-  const label = String(widget(node, "label")?.value ?? "").trim();
-  if (!label || !(label in (await fetchSystemPrompts()))) return toast("info", t("systemNotInLibrary"), label);
+  const label = cleanLabel(widget(node, "label")?.value);
+  const saved = await fetchSystemPrompts();
+  if (!label || !(label in saved)) {
+    const isPreset = (await loadPresets()).some((p) => p.name === label);
+    return toast("info", t("systemNotInLibrary"), isPreset ? t("sysBuiltinNoDelete", label) : label);
+  }
   if (!(await confirmBox(t("systemConfirmDelete", label)))) return;
   try {
     await postJson("/grok_prompt_forge/system_prompts/delete", { label });
-    toast("success", t("deleted"), label);
-  } catch (e) { toast("error", t("notDeleted"), String(e.message ?? e)); }
+  } catch (e) {
+    return toast("error", t("notDeleted"), String(e.message ?? e));
+  }
+  for (const n of systemNodes()) {
+    if (n.properties?.systemChoice === MARK + label) n.properties.systemChoice = "";
+  }
+  await updateSystemLists();
+  toast("success", t("deleted"), label);
+}
+
+// While the `system` input of a writer node gets its text from a library node in
+// mode "replace", the writer's own system_prompt is not used: it is greyed out and
+// read-only. Checked on every draw, so it follows the mode, the text and the link.
+function systemLocked(node) {
+  const input = node.inputs?.find((i) => i.name === "system");
+  if (input?.link == null) return false;
+  const graph = node.graph ?? app.graph;
+  const links = graph?.links;
+  const link = links?.get?.(input.link) ?? links?.[input.link];
+  const source = link && graph.getNodeById?.(link.origin_id);
+  if (!source || !isType(source, SYSTEM_NODE) || source.mode === 2 || source.mode === 4) return false;
+  return widget(source, "mode")?.value === "replace" && !!String(widget(source, "text")?.value ?? "").trim();
+}
+
+function lockSystemPrompt(node) {
+  const w = widget(node, "system_prompt");
+  if (!w) return;
+  const locked = systemLocked(node);
+  if (w._grokSysLocked === locked) return;
+  w._grokSysLocked = locked;
+  // not w.disabled: ComfyUI hides a disabled text box completely; this one stays
+  // readable, greyed out and read-only
+  const input = w.inputEl ?? w.element;
+  if (input) {
+    input.readOnly = locked;
+    input.style.opacity = locked ? "0.4" : "";
+    input.style.cursor = locked ? "not-allowed" : "";
+    input.title = locked ? t("sysLocked") : "";
+  }
+  node.setDirtyCanvas?.(true, true);
+}
+
+function showSystemLock(node) {
+  const w = widget(node, "system_prompt");
+  if (!w || w._grokSysTip) return;
+  try {
+    Object.defineProperty(w, "tooltip", {
+      configurable: true,
+      get() {
+        return [this._grokSysLocked ? t("sysLocked") : "",
+                this._grokBaseTip ?? specTooltip(node, this.name)].filter(Boolean).join("\n\n");
+      },
+      set(value) { this._grokBaseTip = value; },
+    });
+    w._grokDetails = true; // translateNode reads the English text from the definition
+    w._grokSysTip = true;
+  } catch (e) {
+    console.debug(`[${TITLE}] no lock note on system_prompt:`, e); // the note is optional
+  }
 }
 
 // ------------------------------------------------------------------ archive
@@ -994,9 +1220,7 @@ app.registerExtension({
       nodeType.prototype.onNodeCreated = function () {
         const r = onCreated?.apply(this, arguments);
         addLanguageSwitch(this);
-        addButton(this, "btnSystemLoad", openSystemPrompts);
-        addButton(this, "btnSystemSave", saveSystemPrompt);
-        addButton(this, "btnSystemDelete", deleteSystemPrompt);
+        setupSystemNode(this);
         applyLanguage(this);
         return r;
       };
@@ -1029,7 +1253,15 @@ app.registerExtension({
     if (!FORGE_NODES.includes(nodeData?.name)) return;
     const isGrok = nodeData.name === NODE;
 
-    // the `persons` input locks person_1..4 while it is connected
+    // a library node in mode "replace" on the `system` input locks system_prompt
+    const onDrawForeground = nodeType.prototype.onDrawForeground;
+    nodeType.prototype.onDrawForeground = function () {
+      const r = onDrawForeground?.apply(this, arguments);
+      lockSystemPrompt(this);
+      return r;
+    };
+
+    // the `persons` input locks person_1..6 while it is connected
     const onConnectionsChange = nodeType.prototype.onConnectionsChange;
     nodeType.prototype.onConnectionsChange = function () {
       const r = onConnectionsChange?.apply(this, arguments);
@@ -1058,6 +1290,7 @@ app.registerExtension({
       addButton(node, "btnLibrary", openLibrary);
       addButton(node, "btnArchive", openArchive);
       markSelections(node);
+      showSystemLock(node);
       applyLanguage(node);
       refreshPresetChoices(node);
       return r;

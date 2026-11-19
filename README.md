@@ -30,7 +30,7 @@ Both nodes share everything else:
 
 ![Prompt Writer · Persons connected to the persons input of Prompt Writer · Grok API](docs/images/persons_node.png)
 
-*Prompt Writer · Persons chooses the template person Kwame and the group Group_of_women. While it is connected to the writer's `persons` input, the writer's own `person_1` … `person_4` are greyed out and locked.*
+*Prompt Writer · Persons chooses the template person Kwame and the group Group_of_women. While it is connected to the writer's `persons` input, the writer's own person fields are greyed out and locked.*
 
 ![The tooltip of person_1 with the selected person's name in the prompt, gender and description](docs/images/persons_hover.png)
 
@@ -75,10 +75,10 @@ All nodes are in the node menu under **Prompt Writer**.
 
 | Node | Purpose |
 |---|---|
-| **Prompt Writer · Grok API** | Prompt writing, caption rewriting and image captioning through the xAI Grok API. It has four optional image inputs, a custom system prompt input and 58 built-in task presets. You can save your own presets, pick up to four persons and two style blocks from your library, and reload results from the archive. Outputs `prompt` and `negative_prompt`. |
+| **Prompt Writer · Grok API** | Prompt writing, caption rewriting and image captioning through the xAI Grok API. It has four optional image inputs, a custom system prompt input and 60 built-in task presets. You can save your own presets, pick up to six persons and two style blocks from your library, and reload results from the archive. Outputs `prompt` and `negative_prompt`. |
 | **Prompt Writer · LLM GGUF** | The same with a local, uncensored **Qwen3.8-27B** (huihui abliterated or HauhauCS Aggressive, several sizes) instead of the API. The chosen model and its vision projector are downloaded on the first run. Needs llama-cpp-python with CUDA: see **[docs/LOCAL_GGUF.md](docs/LOCAL_GGUF.md)** for the installation and which model fits your GPU. |
-| **Prompt Writer · Persons** | Chooses up to four persons (or groups) from your library outside the writer nodes. Connect its `persons` output to the `persons` input of one or more writer nodes, e.g. one cast for an image and a video writer. While it is connected, the writer's own `person_1` … `person_4` are locked. |
-| **Prompt Writer · System Prompt** | Your own system prompt with a label. Mode `append` adds it to the preset's system prompt as extra binding instructions, mode `replace` uses it instead. With `save` on it is stored under its label in `ComfyUI/user/grok_prompt_forge/system_prompts.json` (not in the workflow); off, it is only used for this run. **📂 Load...** picks a saved one (hover shows the text), **💾 Save now** and **🗑 Delete from library** work without a run. Connect its output to the `system` input of a writer node. |
+| **Prompt Writer · Persons** | Chooses up to six persons (or groups) from your library outside the writer nodes. Connect its `persons` output to the `persons` input of one or more writer nodes, e.g. one cast for an image and a video writer. While it is connected, the writer's own `person_1` … `person_6` are locked. |
+| **Prompt Writer · System Prompt Library** | The whole system prompt library in one node: the system prompts of all built-in presets, of your own presets and your saved system prompts (★). Choose one in **System prompt**, narrowed by **Filter: type** (image, edit, video, captions & tools, my presets, ★ my system prompts) and **Filter: task** (Generation, Caption); it fills `label` and `text`. **📝 Open editor...** edits the text in a large window with a word, character and line count. **💾 Save as...** saves it under a name of your own in `ComfyUI/user/grok_prompt_forge/system_prompts.json` (not in the workflow); built-in presets are never overwritten. **🗑 Delete my prompt** removes only your own saved prompts. Mode `replace` (default) uses the text instead of the writer's `system_prompt`, which is then greyed out and read-only; mode `append` adds it as extra binding instructions. Connect its output to the `system` input of a writer node; the preset, negative prompt and sampling stay on the writer. |
 | **Prompt Writer · Show Prompt** | Shows a text on the node and passes it on unchanged. Below the text, a status line counts words, tags (comma-separated parts), sentences and characters; switch it off with "show counts". Counting is done locally, needs no API call, and never re-runs anything. The last text is kept with the workflow. |
 | **Prompt Writer · System Prompt Loader** | Loads a system prompt from a `.txt` file and reloads it automatically when the file changes. Connect it to `custom_system_prompt`. |
 | **Prompt Writer · Text File Loader** | Loads `.txt` files from any folder one after another, in natural sort order, for batch runs. Outputs the text, the filename without extension, the full path and the file count. |
@@ -117,13 +117,13 @@ The filters only change which presets the list shows. They never change the sele
 | Custom system prompt | Your own system prompt. Left empty, only the node's own rules are sent (see below). |
 | Caption ▸ LoRA training caption | Refines a raw caption (e.g. from JoyCaption) into a training caption. If you put your LoRA's trigger token into `trigger_word`, the subject's fixed traits are removed so they bind to that token. |
 | Caption ▸ Describe image | Captions `image_1`. Optional text adds extra instructions or a question about the image. |
-| Recast ▸ Swap persons | Swaps the persons in an existing prompt for the selected `person_1..4`; everything else stays (see below). |
+| Recast ▸ Swap persons | Swaps the persons in an existing prompt for the selected `person_1..6`; everything else stays (see below). |
 | Generation ▸ *target* | Expands a short idea or keywords into a full prompt for the target model. (Called "Idea ▸" up to 1.1.0; saved workflows and presets are renamed automatically.) |
 | Caption ▸ *target* | Rewrites an existing caption faithfully (nothing new is added) into the target model's prompt style. |
 
 **Targets, local models:** Krea 2 · Qwen-Image 2.1 · Qwen-Image-Edit 2.1 · Z-Image · FLUX · Illustrious · Pony · SDXL · Wan 2.2 · Wan 2.7 · Wan 3.0 · MiniMax H3 FL2VA · MiniMax H3 REF2VA
 
-**Targets, API models:** Seedream 5.0 · Seedream 4.5 / 4.0 · Seedream Edit · GPT Image · Nano Banana · Grok Imagine Image · Flux 3 · Seedance 2.5 · Seedance 2.0 · Seedance 1.5 / 1.0 Pro · Seedance Reference · Kling 3.0 · Veo 3.1 · Grok Imagine Video
+**Targets, API models:** Seedream 5.5 · Seedream 5.0 · Seedream 4.5 / 4.0 · Seedream Edit · GPT Image · Nano Banana · Grok Imagine Image · Flux 3 · Seedance 2.5 · Seedance 2.0 · Seedance 1.5 / 1.0 Pro · Seedance Reference · Kling 3.0 · Veo 3.1 · Grok Imagine Video
 
 The API presets write prompts for the ComfyUI partner nodes and other API services (BytePlus, Venice ...). The node only writes the prompt; the image or video is generated by the API node you connect it to. OpenAI's Sora is missing because OpenAI removed it from its API on 2026-09-24.
 
@@ -141,8 +141,9 @@ The API presets write prompts for the ComfyUI partner nodes and other API servic
 | Wan 2.7 / 3.0 | Entity + scene + motion + aesthetics + sound; multi-shot `Shot 1 [0-3s]`; references as "Image 1" | Official Wan negative (Chinese) |
 | MiniMax H3 FL2VA | Alignment line + `integrated_multimodal_description` / `overall_soundscape` / `non_diegetic_music`; `image_1` = first frame, `image_2` = last frame | none |
 | MiniMax H3 REF2VA | The six full-reference sections with `<Subject N>` / `<Picture N>` labels; `image_1..4` = reference pictures | none |
+| Seedream 5.5 | Like 5.0, plus up to 10 references as "Image 1" … "Image 10"; layouts element by element with a closing palette sentence; transparent results end with "Set a transparent background." (set `background` = transparent and `output_format` = png in the API node) | none (no negative prompt in the API) |
 | Seedream 5.0, 4.5 / 4.0 | Full sentences, subject + action + environment + style, 40–150 words; quoted text; references as "Image 1" | none (no negative prompt in the API) |
-| Seedream Edit | Short edit instruction, "Image 1"…"Image 4" in node order, one "keep … unchanged" clause | none |
+| Seedream Edit | Short edit instruction, "Image 1"…"Image 4" in node order, one "keep … unchanged" clause; for Seedream 5.5 multi-turn edits the preserved features are listed by name | none |
 | GPT Image | Intended use first, then scene → subject → details → constraints; labelled lines for complex images; exact quoted text | none |
 | Nano Banana | Narrative paragraph that starts with a verb; references by role ("the first image") | none |
 | Grok Imagine Image | 4–6 sentences in a fixed order (subject, details, art direction, light, colour, composition); no avoid-lists | none |
@@ -164,7 +165,7 @@ The guides inside the presets follow each model's official sources:
 - Wan 2.2: `system_prompt.py`
 - Wan 2.7 / 3.0: the Alibaba Model Studio video guide
 - MiniMax H3: its own prompt-writing guides
-- Seedream and Seedance: the BytePlus ModelArk prompt guides (Seedream 4.0–4.5, Seedream 5.0 pro / flash, Seedance 2.5, Seedance 2.0 series, Seedance 1.5 pro)
+- Seedream and Seedance: the BytePlus ModelArk prompt guides (Seedream 4.0–4.5, Seedream 5.0 pro / flash, Dola Seedream 5.5 tutorial, Seedance 2.5, Seedance 2.0 series, Seedance 1.5 pro)
 - GPT Image: OpenAI's image prompting guide and image generation docs
 - Nano Banana: Google's Gemini image generation docs and Nano Banana prompting guides
 - Grok Imagine: xAI's image prompting guide and video docs
@@ -184,7 +185,7 @@ Every target guide also ends with **an example of a good result**. It is marked 
 |---|---|
 | `text` | Your input in any language: an idea, a caption or an edit request. You can type it or connect a string. The output is always English. Only text that should appear in the picture and spoken dialogue stay in their original language. |
 | `custom_system_prompt` | When connected and not empty, it **always** replaces the preset's system prompt. |
-| `system` | From Prompt Writer · System Prompt: your own system prompt, appended to the preset's or replacing it (see the node). |
+| `system` | From Prompt Writer · System Prompt Library: a system prompt from the library. In mode `replace` it is used instead of `system_prompt`, which is then greyed out and read-only; in mode `append` it is added as extra binding instructions (see the node). |
 | `light` | **daylight** (default): clear, white, natural daylight, no dramatic lighting, no golden hour, no neon, no colour grading. **night**: deep night, very dark, lit only by one faint light source (moonlight, or the candle or phone screen your text names). **free**: no rule about light. Your text always wins, and `light` never changes the medium: a cartoon stays a cartoon. Without a style and without a medium in your text, the picture is a natural photograph. |
 | `safe` | Off (default): nudity and sexual content are written explicitly and precisely. On: they are only implied. See *Adult content* below. |
 | `image_1` … `image_4` | Optional single images, not batches; only the first image of a batch is used. The model sees each one as "Image N" by its slot number, so an empty slot doesn't shift the numbering. The tooltip explains how each preset uses them. |
@@ -198,23 +199,23 @@ Every target guide also ends with **an example of a good result**. It is marked 
 
 | Library entry | Fields | Used by |
 |---|---|---|
-| Person | **Label:** shown in the list and the selection boxes, only for your overview, e.g. "Peter with glasses" and "Peter with beard". **Name in the prompt:** written into every prompt exactly as given, e.g. "P3ter"; with a digit for a letter it works as a trigger, and several entries may share it. Empty = the label is used (entries from before 1.4.0). **Gender:** male, female or unknown; it lets pronouns and gendered details fit. **Trigger (optional):** an extra LoRA trigger for special cases, written right after the name when it differs from it. **Description:** appearance and fixed traits, binding; use the name from the prompt in it. **Voice:** timbre, pitch, pace, accent. | `person_1` … `person_4` on the writer nodes or on Prompt Writer · Persons. The voice is used only by the models with audio: MiniMax H3 FL2VA / REF2VA, Wan 2.7 / 3.0, Seedance 1.5 / 2.0 / 2.5, Kling 3.0 / 2.6, Veo 3.1 and Grok Imagine Video. |
+| Person | **Label:** shown in the list and the selection boxes, only for your overview, e.g. "Peter with glasses" and "Peter with beard". **Name in the prompt:** written into every prompt exactly as given, e.g. "P3ter"; with a digit for a letter it works as a trigger, and several entries may share it. Empty = the label is used (entries from before 1.4.0). **Gender:** male, female or unknown; it lets pronouns and gendered details fit. **Trigger (optional):** an extra LoRA trigger for special cases, written right after the name when it differs from it. **Description:** appearance and fixed traits, binding; use the name from the prompt in it. **Voice:** timbre, pitch, pace, accent. | `person_1` … `person_6` on the writer nodes or on Prompt Writer · Persons. The voice is used only by the models with audio: MiniMax H3 FL2VA / REF2VA, Wan 2.7 / 3.0, Seedance 1.5 / 2.0 / 2.5, Kling 3.0 / 2.6, Veo 3.1 and Grok Imagine Video. |
 | Style block | **Text:** e.g. a medium (cartoon, oil painting), a camera look or a ban list | `style_1`, `style_2`; applied to every result |
 
 - **New persons are filled in for you:** type the label (e.g. "Peter") and the dialog suggests the name in the prompt and the trigger ("P3ter": the first a, e, i or o becomes 4, 3, 1 or 0), the gender male and a description that starts with "P3ter is a man". Every suggestion is editable; a field you change yourself is left alone. Renaming the name later also renames it in the description and in a trigger that equals it.
-- **On hover:** the tooltip of `person_1` … `person_4` shows the selected person's name in the prompt, gender, trigger and description; so does an entry in the dialog's list.
+- **On hover:** the tooltip of `person_1` … `person_6` shows the selected person's name in the prompt, gender, trigger and description; so does an entry in the dialog's list.
 - **📥 Add templates** in the dialog adds ten fictional template persons, two groups and seventeen style blocks to your library. Labels you already have are never changed. Each template describes only the outer appearance, in two to three detailed English sentences: origin, skin tone, age, height and build in words (image models can't show "1.88 m"), face, eyes and hair. The label is the real name; the name in the prompt (also the trigger) has one digit for a letter.
   - Persons (label → name in the prompt): Sean → S3an (Ireland), Rafael → R4fael (Brazil), Sione → S1one (Samoa), Kenji → K3nji (Japan), Arjun → 4rjun (India), Kwame → Kw4me (Ghana), Karim → K4rim (Egypt), Olav → 0lav (Norway), Amara → 4mara (Nigeria) and Jiwoo → J1woo (Korea).
   - **Group_of_men** with six and **Group_of_women** with four clearly different members, each with a name of their own.
   - Style blocks: **Natural daylight**, **Cartoon**, **Oil painting**, **Line drawing**, **Watercolour**, **Pencil sketch**, **Anime**, **Manga**, **Hentai**, **Comic book**, **3D render**, **Vintage film photo**, **Van Gogh**, **Rembrandt**, **Simpsons**, **Pixar** and **GTA VI**. Each names its medium and technique with the style's own terms (impasto, chiaroscuro, hatching, screentones, cel shading ...), in positive words only: what the picture is and how it was made, never what it is not - image models are pulled towards every word in a prompt, so even "not realistic" brings realism back. *Anime* is the colour look of Japanese animation, *Manga* the inked look of Japanese comics in full colour, like a manga colour page or cover, *Hentai* the explicit adult anime look with clearly adult characters (with `safe` on it is only implied).
 - **Groups:** a person entry whose description starts with "A group of" is a group in one slot. Its own name is only a label and never appears in the prompt. Instead, every member is introduced by name, and every action is assigned to a member, e.g. "B0ris lifts the crate while M1nh holds the door".
-- **Prompt Writer · Persons:** chooses the persons outside the writer nodes and passes them to the writer's `persons` input. While that input is connected, `person_1` … `person_4` on the writer are greyed out, locked and ignored; disconnect it and they work again with their old values. The slot numbers come from the Persons node, so Person 3 there is Person 3 in the prompt and pairs with `image_3`.
+- **Prompt Writer · Persons:** chooses the persons outside the writer nodes and passes them to the writer's `persons` input. While that input is connected, `person_1` … `person_6` on the writer are greyed out, locked and ignored; disconnect it and they work again with their old values. The slot numbers come from the Persons node, so Person 3 there is Person 3 in the prompt and pairs with `image_3`.
 - **At a glance:** a selected person turns its field **dark red**, a selected style block turns its field **dark blue**. Fields set to "(none)" look normal. The colour is display only and is not saved in the workflow.
 - **Using persons in your text:** refer to a selected person by name or as "Person 1"…"Person 4". Selected persons always appear in the result, even if the text doesn't mention them.
   - Each person is introduced once as "name, trigger, description". The label is never written.
   - After that, every pose, action, gaze and line of dialogue is attributed to a person by name, with no ambiguous "she" or "the woman" when several persons are present.
   - Tag models (Pony, Illustrious, SDXL) get the name first, then the trigger, then the description as tags.
-- **`image_n_is_person_n`** (off by default) pairs each person with the image input of the same number: `person_1` = `image_1`, `person_2` = `image_2`, `person_3` = `image_3`, `person_4` = `image_4`.
+- **`image_n_is_person_n`** (off by default) pairs each person with the image input of the same number: `person_1` = `image_1`, `person_2` = `image_2`, `person_3` = `image_3`, `person_4` = `image_4`. There are only four image inputs, so `person_5` and `person_6` have no image of their own.
   - Turn it on and load a photo of the person into the matching image input, and the model takes the look from it.
   - With Qwen-Image-Edit (`<imageN>`), MiniMax H3 REF2VA (`<Picture N>`), Wan 2.7 / 3.0, Seedream and Seedance ("Image N"), Kling and Grok Imagine (`@ImageN`), GPT Image, Nano Banana and FLUX multi-reference, the prompt points at the image instead of describing the face.
   - Leave it off when the images mean something else, e.g. the first and last frame of a video or the input images of an edit. Workflows saved before 1.2.0 keep the setting they had (it used to be on by default).

@@ -40,6 +40,12 @@ const PERSON_DE = (n) =>
   "Ein Eintrag, dessen Beschreibung mit 'A group of' beginnt, ist eine Gruppe benannter " +
   "Personen in einem Slot.";
 const LOCK_DE = " Gesperrt, solange der Eingang 'Personen' angeschlossen ist.";
+const NOIMG_DE = (n) =>
+  ` Es gibt nur vier Bild-Eingänge: person_${n} hat kein eigenes Bild, 'Bild N = Person N' gilt ` +
+  "für sie nicht.";
+const SYSLOCK_DE =
+  " Gesperrt, solange eine System Prompt Library im Modus 'replace' am Eingang 'Systemprompt' " +
+  "hängt: dieser Node legt dann den Systemprompt fest.";
 
 const STYLE_DE = (n) =>
   `Stil-Baustein ${n} aus deiner Bibliothek (Button '👤 Personen & Stile...'): ein ` +
@@ -69,7 +75,7 @@ export const NODE_TEXT_DE = {
     "File Loader) an dieses Feld anschließen." },
   system_prompt: { label: "Systemprompt", tooltip:
     "Anweisungen, die festlegen, was das Modell tut. Wird von der Auswahl gefüllt; frei " +
-    "bearbeitbar. Wird ignoriert, wenn custom_system_prompt angeschlossen ist." },
+    "bearbeitbar. Wird ignoriert, wenn custom_system_prompt angeschlossen ist." + SYSLOCK_DE },
   negative_prompt: { label: "Negativprompt", tooltip:
     "Standard-Negativprompt des Zielmodells; geht direkt an den Ausgang negative_prompt " +
     "(wird nicht an das Modell geschickt). Leer bei Modellen, die Negativprompts bei CFG 1 " +
@@ -105,14 +111,14 @@ export const NODE_TEXT_DE = {
   persons: { label: "Personen", tooltip:
     "Optional: 'Prompt Writer · Persons' anschließen, um die Personen außerhalb dieses Nodes " +
     "zu wählen - z. B. eine Besetzung für mehrere Writer-Nodes. Solange er angeschlossen ist, " +
-    "sind person_1..person_4 an diesem Node gesperrt und werden ignoriert; es zählen die " +
+    "sind person_1..person_6 an diesem Node gesperrt und werden ignoriert; es zählen die " +
     "Slotnummern des Persons-Nodes (Person 3 dort = Person 3 hier, auch für 'Bild N = " +
     "Person N')." },
   system: { label: "Systemprompt", tooltip:
-    "Optional: 'Prompt Writer · System Prompt' anschließen, um einen deiner gespeicherten (oder " +
-    "einen temporären) Systemprompt zu verwenden. Modus 'replace' nimmt ihn statt des " +
-    "Systemprompts der Auswahl, Modus 'append' hängt ihn als zusätzliche verbindliche " +
-    "Anweisungen an." },
+    "Optional: 'Prompt Writer · System Prompt Library' anschließen, um den Systemprompt dort zu " +
+    "wählen - aus den mitgelieferten Auswahlen, deinen eigenen Auswahlen oder deinen gespeicherten " +
+    "Systemprompts. Modus 'replace' nimmt ihn statt des Feldes Systemprompt (das dann gesperrt " +
+    "ist), Modus 'append' hängt ihn als zusätzliche verbindliche Anweisungen an." },
   light: { label: "Licht", tooltip:
     "Das Licht der Szene, sofern dein Text nichts anderes sagt (dein Text hat immer Vorrang).\n" +
     "daylight: klares, weißes, natürliches Tageslicht mit weichen Schatten und echten Farben - " +
@@ -130,6 +136,8 @@ export const NODE_TEXT_DE = {
     "Handlungen, keine Körperflüssigkeiten. Für API-Modelle mit Inhaltsfilter (Seedream, " +
     "Seedance, GPT Image, Nano Banana, Grok Imagine, Flux 3, Kling, Veo) oder wenn das " +
     "Ergebnis jugendfrei bleiben muss." },
+  person_5: { label: "Person 5", tooltip: PERSON_DE(5) + LOCK_DE + NOIMG_DE(5) },
+  person_6: { label: "Person 6", tooltip: PERSON_DE(6) + LOCK_DE + NOIMG_DE(6) },
   trigger_word: { label: "Trigger-Wort", tooltip:
     "Nur für 'Caption > LoRA training caption': der Trigger des LoRAs für das Hauptmotiv " +
     "(ersetzt {trigger} im Systemprompt). Leer lassen für Captions ohne Trigger." },
@@ -161,7 +169,8 @@ export const NODE_TEXT_DE = {
   person_4: { label: "Person 4", tooltip: PERSON_DE(4) + LOCK_DE },
   image_n_is_person_n: { label: "Bild N = Person N", tooltip:
     "Koppelt jede Person mit dem Bild-Eingang derselben Nummer: person_1 = image_1, " +
-    "person_2 = image_2, person_3 = image_3, person_4 = image_4.\n" +
+    "person_2 = image_2, person_3 = image_3, person_4 = image_4. person_5 und person_6 haben " +
+    "kein eigenes Bild.\n" +
     "An: Lädst du ein Foto der Person in den passenden Bild-Eingang, erfährt das Modell 'dieses " +
     "Bild zeigt diese Person' und übernimmt das Aussehen aus dem Foto. Bei Qwen-Image-Edit, " +
     "MiniMax H3 REF2VA, Wan 2.7/3.0, Seedream, Seedance, Kling, Grok Imagine, GPT Image, Nano " +
@@ -210,23 +219,25 @@ export const LOCAL_TEXT_DE = {
     "Berücksichtigt nur die k wahrscheinlichsten nächsten Wörter. Qwen empfiehlt 20; 0 = aus." },
 };
 
-// German texts of the Prompt Writer · System Prompt node.
+// German texts of the Prompt Writer · System Prompt Library node.
 export const SYSTEM_TEXT_DE = {
   label: { label: "Bezeichnung", tooltip:
-    "Name dieses Systemprompts in deiner Bibliothek. '📂 Laden...' wählt einen gespeicherten; " +
-    "eine neue Bezeichnung legt beim Speichern einen neuen Eintrag an." },
+    "Name dieses Systemprompts. Eine Wahl aus der Bibliothek trägt ihn ein; '💾 Speichern als...' " +
+    "fragt nach einem eigenen Namen (mitgelieferte Auswahlen werden nie überschrieben)." },
   text: { label: "Text", tooltip:
-    "Der Systemprompt oder die zusätzlichen Anweisungen. Leer = dieser Node tut nichts." },
+    "Der Systemprompt (Modus replace) oder die zusätzlichen Anweisungen (Modus append). " +
+    "'📝 Editor öffnen...' bearbeitet ihn in einem großen Fenster mit Wort- und Zeichenzählung. " +
+    "Leer = dieser Node tut nichts." },
   mode: { label: "Modus", tooltip:
-    "append: wird an den Systemprompt der Auswahl angehängt, als zusätzliche verbindliche " +
-    "Anweisungen (z. B. eigene Regeln zusätzlich zu einem Modell-Leitfaden).\n" +
-    "replace: wird statt des Systemprompts der Auswahl verwendet." },
+    "replace (Standard): wird statt des Feldes Systemprompt am Writer verwendet; das Feld ist " +
+    "gesperrt, solange dieser Node angeschlossen ist.\n" +
+    "append: wird an den Systemprompt des Writers angehängt, als zusätzliche verbindliche " +
+    "Anweisungen (z. B. eigene Regeln zusätzlich zu einem Modell-Leitfaden)." },
   save: { label: "speichern", tooltip:
     "An: der Text wird bei jedem Lauf unter der Bezeichnung in deiner Bibliothek gespeichert " +
-    "(ComfyUI/user/grok_prompt_forge/system_prompts.json) und lässt sich in jedem Workflow " +
-    "wieder laden.\n" +
-    "Aus: temporär - nur für diesen Lauf, die Bibliothek bleibt unverändert. '💾 Jetzt " +
-    "speichern' speichert sofort, ohne Lauf." },
+    "(ComfyUI/user/grok_prompt_forge/system_prompts.json).\n" +
+    "Aus (Standard): ein Lauf speichert nichts - '💾 Speichern als...' speichert bei Bedarf " +
+    "unter einem Namen deiner Wahl. Mitgelieferte Auswahlen werden nie überschrieben." },
   "output:system": { label: "Systemprompt" },
 };
 
@@ -236,6 +247,8 @@ export const PERSONS_TEXT_DE = {
   person_2: { label: "Person 2", tooltip: PERSON_DE(2) },
   person_3: { label: "Person 3", tooltip: PERSON_DE(3) },
   person_4: { label: "Person 4", tooltip: PERSON_DE(4) },
+  person_5: { label: "Person 5", tooltip: PERSON_DE(5) + NOIMG_DE(5) },
+  person_6: { label: "Person 6", tooltip: PERSON_DE(6) + NOIMG_DE(6) },
   "output:persons": { label: "Personen" },
 };
 
@@ -331,16 +344,29 @@ export const STRINGS = {
     templatesAdded: "Templates added",
     templatesResult: (a, s, u) => `${a} added, ${u} updated, ${s} already in your library`,
     templatesFailed: "Templates not added",
-    btnSystemLoad: "📂 Load...",
-    btnSystemSave: "💾 Save now",
-    btnSystemDelete: "🗑 Delete from library",
-    systemTitle: "Prompt Writer · saved system prompts",
-    systemPick: "Click a system prompt to put its label and text into the node. Hover over one to read it.",
-    systemEmpty: "No saved system prompts yet. Write one in the node and press '💾 Save now', or switch 'save' on.",
-    systemLoaded: "System prompt loaded",
+    btnSystemEditor: "📝 Open editor...",
+    btnSystemSave: "💾 Save as...",
+    btnSystemDelete: "🗑 Delete my prompt",
+    sysLibrary: "System prompt",
+    sysLibraryTip: "The whole library: the system prompts of the built-in presets, of your own presets and your saved system prompts (★). Choosing one puts its label and text into the node - edit them freely; the library itself only changes with '💾 Save as...' or '🗑 Delete my prompt'. The filters above narrow the list. Display only: choosing never starts a run by itself.",
+    sysChoose: "(choose from the library)",
+    sysFilterTypeTip: "Shows only system prompts of this type: of image, edit or video presets, of captions & tools, of your own presets, or your saved system prompts (★). Display only.",
+    sysFilterTaskTip: "Shows only the system prompts of 'Generation ▸' or 'Caption ▸' presets. Your saved system prompts (★) are always shown. Display only.",
+    opt_saved: "★ My system prompts",
+    sysEditorTitle: "Prompt Writer · edit system prompt",
+    sysEditorHint: "Edit freely. '✔ Apply' puts label and text into the node (nothing is saved); '💾 Save as...' also saves it in your library under a name of your own.",
+    sysApply: "✔ Apply",
+    sysCancel: "Cancel",
+    sysCount: (w, c, l) => [plural(w, "word", "words"), plural(c, "character", "characters"),
+      plural(l, "line", "lines")].join(" · "),
+    sysSaveTitle: "Save system prompt as...",
+    sysSaveName: "Name in your library:",
+    sysBuiltinName: (n) => `"${n}" is a built-in preset - built-ins stay unchanged. Choose a name of your own.`,
+    sysEmptyText: "The text is empty.",
+    sysBuiltinNoDelete: (n) => `"${n}" is a preset, not one of your saved system prompts: nothing to delete here.`,
+    sysLocked: "Locked: the connected System Prompt Library (mode 'replace') sets the system prompt.",
     systemSaved: "System prompt saved",
     systemNotSaved: "System prompt not saved",
-    systemNeedsLabel: "Enter a label first.",
     systemOverwrite: (l) => `Replace the saved system prompt "${l}" with this text?`,
     systemNotInLibrary: "Not in your library",
     systemConfirmDelete: (l) => `Delete the system prompt "${l}" from your library?`,
@@ -350,12 +376,12 @@ export const STRINGS = {
     storedIn: "Stored in ComfyUI/user/grok_prompt_forge/library.json",
     archiveTitle: "Prompt Writer · load from archive",
     archiveSearch: "Search prompts, inputs, presets, persons...",
-    archiveHint: "'Use as text' puts the prompt into the text field. 'Recast' also selects the preset 'Recast ▸ Swap persons' and the archived negative prompt - then choose person_1..4 and add an instruction such as 'replace the man with Person 1'.",
+    archiveHint: "'Use as text' puts the prompt into the text field. 'Recast' also selects the preset 'Recast ▸ Swap persons' and the archived negative prompt - then choose person_1..6 and add an instruction such as 'replace the man with Person 1'.",
     persons: "persons",
     useAsText: "Use as text",
     recast: "Recast",
     readyToRecast: "Ready to recast",
-    recastHint: "Choose person_1..4 and say whom to replace in the text.",
+    recastHint: "Choose person_1..6 and say whom to replace in the text.",
     loadedIntoText: "Loaded into text",
     nothingFound: "Nothing found.",
     archiveEmpty: "The archive is empty. Results are archived while 'archive' is on.",
@@ -448,16 +474,29 @@ export const STRINGS = {
     templatesAdded: "Vorlagen hinzugefügt",
     templatesResult: (a, s, u) => `${a} hinzugefügt, ${u} aktualisiert, ${s} schon in deiner Bibliothek`,
     templatesFailed: "Vorlagen nicht hinzugefügt",
-    btnSystemLoad: "📂 Laden...",
-    btnSystemSave: "💾 Jetzt speichern",
-    btnSystemDelete: "🗑 Aus Bibliothek löschen",
-    systemTitle: "Prompt Writer · gespeicherte Systemprompts",
-    systemPick: "Einen Systemprompt anklicken, um Bezeichnung und Text in den Node zu übernehmen. Beim Überfahren erscheint der Text.",
-    systemEmpty: "Noch keine gespeicherten Systemprompts. Einen im Node schreiben und '💾 Jetzt speichern' drücken oder 'speichern' einschalten.",
-    systemLoaded: "Systemprompt geladen",
+    btnSystemEditor: "📝 Editor öffnen...",
+    btnSystemSave: "💾 Speichern als...",
+    btnSystemDelete: "🗑 Eigenen Prompt löschen",
+    sysLibrary: "Systemprompt",
+    sysLibraryTip: "Die ganze Bibliothek: die Systemprompts der mitgelieferten Auswahlen, deiner eigenen Auswahlen und deine gespeicherten Systemprompts (★). Eine Wahl setzt Bezeichnung und Text in den Node - frei bearbeitbar; die Bibliothek selbst ändert sich nur mit '💾 Speichern als...' oder '🗑 Eigenen Prompt löschen'. Die Filter darüber grenzen die Liste ein. Nur Anzeige: eine Wahl startet nie selbst einen Lauf.",
+    sysChoose: "(aus der Bibliothek wählen)",
+    sysFilterTypeTip: "Zeigt nur Systemprompts dieses Typs: von Bild-, Edit- oder Video-Auswahlen, von Captions & Werkzeugen, von deinen eigenen Auswahlen oder deine gespeicherten Systemprompts (★). Nur Anzeige.",
+    sysFilterTaskTip: "Zeigt nur die Systemprompts von 'Generation ▸'- oder 'Caption ▸'-Auswahlen. Deine gespeicherten Systemprompts (★) erscheinen immer. Nur Anzeige.",
+    opt_saved: "★ Eigene Systemprompts",
+    sysEditorTitle: "Prompt Writer · Systemprompt bearbeiten",
+    sysEditorHint: "Frei bearbeiten. '✔ Übernehmen' setzt Bezeichnung und Text in den Node (nichts wird gespeichert); '💾 Speichern als...' speichert ihn zusätzlich unter eigenem Namen in deiner Bibliothek.",
+    sysApply: "✔ Übernehmen",
+    sysCancel: "Abbrechen",
+    sysCount: (w, c, l) => [plural(w, "Wort", "Wörter"), plural(c, "Zeichen", "Zeichen"),
+      plural(l, "Zeile", "Zeilen")].join(" · "),
+    sysSaveTitle: "Systemprompt speichern als...",
+    sysSaveName: "Name in deiner Bibliothek:",
+    sysBuiltinName: (n) => `"${n}" ist eine mitgelieferte Auswahl - sie bleibt unverändert. Bitte einen eigenen Namen wählen.`,
+    sysEmptyText: "Der Text ist leer.",
+    sysBuiltinNoDelete: (n) => `"${n}" ist eine Auswahl, kein gespeicherter Systemprompt: hier gibt es nichts zu löschen.`,
+    sysLocked: "Gesperrt: die angeschlossene System Prompt Library (Modus 'replace') legt den Systemprompt fest.",
     systemSaved: "Systemprompt gespeichert",
     systemNotSaved: "Systemprompt nicht gespeichert",
-    systemNeedsLabel: "Bitte zuerst eine Bezeichnung eingeben.",
     systemOverwrite: (l) => `Den gespeicherten Systemprompt "${l}" durch diesen Text ersetzen?`,
     systemNotInLibrary: "Nicht in deiner Bibliothek",
     systemConfirmDelete: (l) => `Den Systemprompt "${l}" aus deiner Bibliothek löschen?`,
@@ -467,12 +506,12 @@ export const STRINGS = {
     storedIn: "Gespeichert in ComfyUI/user/grok_prompt_forge/library.json",
     archiveTitle: "Prompt Writer · aus Archiv laden",
     archiveSearch: "Prompts, Eingaben, Auswahlen, Personen durchsuchen...",
-    archiveHint: "'Als Eingabe' setzt den Prompt ins Eingabefeld. 'Recast' wählt zusätzlich die Auswahl 'Recast ▸ Swap persons' und den archivierten Negativprompt - dann person_1..4 wählen und eine Anweisung ergänzen wie 'ersetze den Mann durch Person 1'.",
+    archiveHint: "'Als Eingabe' setzt den Prompt ins Eingabefeld. 'Recast' wählt zusätzlich die Auswahl 'Recast ▸ Swap persons' und den archivierten Negativprompt - dann person_1..6 wählen und eine Anweisung ergänzen wie 'ersetze den Mann durch Person 1'.",
     persons: "Personen",
     useAsText: "Als Eingabe",
     recast: "Recast",
     readyToRecast: "Bereit zum Neubesetzen",
-    recastHint: "person_1..4 wählen und im Text sagen, wer ersetzt wird.",
+    recastHint: "person_1..6 wählen und im Text sagen, wer ersetzt wird.",
     loadedIntoText: "In die Eingabe geladen",
     nothingFound: "Nichts gefunden.",
     archiveEmpty: "Das Archiv ist leer. Ergebnisse werden archiviert, solange 'archivieren' an ist.",

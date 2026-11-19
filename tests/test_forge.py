@@ -96,7 +96,7 @@ class BuiltinPresetTests(unittest.TestCase):
         names = " ".join(builtin_presets.BUILTIN)
         for target in ("Krea 2", "Qwen-Image 2.1", "Qwen-Image-Edit 2.1", "Z-Image", "FLUX",
                        "Illustrious", "Pony", "SDXL", "Wan 2.2", "Wan 2.7", "Wan 3.0",
-                       "MiniMax H3 FL2VA", "MiniMax H3 REF2VA", "Seedream 5.0",
+                       "MiniMax H3 FL2VA", "MiniMax H3 REF2VA", "Seedream 5.5", "Seedream 5.0",
                        "Seedream 4.5 / 4.0", "Seedream Edit", "Seedance 2.5", "Seedance 2.0",
                        "Seedance 1.5 / 1.0 Pro", "Seedance Reference", "GPT Image", "Nano Banana",
                        "Grok Imagine Image", "Flux 3", "Kling 3.0", "Veo 3.1",
@@ -135,9 +135,19 @@ class BuiltinPresetTests(unittest.TestCase):
             self.assertNotIn(word, text)
 
     def test_api_models_without_negative_prompt(self):
-        for target in ("Seedream 5.0", "Seedance 2.5", "GPT Image", "Nano Banana", "Flux 3",
-                       "Grok Imagine Video"):
+        for target in ("Seedream 5.5", "Seedream 5.0", "Seedance 2.5", "GPT Image", "Nano Banana",
+                       "Flux 3", "Grok Imagine Video"):
             self.assertEqual(builtin_presets.BUILTIN[f"Generation ▸ {target}"]["negative_prompt"], "")
+
+    def test_seedream_5_5_follows_the_byteplus_tutorial(self):
+        self.assertEqual(len(builtin_presets.BUILTIN), 60)
+        system = builtin_presets.BUILTIN["Generation ▸ Seedream 5.5"]["system_prompt"]
+        for phrase in ("up to 10 reference images", "Set a transparent background.", "Image 1"):
+            self.assertIn(phrase, system)
+        self.assertEqual(builtin_presets.BUILTIN["Generation ▸ Seedream 5.5"]["group"], "image")
+        edit = builtin_presets.BUILTIN["Generation ▸ Seedream Edit"]["system_prompt"]
+        self.assertIn("Seedream 5.5 (multi-turn editing)", edit)
+        self.assertIn("Preserve the identity", edit)
 
     def test_everything_neutral(self):
         # names that must never ship, rot13-encoded so they don't ship here either
@@ -330,9 +340,14 @@ class ForgeNodeTests(unittest.TestCase):
         self.assertEqual(order[len(v310):], ["person_1", "person_2", "person_3", "person_4",
                                              "image_n_is_person_n", "style_1", "style_2",
                                              "archive", "image_4", "persons", "system",
-                                             "light", "safe"])
+                                             "light", "safe", "person_5", "person_6"])
         self.assertTrue(forge_node.GrokPromptForge.VALIDATE_INPUTS(
-            "unknown", "unknown", person_1="Nobody", style_2="Gone"))
+            "unknown", "unknown", person_1="Nobody", person_6="Gone too", style_2="Gone"))
+        # persons 5 and 6 have no image input of their own
+        self.assertIn("no image of its own", spec["optional"]["person_5"][1]["tooltip"])
+        self.assertNotIn("no image of its own", spec["optional"]["person_4"][1]["tooltip"])
+        self.assertIn("Locked while a System Prompt Library",
+                      spec["required"]["system_prompt"][1]["tooltip"])
 
 
 def _reset_user_files():
@@ -397,6 +412,24 @@ class RulesAndSystemPromptTests(unittest.TestCase):
         self.system_of(system=own)
         self.assertEqual(archive.entries()[0]["system_prompt"], "Mine")
         self.assertEqual(archive.entries()[0]["light"], "daylight")
+
+    def test_system_prompt_library_defaults_and_keeps_builtins(self):
+        spec = system_prompt_node.PromptWriterSystemPrompt.INPUT_TYPES()["required"]
+        # the 1.5.0 widget order stays, so saved workflows load unchanged
+        self.assertEqual(list(spec), ["label", "text", "mode", "save"])
+        self.assertEqual(spec["mode"][1]["default"], "replace")
+        self.assertIn("append", spec["mode"][0])
+        builtin = "Generation ▸ Krea 2"
+        with self.assertRaises(ValueError):
+            system_prompts.save(builtin, "mine now")
+        node = system_prompt_node.PromptWriterSystemPrompt()
+        (out,) = node.build(label=builtin, text="edited", mode="replace", save=True)
+        self.assertEqual(out["text"], "edited")  # used for the run, never saved
+        self.assertEqual(system_prompts.load(), {})
+        # the library's mark for own prompts is never part of a label
+        system_prompts.save("★ My rules", "be brief")
+        self.assertEqual(system_prompts.load(), {"My rules": "be brief"})
+        self.assertTrue(system_prompts.delete("★ My rules"))
 
     def test_system_prompt_node_saves_only_when_asked(self):
         node = system_prompt_node.PromptWriterSystemPrompt()
@@ -637,6 +670,16 @@ class PersonRuleTests(unittest.TestCase):
         self.assertNotEqual(before, persons_node.PromptWriterPersons.IS_CHANGED(person_1="Alice"))
         self.assertTrue(persons_node.PromptWriterPersons.VALIDATE_INPUTS(person_1="Gone"))
 
+    def test_six_persons_and_the_last_two_have_no_image(self):
+        spec = persons_node.PromptWriterPersons.INPUT_TYPES()["required"]
+        self.assertEqual(list(spec), [f"person_{n}" for n in range(1, 7)])
+        (cast,) = persons_node.PromptWriterPersons().select(person_5="Alice", person_6="Bob")
+        self.assertEqual([(slot, name) for slot, name, _ in cast], [(5, "Alice"), (6, "Bob")])
+        img = np.zeros((1, 8, 8, 3), dtype=np.float32)
+        system = self.system_of(person_6="Bob", image_4=img, image_n_is_person_n=True)
+        self.assertIn("Person 6:\n- Name: Bob", system)
+        self.assertNotIn("Image 6", system)
+
     def test_group_entry_introduces_its_members_not_its_label(self):
         library.save("person", "Group_of_men", person_templates.TEMPLATES["persons"]["Group_of_men"])
         system = self.system_of(person_1="Group_of_men", person_2="Alice")
@@ -823,8 +866,8 @@ class LocalModelTests(unittest.TestCase):
         for new in ("thinking", "unload_after_run", "context_length", "gpu_layers", "top_k"):
             self.assertIn(new, spec["optional"])
         # image_4 (1.2.0) comes after the local options, so their saved values keep their place
-        self.assertEqual(names[-10:], [*local_node.LOCAL_OPTIONS, "image_4", "persons", "system",
-                                       "light", "safe"])
+        self.assertEqual(names[-12:], [*local_node.LOCAL_OPTIONS, "image_4", "persons", "system",
+                                       "light", "safe", "person_5", "person_6"])
         self.assertEqual(spec["required"]["model"][0], local_models.model_labels())
         self.assertTrue(local_node.LocalPromptForgeGGUF.VALIDATE_INPUTS("x", "y", person_1="z"))
 
@@ -853,7 +896,7 @@ class PackTests(unittest.TestCase):
             "LocalPromptForgeGGUF": "Prompt Writer · LLM GGUF",
             "GrokShowPrompt": "Prompt Writer · Show Prompt",
             "PromptWriterPersons": "Prompt Writer · Persons",
-            "PromptWriterSystemPrompt": "Prompt Writer · System Prompt",
+            "PromptWriterSystemPrompt": "Prompt Writer · System Prompt Library",
             "GrokSystemPromptLoader": "Prompt Writer · System Prompt Loader",
             "GrokTextFileLoader": "Prompt Writer · Text File Loader",
         })

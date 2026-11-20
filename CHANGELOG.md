@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.0 — 2026-11-20
+
+- **`person_5` and `person_6` sit with the other persons:** on both writer nodes they now follow `person_4` instead of sitting near the end. Workflows saved with an older version keep every value: the node reads their widget values in the old order once when the workflow is loaded.
+- **New template groups:** "📥 Add templates" adds **Group of men II** (six extremely fat, unkempt German men), **Group of men III** (six Nigerian men, from extremely fat to very thin), **Group of men IV** (six very fat men with big bellies from different cultures) and **Group of men V** (six young German men in their early twenties, ordinary in appearance).
+- **Group of men I / Group of women I:** the groups Group_of_men and Group_of_women are renamed. "Add templates" renames them in your library and keeps your own edits; a group still holding the old template text gets the new one (T4koda now wears his long hair loose over his shoulders). Workflows that still select an old name use the renamed group.
+
 ## 1.7.0 — 2026-11-20
 
 - **SFW and NSFW presets for every model:** every preset except "Custom system prompt" now comes as "· SFW" and "· NSFW" (e.g. "Generation ▸ Krea 2 · SFW" / "· NSFW"), including Caption ▸ LoRA training caption, Caption ▸ Describe image and Recast ▸ Swap persons. GPT Image, Nano Banana, Grok Imagine Image, Kling 3.0, Veo 3.1 and Grok Imagine Video (generation) come as "· SFW" only. 108 built-in presets in all, the same on Grok API and LLM GGUF.

@@ -61,7 +61,7 @@ _PERSONS = {
 }
 
 _GROUPS = {
-    "Group_of_men":
+    "Group of men I":
         "A group of six men, each clearly different from the others. B0ris is a Russian man in "
         "his fifties with pale skin and a very tall, barrel-chested build; his grey hair is cut "
         "in a short buzz cut, and his nose is flattened from an old break. M4teo is an Argentine "
@@ -69,12 +69,69 @@ _GROUPS = {
         "slicked-back black hair and a dark three-day stubble. 0usmane is a Senegalese man in his "
         "thirties with very dark skin and a very tall, lanky frame; he wears his black hair in "
         "short twists and has a narrow, angular face. T4koda is a Lakota man in his forties with "
-        "copper-brown skin and a broad, solid build; his long, straight black hair is worn in two "
-        "braids over his shoulders. M1nh is a Vietnamese man in his early twenties, short and "
+        "copper-brown skin and a broad, solid build; his long, straight black hair falls loose "
+        "over his shoulders. M1nh is a Vietnamese man in his early twenties, short and "
         "sinewy, with light golden skin and spiky hair dyed platinum blond. J4n is a Dutch man in "
         "his sixties, tall and heavy, with ruddy skin, a bald head and thick white mutton-chop "
         "sideburns.",
-    "Group_of_women":
+    "Group of men II":
+        "A group of six extremely fat German men, each clearly different from the others and all "
+        "unkempt. H0rst is in his fifties, of average height and enormously obese, with a huge "
+        "round belly that hangs down over his thighs, a thick double chin and flushed, blotchy "
+        "skin; his greasy brown hair is combed over a bald crown, and patchy grey stubble covers "
+        "his jowls. D1eter is in his sixties, short and immensely wide, with pale, pasty skin, deep "
+        "rolls of fat on his neck and back, a shiny bald head with a greasy grey fringe and a "
+        "yellowed, untrimmed walrus moustache. Kl4us is in his forties, very tall and massively "
+        "obese, with ruddy, sweaty skin, a heavy belly and a broad, sagging chest; his long, "
+        "thinning dirty-blond hair hangs in a lank mullet, and a scraggly beard grows in uneven "
+        "patches. W3rner is in his seventies, short and round as a barrel, with sallow, wrinkled "
+        "skin, a vast belly, tufts of white hair sticking out above his ears and wild, bushy "
+        "eyebrows. B3rnd is in his thirties, of average height and extremely fat, with a soft, "
+        "puffy face, pale skin with red cheeks, a bulging belly, a shaggy, unwashed brown beard "
+        "and a tangled mop of dark hair. R4iner is in his late fifties, tall and enormously heavy, "
+        "with a sunburnt, leathery face, a hanging belly, thick arms, an unevenly grown-out grey "
+        "buzz cut and nicotine-yellowed teeth and fingers.",
+    "Group of men III":
+        "A group of six Nigerian men, each clearly different from the others, from extremely fat "
+        "to very thin. 3meka is in his forties, of average height and enormously obese, with very "
+        "dark, smooth skin, a huge round belly, a heavy double chin and a gleaming shaved head. "
+        "Ch1nedu is in his fifties, tall and heavy, with deep brown skin, a broad, thick-set body "
+        "with a solid belly, close-cropped greying hair and a short grey beard. 4debayo is in his "
+        "thirties, short and stocky, with dark brown skin, broad shoulders, a round face and a "
+        "short black afro with a sharp hairline. 0binna is in his late twenties, of average "
+        "height, with very dark skin, a lean, muscular body and short dreadlocks tied up on top "
+        "of his head. F3mi is in his early twenties, tall and slim, with warm medium-brown skin, a "
+        "narrow face, a high-top fade and a thin moustache. 1kenna is in his sixties, very tall "
+        "and very thin, with dark, weathered skin, bony shoulders, long thin arms, hollow cheeks, "
+        "short white hair and a neat white goatee.",
+    "Group of men IV":
+        "A group of six very fat men from different cultures, each clearly different from the "
+        "others and each with a big belly. M3hmet is a Turkish man in his fifties of average "
+        "height, with light olive skin, a big, hard, round belly, a thick black moustache and "
+        "short black hair greying at the temples. R0drigo is a Mexican man in his forties, short "
+        "and wide, with warm tan skin, a soft belly that hangs low, a round face, slicked-back "
+        "black hair and a thin goatee. D4le is an American man from Texas in his sixties, very "
+        "tall and heavy, with ruddy, sun-reddened skin, a huge beer belly, a thick neck, thin "
+        "white hair and a bushy white horseshoe moustache. W3i is a Chinese man in his thirties, "
+        "short and round, with light skin, a full, round face, small round glasses, a big round "
+        "belly and straight black hair cut in a bowl shape. V1liami is a Tongan man in his late "
+        "twenties, very tall and massive, with warm brown skin, a huge belly, broad, heavy "
+        "shoulders, thick curly black hair and a full black beard. K0stas is a Greek man in his "
+        "seventies of average height, with tanned, deeply lined skin, a belly round as a drum, "
+        "thick grey chest hair, bushy grey eyebrows and a bald head ringed by white curls.",
+    "Group of men V":
+        "A group of six young German men in their early twenties, each clearly different from "
+        "the others and ordinary in appearance. Luk4s is tall and slim, with fair skin, light "
+        "freckles and short dark-blond hair in an undercut, combed to one side. J0nas is of "
+        "average height with a sporty, compact build, light skin, short brown hair with a messy "
+        "fringe and light stubble. F1nn is very tall and lanky, with pale skin, a long, narrow "
+        "face, a reddish-blond buzz cut and a thin, patchy beard. L3on is shorter than the others "
+        "and slightly chubby, with a round, friendly face, light skin with rosy cheeks and wavy "
+        "chestnut-brown hair to his ears. P4ul is of average height and broad-shouldered, with "
+        "light olive skin, dark brown eyes, short black curls and a neatly trimmed short beard. "
+        "N1klas is tall with a slim, slightly gangly build, light skin, chin-length straight "
+        "blond hair tucked behind his ears and thin round glasses.",
+    "Group of women I":
         "A group of four women, each clearly different from the others. S0fia is an Italian woman "
         "in her late thirties of average height with a curvy figure and olive skin; her long, "
         "dark brown hair falls in loose waves past her shoulders. Fre1ja is a Swedish woman in her "
@@ -93,7 +150,19 @@ _LABELS = {
     "K4rim": ("Karim", "m"), "0lav": ("Olav", "m"), "4mara": ("Amara", "f"),
     "J1woo": ("Jiwoo", "f"),
 }
-_GROUP_GENDERS = {"Group_of_men": "m", "Group_of_women": "f"}
+_GROUP_GENDERS = {"Group of men I": "m", "Group of men II": "m", "Group of men III": "m",
+                  "Group of men IV": "m", "Group of men V": "m", "Group of women I": "f"}
+
+# Group labels up to 1.7.x -> since 1.8.0. add_to_library renames them in your library
+# (your own edits stay); a workflow that still selects an old label finds the new one
+# (forge_node.selected_persons).
+RENAMED = {"Group_of_men": "Group of men I", "Group_of_women": "Group of women I"}
+# The group texts of earlier builds: a renamed group that still holds one unchanged
+# gets the current template text.
+_OUTDATED_GROUPS = {
+    "Group_of_men": _GROUPS["Group of men I"].replace(
+        "falls loose over his shoulders", "is worn in two braids over his shoulders"),
+}
 
 # Style blocks: short and concrete, only visible features, and only positive words.
 # A style says what the picture is and how it was made (painted, drawn, computer-
@@ -284,8 +353,17 @@ def add_to_library():
     """Add the templates to your library: new labels are added, style blocks that
     still hold an outdated template text unchanged are updated, everything else
     is left alone. Returns (added, updated, kept)."""
-    styles = library.load()["styles"]
+    data = library.load()
+    styles, persons = data["styles"], data["persons"]
     updated = 0
+    for old, new in RENAMED.items():
+        entry = persons.get(old)
+        if entry is None or new in persons:
+            continue
+        if entry["description"] == _OUTDATED_GROUPS.get(old):
+            entry = dict(entry, description=_GROUPS[new])
+        library.save("person", new, entry, old_name=old)
+        updated += 1
     for label, entry in TEMPLATES["styles"].items():
         current = styles.get(label)
         if current and current["text"] in _OUTDATED_STYLES and current["text"] != entry["text"]:

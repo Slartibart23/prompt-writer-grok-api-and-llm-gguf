@@ -8,6 +8,7 @@ ComfyUI's Python, which has numpy and Pillow:
 import codecs
 import importlib.util
 import json
+import re
 import os
 import shutil
 import sys
@@ -367,11 +368,13 @@ class ForgeNodeTests(unittest.TestCase):
         self.assertEqual(order[:len(v300)], v300)
         v310 = v300 + ["min_words", "max_words"]
         self.assertEqual(order[:len(v310)], v310)
+        # person_5 / person_6 follow person_4 since 1.8.0 (the JS reads older workflows
+        # in the old order, with both right after "safe")
         self.assertEqual(order[len(v310):], ["person_1", "person_2", "person_3", "person_4",
+                                             "person_5", "person_6",
                                              "image_n_is_person_n", "style_1", "style_2",
                                              "archive", "image_4", "persons", "system",
-                                             "light", "safe", "person_5", "person_6",
-                                             "variation"])
+                                             "light", "safe", "variation"])
         self.assertTrue(forge_node.GrokPromptForge.VALIDATE_INPUTS(
             "unknown", "unknown", person_1="Nobody", person_6="Gone too", style_2="Gone"))
         # persons 5 and 6 have no image input of their own
@@ -639,15 +642,15 @@ class LibraryTests(unittest.TestCase):
 
     def test_templates_are_added_once_and_never_overwrite(self):
         library.save("person", "Kenji", {"description": "my own Kenji"})
-        self.assertEqual(library.import_entries(person_templates.TEMPLATES), (28, 0, 1))  # 11 persons + 17 styles
+        self.assertEqual(library.import_entries(person_templates.TEMPLATES), (32, 0, 1))  # 15 persons + 17 styles
         self.assertEqual(library.get("person", "Kenji")["description"], "my own Kenji")
-        self.assertEqual(library.import_entries(person_templates.TEMPLATES), (0, 0, 29))
+        self.assertEqual(library.import_entries(person_templates.TEMPLATES), (0, 0, 33))
         entries = person_templates.TEMPLATES["persons"]
-        self.assertEqual(len(entries), 12)
+        self.assertEqual(len(entries), 16)
         self.assertEqual(entries["Kenji"]["name"], "K3nji")
         for label, entry in entries.items():
             group = forge_node.is_group(entry)
-            self.assertEqual(group, label.startswith("Group_of_"), label)
+            self.assertEqual(group, label.startswith("Group of "), label)
             # no measurements image models can't show, no voice, a gender for every entry
             self.assertNotRegex(entry["description"], r"\b\d+\b", label)
             self.assertFalse(entry["voice"], label)
@@ -695,11 +698,45 @@ class LibraryTests(unittest.TestCase):
         library.save("style", "Cartoon", {"text": outdated})       # first 1.5.0 template text
         library.save("style", "Oil painting", {"text": "my own oil painting"})
         added, updated, kept = person_templates.add_to_library()
-        self.assertEqual((added, updated, kept), (27, 1, 1))
+        self.assertEqual((added, updated, kept), (31, 1, 1))
         self.assertEqual(library.get("style", "Cartoon")["text"],
                          person_templates.TEMPLATES["styles"]["Cartoon"]["text"])
         self.assertEqual(library.get("style", "Oil painting")["text"], "my own oil painting")
-        self.assertEqual(person_templates.add_to_library(), (0, 0, 29))
+        self.assertEqual(person_templates.add_to_library(), (0, 0, 33))
+
+    def test_template_groups(self):
+        entries = person_templates.TEMPLATES["persons"]
+        for n in ("I", "II", "III", "IV", "V"):
+            entry = entries[f"Group of men {n}"]
+            self.assertTrue(entry["description"].startswith("A group of six "), n)
+            self.assertEqual(entry["gender"], "m", n)
+            # six members, each named with one digit for a letter
+            self.assertEqual(len(re.findall(r"(?<![\w-])(?=\w*\d)\w+ is\b",
+                                            entry["description"])), 6, n)
+        self.assertIn("falls loose over his shoulders", entries["Group of men I"]["description"])
+        self.assertIn("early twenties", entries["Group of men V"]["description"])
+        self.assertIn("Group of women I", entries)
+
+    def test_old_group_labels_are_renamed_with_own_edits(self):
+        old_men = person_templates._OUTDATED_GROUPS["Group_of_men"]
+        library.save("person", "Group_of_men", {"description": old_men, "gender": "m"})
+        library.save("person", "Group_of_women", {"description": "A group of my own women.",
+                                                  "gender": "f"})
+        added, updated, kept = person_templates.add_to_library()
+        self.assertEqual((added, updated), (31, 2))
+        names = library.names("person")
+        self.assertNotIn("Group_of_men", names)
+        self.assertNotIn("Group_of_women", names)
+        # the unchanged old template text gets the new one, an own edit stays
+        self.assertEqual(library.get("person", "Group of men I")["description"],
+                         person_templates.TEMPLATES["persons"]["Group of men I"]["description"])
+        self.assertEqual(library.get("person", "Group of women I")["description"],
+                         "A group of my own women.")
+        # a workflow that still selects the old label finds the renamed group
+        ((slot, name, entry),) = forge_node.selected_persons({"person_1": "Group_of_women"})
+        self.assertEqual((slot, name, entry["description"]),
+                         (1, "Group of women I", "A group of my own women."))
+        self.assertEqual(person_templates.add_to_library(), (0, 0, 33))
 
     def test_style_rule_asks_for_positive_words_only(self):
         rule = forge_node.styles_rule([("Cartoon", {"text": "Hand-drawn cartoon."})])
@@ -846,13 +883,14 @@ class PersonRuleTests(unittest.TestCase):
         self.assertNotIn("Image 6", system)
 
     def test_group_entry_introduces_its_members_not_its_label(self):
-        library.save("person", "Group_of_men", person_templates.TEMPLATES["persons"]["Group_of_men"])
-        system = self.system_of(person_1="Group_of_men", person_2="Alice")
-        self.assertIn('Person 1 - a GROUP (label "Group_of_men", never write it)', system)
+        library.save("person", "Group of men I",
+                     person_templates.TEMPLATES["persons"]["Group of men I"])
+        system = self.system_of(person_1="Group of men I", person_2="Alice")
+        self.assertIn('Person 1 - a GROUP (label "Group of men I", never write it)', system)
         self.assertIn("Introduce every member once by name", system)
         self.assertIn("B0ris", system)
         self.assertIn("- All members are male.", system)
-        self.assertNotIn("- Name: Group_of_men", system)
+        self.assertNotIn("- Name: Group of men I", system)
         self.assertIn("Person 2:\n- Name: Alice", system)
 
     def test_recast_preset(self):
@@ -1031,8 +1069,9 @@ class LocalModelTests(unittest.TestCase):
         for new in ("thinking", "unload_after_run", "context_length", "gpu_layers", "top_k"):
             self.assertIn(new, spec["optional"])
         # image_4 (1.2.0) comes after the local options, so their saved values keep their place
-        self.assertEqual(names[-13:], [*local_node.LOCAL_OPTIONS, "image_4", "persons", "system",
-                                       "light", "safe", "person_5", "person_6", "variation"])
+        self.assertEqual(names[-11:], [*local_node.LOCAL_OPTIONS, "image_4", "persons", "system",
+                                       "light", "safe", "variation"])
+        self.assertEqual(names[names.index("person_4") + 1:][:2], ["person_5", "person_6"])
         self.assertEqual(spec["required"]["model"][0], local_models.model_labels())
         self.assertTrue(local_node.LocalPromptForgeGGUF.VALIDATE_INPUTS("x", "y", person_1="z"))
 

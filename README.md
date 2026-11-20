@@ -36,7 +36,7 @@ Both nodes share everything else:
 
 ![Prompt Writer · Persons connected to the persons input of Prompt Writer · Grok API](docs/images/persons_node.png)
 
-*Prompt Writer · Persons chooses the template person Kwame, the group Group_of_women and the template person Jiwoo in `person_5`. While it is connected to the writer's `persons` input, the writer's own `person_1` … `person_6` are greyed out and locked.*
+*Prompt Writer · Persons chooses the template person Kwame, the group Group_of_women (since 1.8.0 "Group of women I") and the template person Jiwoo in `person_5`. While it is connected to the writer's `persons` input, the writer's own `person_1` … `person_6` are greyed out and locked.*
 
 ![The tooltip of person_1 with the selected person's name in the prompt, gender and description](docs/images/persons_hover.png)
 
@@ -241,9 +241,16 @@ Every target guide also ends with **an example of a good result**. It is marked 
 
 - **New persons are filled in for you:** type the label (e.g. "Peter") and the dialog suggests the name in the prompt and the trigger ("P3ter": the first a, e, i or o becomes 4, 3, 1 or 0), the gender male and a description that starts with "P3ter is a man". Every suggestion is editable; a field you change yourself is left alone. Renaming the name later also renames it in the description and in a trigger that equals it.
 - **On hover:** the tooltip of `person_1` … `person_6` shows the selected person's name in the prompt, gender, trigger and description; so does an entry in the dialog's list.
-- **📥 Add templates** in the dialog adds ten fictional template persons, two groups and seventeen style blocks to your library. Labels you already have are never changed. Each template describes only the outer appearance, in two to three detailed English sentences: origin, skin tone, age, height and build in words (image models can't show "1.88 m"), face, eyes and hair. The label is the real name; the name in the prompt (also the trigger) has one digit for a letter.
+- **📥 Add templates** in the dialog adds ten fictional template persons, six groups and seventeen style blocks to your library. Labels you already have are never changed. Each template describes only the outer appearance, in two to three detailed English sentences: origin, skin tone, age, height and build in words (image models can't show "1.88 m"), face, eyes and hair. The label is the real name; the name in the prompt (also the trigger) has one digit for a letter.
   - Persons (label → name in the prompt): Sean → S3an (Ireland), Rafael → R4fael (Brazil), Sione → S1one (Samoa), Kenji → K3nji (Japan), Arjun → 4rjun (India), Kwame → Kw4me (Ghana), Karim → K4rim (Egypt), Olav → 0lav (Norway), Amara → 4mara (Nigeria) and Jiwoo → J1woo (Korea).
-  - **Group_of_men** with six and **Group_of_women** with four clearly different members, each with a name of their own.
+  - Groups, each member clearly different from the others and with a name of their own:
+    - **Group of men I:** six men of different origins (Russia, Argentina, Senegal, Lakota, Vietnam, Netherlands).
+    - **Group of men II:** six extremely fat, unkempt German men.
+    - **Group of men III:** six Nigerian men, from extremely fat to very thin.
+    - **Group of men IV:** six very fat men with big bellies from different cultures (Turkey, Mexico, Texas, China, Tonga, Greece).
+    - **Group of men V:** six young German men in their early twenties, ordinary in appearance.
+    - **Group of women I:** four women of different origins and ages.
+  - Up to 1.7.x the groups were called Group_of_men and Group_of_women. "Add templates" renames them in your library and keeps your own edits; workflows that still select an old name use the renamed group.
   - Style blocks: **Natural daylight**, **Cartoon**, **Oil painting**, **Line drawing**, **Watercolour**, **Pencil sketch**, **Anime**, **Manga**, **Hentai**, **Comic book**, **3D render**, **Vintage film photo**, **Van Gogh**, **Rembrandt**, **Simpsons**, **Pixar** and **GTA VI**. Each names its medium and technique with the style's own terms (impasto, chiaroscuro, hatching, screentones, cel shading ...), in positive words only: what the picture is and how it was made, never what it is not - image models are pulled towards every word in a prompt, so even "not realistic" brings realism back. *Anime* is the colour look of Japanese animation, *Manga* the inked look of Japanese comics in full colour, like a manga colour page or cover, *Hentai* the explicit adult anime look with clearly adult characters (with `safe` on it is only implied).
 - **Groups:** a person entry whose description starts with "A group of" is a group in one slot. Its own name is only a label and never appears in the prompt. Instead, every member is introduced by name, and every action is assigned to a member, e.g. "B0ris lifts the crate while M1nh holds the door".
 - **Prompt Writer · Persons:** chooses the persons outside the writer nodes and passes them to the writer's `persons` input. While that input is connected, `person_1` … `person_6` on the writer are greyed out, locked and ignored; disconnect it and they work again with their old values. The slot numbers come from the Persons node, so Person 3 there is Person 3 in the prompt and pairs with `image_3`.
@@ -380,7 +387,7 @@ On an RTX 5090 with huihui Q4_K, a FLUX prompt takes about 20 s including loadin
 3. Restart ComfyUI. The nodes appear under **Prompt Writer**.
 4. *Optional, for Prompt Writer · LLM GGUF:* install llama-cpp-python with CUDA. Follow **[docs/LOCAL_GGUF.md](docs/LOCAL_GGUF.md)**: it explains which build fits your GPU and why to install it with `--no-deps`. The Grok API node doesn't need it.
 
-New fields are always added at the end of a node, so saved workflows keep their values in place after an update. See [CHANGELOG.md](CHANGELOG.md) for what changed.
+New fields are added at the end of a node, so saved workflows keep their values in place after an update. The one exception: since 1.8.0 `person_5` and `person_6` sit right below `person_4`; the node moves their values in workflows saved with an older version when the workflow is loaded. See [CHANGELOG.md](CHANGELOG.md) for what changed.
 
 ### Coming from comfyui-grok-prompt-forge
 

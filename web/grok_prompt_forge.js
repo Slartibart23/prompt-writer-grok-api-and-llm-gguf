@@ -1206,6 +1206,36 @@ function setupShowNode(node) {
   node.setSize([Math.max(node.size[0], min[0], 420), Math.max(node.size[1], min[1], 260)]);
 }
 
+// ----------------------------------------------- widget order of older workflows
+// A saved workflow holds the widget values by position. Up to 1.7.x person_5 and
+// person_6 sat after "safe" near the end of the writer nodes; since 1.8.0 they
+// follow person_4. A writer saved without properties.widgetOrder >= 2 used the old
+// order: its values are read in that order and handed to the widgets by name;
+// widgets the old workflow had no value for get their defaults back.
+const WIDGET_ORDER = 2;
+const MOVED_PERSONS = ["person_5", "person_6"];
+
+function legacyOrder(names) {
+  const rest = names.filter((n) => !MOVED_PERSONS.includes(n));
+  const at = rest.indexOf("safe") + 1;
+  return at ? [...rest.slice(0, at), ...MOVED_PERSONS, ...rest.slice(at)] : names;
+}
+
+function migrateWidgetOrder(node, info) {
+  const saved = info?.properties?.widgetOrder ?? 1;
+  node.properties.widgetOrder = WIDGET_ORDER;
+  const values = info?.widgets_values;
+  if (saved >= WIDGET_ORDER || !Array.isArray(values)) return;
+  const widgets = (node.widgets || []).filter((w) => w.serialize !== false);
+  const named = info.widgets_values_named;
+  const byName = new Map(named && typeof named === "object" ? Object.entries(named)
+    : legacyOrder(widgets.map((w) => w.name)).slice(0, values.length).map((n, i) => [n, values[i]]));
+  for (const w of widgets) {
+    const value = byName.has(w.name) ? byName.get(w.name) : node._pwDefaults?.[w.name];
+    if (value !== undefined) w.value = value;
+  }
+}
+
 app.registerExtension({
   name: "GrokPromptForge.Presets",
 
@@ -1294,6 +1324,9 @@ app.registerExtension({
     nodeType.prototype.onNodeCreated = function () {
       const r = onNodeCreated?.apply(this, arguments);
       const node = this;
+      // the defaults, for widgets an older workflow has no value for (migrateWidgetOrder)
+      node._pwDefaults = Object.fromEntries((node.widgets || []).map((w) => [w.name, w.value]));
+      node.properties.widgetOrder = WIDGET_ORDER;
       const w = widget(node, "preset");
       if (w) {
         const cb = w.callback;
@@ -1318,7 +1351,8 @@ app.registerExtension({
     };
 
     const onConfigure = nodeType.prototype.onConfigure;
-    nodeType.prototype.onConfigure = function () {
+    nodeType.prototype.onConfigure = function (info) {
+      migrateWidgetOrder(this, info); // person_5 / person_6 moved in 1.8.0
       const r = onConfigure?.apply(this, arguments);
       applyLanguage(this); // also refreshes the word hint: a loaded workflow may use another preset
       refreshPresetChoices(this); // the filter saved with the workflow

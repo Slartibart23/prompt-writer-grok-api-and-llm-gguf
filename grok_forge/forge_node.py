@@ -7,7 +7,7 @@ import json
 import re
 
 from . import archive as prompt_archive
-from . import library, models, presets, variation
+from . import library, models, person_templates, presets, variation
 from .api import (DEFAULT_BASE_URL, DEFAULT_KEY_FILE, DEFAULT_MODEL, apply_sampling_params,
                   chat, image_to_data_uri, resolve_api_key)
 from .builtin_presets import BUILTIN, DEFAULT_PRESET
@@ -16,7 +16,6 @@ LOG = "[Prompt Writer · Grok API]"
 NO_TRIGGER = "(none)"
 IMAGE_SLOTS = 4
 PERSON_SLOTS = 6
-FIRST_PERSON_SLOTS = 4  # person_5 and person_6 came in 1.6.0 and sit at the end of the node
 STYLE_SLOTS = 2
 
 PERSON_TOOLTIP = (
@@ -299,6 +298,9 @@ def selected_persons(kwargs, log=LOG):
     for n in range(1, PERSON_SLOTS + 1):
         name = kwargs.get(f"person_{n}") or library.NONE
         entry = library.get("person", name)
+        if entry is None and name in person_templates.RENAMED:  # a group renamed in 1.8.0
+            name = person_templates.RENAMED[name]
+            entry = library.get("person", name)
         if entry is not None:
             persons.append((n, name, entry))
         elif name != library.NONE:
@@ -425,9 +427,11 @@ class GrokPromptForge:
             "max_words": ("INT", {"default": 0, "min": 0, "max": 2000, "step": 5,
                                   "tooltip": WORDS_TOOLTIP}),
         })
-        # Added in 3.2.0, again at the end.
+        # Added in 3.2.0, again at the end. person_5 / person_6 (1.6.0) sat at the very
+        # end until 1.8.0; web/grok_prompt_forge.js moves their values in older
+        # workflows to this place (LEGACY_ORDER / migrateWidgetOrder).
         person_names = library.names("person")
-        for n in range(1, FIRST_PERSON_SLOTS + 1):
+        for n in range(1, PERSON_SLOTS + 1):
             optional[f"person_{n}"] = person_input(person_names, n, PERSON_LOCK_NOTE)
         optional["image_n_is_person_n"] = ("BOOLEAN", {"default": False, "tooltip": LINK_TOOLTIP})
         style_names = library.names("style")
@@ -443,9 +447,6 @@ class GrokPromptForge:
         optional["system"] = ("PW_SYSTEM", {"tooltip": SYSTEM_INPUT_TOOLTIP})
         optional["light"] = (LIGHTS, {"default": "free", "tooltip": LIGHT_TOOLTIP})
         optional["safe"] = ("BOOLEAN", {"default": False, "tooltip": SAFE_TOOLTIP})
-        # Added in 1.6.0: two more persons, without image inputs of their own.
-        for n in range(FIRST_PERSON_SLOTS + 1, PERSON_SLOTS + 1):
-            optional[f"person_{n}"] = person_input(person_names, n, PERSON_LOCK_NOTE)
         # Added in 1.7.0.
         optional["variation"] = ("BOOLEAN", {"default": True, "tooltip": VARIATION_TOOLTIP})
         return {

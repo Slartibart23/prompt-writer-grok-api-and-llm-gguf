@@ -12,7 +12,9 @@ You can choose between two ways to let it write:
 Both nodes share everything else:
 
 - **Presets per target model:** each target model has its own task preset with a matching system prompt, standard negative prompt and sampling settings. This covers local models (Krea 2, Qwen-Image, Z-Image, FLUX, SDXL family, Wan, MiniMax H3) and API models (Seedream, Seedance, GPT Image, Nano Banana, Grok Imagine, Flux 3, Kling, Veo).
-- **Preset filters:** two boxes above the preset list narrow it by type (image, edit, video, captions & tools, your own) and task (Generation, Caption).
+- **Preset filters:** three boxes above the preset list narrow it by type (image, edit, video, captions & tools, your own), task (Generation, Caption) and content (SFW, NSFW).
+- **SFW and NSFW presets:** Wan 3.0 comes as "· SFW" and "· NSFW" presets with content rules written for that model; poses and interactions are described step by step, not only named.
+- **Only the final prompt:** the result is the prompt itself, ready to paste. Labels such as "Prompt:", settings, tips and text around a code block are removed.
 - **Your own persons and style blocks:** pick them from a local library and they appear in every prompt, with every action clearly assigned by name.
 - **Prompt archive:** every result can be found and reused later.
 - **Prompt Writer · Show Prompt** displays the result with a word count.
@@ -79,10 +81,10 @@ All nodes are in the node menu under **Prompt Writer**.
 
 | Node | Purpose |
 |---|---|
-| **Prompt Writer · Grok API** | Prompt writing, caption rewriting and image captioning through the xAI Grok API. It has four optional image inputs, a custom system prompt input and 60 built-in task presets. You can save your own presets, pick up to six persons and two style blocks from your library, and reload results from the archive. Outputs `prompt` and `negative_prompt`. |
+| **Prompt Writer · Grok API** | Prompt writing, caption rewriting and image captioning through the xAI Grok API. It has four optional image inputs, a custom system prompt input and 62 built-in task presets. You can save your own presets, pick up to six persons and two style blocks from your library, and reload results from the archive. Outputs `prompt` and `negative_prompt`. |
 | **Prompt Writer · LLM GGUF** | The same with a local, uncensored **Qwen3.8-27B** (huihui abliterated or HauhauCS Aggressive, several sizes) instead of the API. The chosen model and its vision projector are downloaded on the first run. Needs llama-cpp-python with CUDA: see **[docs/LOCAL_GGUF.md](docs/LOCAL_GGUF.md)** for the installation and which model fits your GPU. |
 | **Prompt Writer · Persons** | Chooses up to six persons (or groups) from your library outside the writer nodes. Connect its `persons` output to the `persons` input of one or more writer nodes, e.g. one cast for an image and a video writer. While it is connected, the writer's own `person_1` … `person_6` are locked. |
-| **Prompt Writer · System Prompt Library** | The whole system prompt library in one node: the system prompts of all built-in presets, of your own presets and your saved system prompts (★). Choose one in **System prompt**, narrowed by **Filter: type** (image, edit, video, captions & tools, my presets, ★ my system prompts) and **Filter: task** (Generation, Caption); it fills `label` and `text`. **📝 Open editor...** edits the text in a large window with a word, character and line count. **💾 Save as...** saves it under a name of your own in `ComfyUI/user/grok_prompt_forge/system_prompts.json` (not in the workflow); built-in presets are never overwritten. **🗑 Delete my prompt** removes only your own saved prompts. Mode `replace` (default) uses the text instead of the writer's `system_prompt`, which is then greyed out and read-only; mode `append` adds it as extra binding instructions. Connect its output to the `system` input of a writer node; the preset, negative prompt and sampling stay on the writer. |
+| **Prompt Writer · System Prompt Library** | The whole system prompt library in one node: the system prompts of all built-in presets, of your own presets and your saved system prompts (★). Choose one in **System prompt**, narrowed by **Filter: type** (image, edit, video, captions & tools, my presets, ★ my system prompts), **Filter: task** (Generation, Caption) and **Filter: content** (SFW, NSFW); it fills `label` and `text`. **📝 Open editor...** edits the text in a large window with a word, character and line count. **💾 Save as...** saves it under a name of your own in `ComfyUI/user/grok_prompt_forge/system_prompts.json` (not in the workflow); built-in presets are never overwritten. **🗑 Delete my prompt** removes only your own saved prompts. Mode `replace` (default) uses the text instead of the writer's `system_prompt`, which is then greyed out and read-only; mode `append` adds it as extra binding instructions. Connect its output to the `system` input of a writer node; the preset, negative prompt and sampling stay on the writer. |
 | **Prompt Writer · Show Prompt** | Shows a text on the node and passes it on unchanged. Below the text, a status line counts words, tags (comma-separated parts), sentences and characters; switch it off with "show counts". Counting is done locally, needs no API call, and never re-runs anything. The last text is kept with the workflow. |
 | **Prompt Writer · System Prompt Loader** | Loads a system prompt from a `.txt` file and reloads it automatically when the file changes. Connect it to `custom_system_prompt`. |
 | **Prompt Writer · Text File Loader** | Loads `.txt` files from any folder one after another, in natural sort order, for batch runs. Outputs the text, the filename without extension, the full path and the file count. |
@@ -109,10 +111,11 @@ Choosing a preset fills `system_prompt`, `negative_prompt`, `temperature`, `top_
 
 The preset only labels the values. The node always runs with the values shown in its fields, so a workflow shared with someone who doesn't have your presets still runs unchanged.
 
-**Filter: type** and **Filter: task**, right above the preset list, narrow it down:
+**Filter: type**, **Filter: task** and **Filter: content**, right above the preset list, narrow it down:
 
 - Type: All, Image, Edit, Video, Captions & tools, or My presets.
 - Task: All, Generation or Caption.
+- Content: All, SFW or NSFW. SFW and NSFW show the presets whose system prompt has its own content section (see *SFW and NSFW presets* below), including your own presets saved from them.
 
 The filters only change which presets the list shows. They never change the selected preset, which stays in the list even when it doesn't match, and they never re-run the node. The choice is kept per node in the workflow. Inside the opened list, ComfyUI's search field narrows it further, e.g. type "seedance".
 
@@ -177,7 +180,16 @@ The guides inside the presets follow each model's official sources:
 - Kling 3.0: Kling's prompt guide and multi-shot guide
 - Veo 3.1: Google Cloud's Veo prompt guide
 
-For Illustrious, Pony and SDXL they follow the model cards plus established community practice. For **Wan 3.0** there is little model-specific guidance yet, so its preset follows the Wan 2.7 guide.
+For Illustrious, Pony and SDXL they follow the model cards plus established community practice. For **Wan 3.0** there is little model-specific guidance yet, so its presets follow the Wan 2.7 guide.
+
+### SFW and NSFW presets
+
+Wan 3.0 comes as four presets: "Generation ▸ Wan 3.0 · SFW", "Generation ▸ Wan 3.0 · NSFW" and the same two for "Caption ▸". Both use the Wan 3.0 model guide and add a content section written for Wan, with an example of its own:
+
+- **· SFW:** every person is dressed, with what each one wears and how it fits and moves. Every pose and every interaction (a dance, an embrace, a kiss, a fight, a sport) is described as a sequence of visible actions: who does it to whom with which body part, the point of contact, the movement with its direction, speed and force, what all hands do and how the bodies react. Persons in romantic, swimwear or fitness scenes are adults.
+- **· NSFW:** explicit, adults only, introduced with an adult age, and with visible mutual consent. Every sexual interaction is described step by step, never only by its name: who does what to whom with which body part, the exact point of contact, the movement with direction, depth, pressure and speed, what the hands do and the visible reaction of the bodies. Positions get their common term and their full geometry; each shot has one main action with its rhythm, the state of undress stays consistent, the camera shows the action and the sound has breathing, moans and spoken lines.
+
+The content section replaces the general *Adult content* and *Safe mode* rules below. `safe` on still wins: with an NSFW preset it keeps the result safe for work. Workflows and saved overrides that used "Generation ▸ Wan 3.0" or "Caption ▸ Wan 3.0" now use the "· SFW" preset. More models get SFW and NSFW presets in later versions.
 
 Every target that is written as prose (all image and video models except the tag models Illustrious, Pony and SDXL and the edit instructions) also gets a **sentence rule**: complete sentences that each end with a period, each making one clear statement about a subject's look, clothing, pose, action, the setting, the light, the camera or the style. Long descriptions are split into several short sentences instead of comma-chained fragments. Fixed labels that a model needs, such as shot labels, timestamps or section names, keep their form. "Caption ▸ Describe image" and "Caption ▸ LoRA training caption" follow the same rule.
 
@@ -239,7 +251,9 @@ These rules are appended to every system prompt, whether built-in, edited or con
 - **Light,** as set with `light` (not with *free*).
 - **Adult content** (with `safe` off): all persons in nude or sexual content are adults and are described as adults; minors are never sexualised. Everything is written explicitly with plain anatomical words: who does what to whom with which body part, where the bodies touch, who lies, kneels, sits or stands, each person's state of undress, and body fluids by name with where they are and how they look. Framing and camera angle show the action. Tag models get the matching explicit tags, video models the movement and its rhythm. Nothing explicit is added that the input doesn't ask for.
 - **Safe mode** (with `safe` on): nudity and sexual content are only implied - no visible genitals, no explicit acts, no body fluids. Use it for the API models, which filter adult content anyway.
+- Presets ending in "· SFW" or "· NSFW" bring their own content section instead of these two rules (see *SFW and NSFW presets*); `safe` on still wins over "· NSFW".
 - **Length,** only if `min_words` or `max_words` is set.
+- **Final answer:** the reply is the final result only - the prompt (or edit instruction or caption) itself, in its own format. This also applies to your own and the library's system prompts, even if they ask for headings, settings or tips around the prompt. Should a model still add a label such as "Prompt:" or wrap the prompt in a code block with notes around it, the node keeps only the prompt.
 
 The console logs the word and tag count of each result whenever a range is set. Language models count well but not perfectly, so expect an occasional miss of a few words.
 

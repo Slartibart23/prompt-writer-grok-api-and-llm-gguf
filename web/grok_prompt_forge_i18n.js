@@ -135,7 +135,9 @@ export const NODE_TEXT_DE = {
     "An: Sexuelles wird nur angedeutet - Nacktheit ohne explizite Details, keine expliziten " +
     "Handlungen, keine Körperflüssigkeiten. Für API-Modelle mit Inhaltsfilter (Seedream, " +
     "Seedance, GPT Image, Nano Banana, Grok Imagine, Flux 3, Kling, Veo) oder wenn das " +
-    "Ergebnis jugendfrei bleiben muss." },
+    "Ergebnis jugendfrei bleiben muss.\n" +
+    "Auswahlen mit '· SFW' oder '· NSFW' bringen eigene Inhaltsregeln für ihr Modell mit; " +
+    "'safe' an hat auch vor einer '· NSFW'-Auswahl Vorrang." },
   person_5: { label: "Person 5", tooltip: PERSON_DE(5) + LOCK_DE + NOIMG_DE(5) },
   person_6: { label: "Person 6", tooltip: PERSON_DE(6) + LOCK_DE + NOIMG_DE(6) },
   trigger_word: { label: "Trigger-Wort", tooltip:
@@ -281,6 +283,10 @@ export const STRINGS = {
     opt_own: "My presets",
     opt_generation: "Generation",
     opt_caption: "Caption",
+    filterContent: "Filter: content",
+    filterContentTip: "Shows only '· SFW' or '· NSFW' presets: their system prompt has its own content rules for that model. SFW: everyone is dressed, poses and interactions are described step by step. NSFW: explicit, adults only, sexual interactions described step by step ('safe' on still keeps the result safe for work). Display only: it never changes the selected preset and never starts a new run.",
+    opt_sfw: "SFW",
+    opt_nsfw: "NSFW",
     recommended: (name, words) => `Recommended for "${name}": ${words}.`,
     noLength: "This preset has no recommended length.",
     length: "Length",
@@ -350,6 +356,7 @@ export const STRINGS = {
     sysLibrary: "System prompt",
     sysLibraryTip: "The whole library: the system prompts of the built-in presets, of your own presets and your saved system prompts (★). Choosing one puts its label and text into the node - edit them freely; the library itself only changes with '💾 Save as...' or '🗑 Delete my prompt'. The filters above narrow the list. Display only: choosing never starts a run by itself.",
     sysChoose: "(choose from the library)",
+    sysFilterContentTip: "Shows only system prompts with their own SFW or NSFW content section (the '· SFW' / '· NSFW' presets, and your saved prompts that contain such a section). Display only.",
     sysFilterTypeTip: "Shows only system prompts of this type: of image, edit or video presets, of captions & tools, of your own presets, or your saved system prompts (★). Display only.",
     sysFilterTaskTip: "Shows only the system prompts of 'Generation ▸' or 'Caption ▸' presets. Your saved system prompts (★) are always shown. Display only.",
     opt_saved: "★ My system prompts",
@@ -411,6 +418,10 @@ export const STRINGS = {
     opt_own: "Eigene",
     opt_generation: "Generation",
     opt_caption: "Caption",
+    filterContent: "Filter: Inhalt",
+    filterContentTip: "Zeigt nur '· SFW'- oder '· NSFW'-Auswahlen: Ihr Systemprompt bringt eigene Inhaltsregeln für dieses Modell mit. SFW: alle sind bekleidet, Posen und Interaktionen werden Schritt für Schritt beschrieben. NSFW: explizit, nur Erwachsene, sexuelle Interaktionen Schritt für Schritt beschrieben ('safe' an hält das Ergebnis trotzdem jugendfrei). Nur Anzeige: ändert nie die gewählte Auswahl und startet nie einen neuen Lauf.",
+    opt_sfw: "SFW",
+    opt_nsfw: "NSFW",
     recommended: (name, words) => `Empfohlen für "${name}": ${words}.`,
     noLength: "Für diese Auswahl gibt es keine Längenempfehlung.",
     length: "Länge",
@@ -480,6 +491,7 @@ export const STRINGS = {
     sysLibrary: "Systemprompt",
     sysLibraryTip: "Die ganze Bibliothek: die Systemprompts der mitgelieferten Auswahlen, deiner eigenen Auswahlen und deine gespeicherten Systemprompts (★). Eine Wahl setzt Bezeichnung und Text in den Node - frei bearbeitbar; die Bibliothek selbst ändert sich nur mit '💾 Speichern als...' oder '🗑 Eigenen Prompt löschen'. Die Filter darüber grenzen die Liste ein. Nur Anzeige: eine Wahl startet nie selbst einen Lauf.",
     sysChoose: "(aus der Bibliothek wählen)",
+    sysFilterContentTip: "Zeigt nur Systemprompts mit eigenem SFW- oder NSFW-Inhaltsabschnitt (die '· SFW'-/'· NSFW'-Auswahlen und deine gespeicherten Prompts mit einem solchen Abschnitt). Nur Anzeige.",
     sysFilterTypeTip: "Zeigt nur Systemprompts dieses Typs: von Bild-, Edit- oder Video-Auswahlen, von Captions & Werkzeugen, von deinen eigenen Auswahlen oder deine gespeicherten Systemprompts (★). Nur Anzeige.",
     sysFilterTaskTip: "Zeigt nur die Systemprompts von 'Generation ▸'- oder 'Caption ▸'-Auswahlen. Deine gespeicherten Systemprompts (★) erscheinen immer. Nur Anzeige.",
     opt_saved: "★ Eigene Systemprompts",

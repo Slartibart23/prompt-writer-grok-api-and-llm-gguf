@@ -259,7 +259,8 @@ async function applyPreset(node, name, announce = false) {
 }
 
 // ------------------------------------------------------------ preset filter
-// Two selection boxes above "preset" narrow its list by type and task. Display
+// Three selection boxes above "preset" narrow its list by type, task and content
+// (SFW / NSFW: presets whose system prompt has its own content section). Display
 // only: the choice lives in node.properties (saved with the workflow, never sent
 // with the prompt) and the selected preset always stays in the list.
 const FILTERS = {
@@ -267,20 +268,29 @@ const FILTERS = {
            keys: ["all", "image", "edit", "video", "tools", "own"] },
   task: { widget: "grok_filter_task", label: "filterTask", tip: "filterTaskTip",
           keys: ["all", "generation", "caption"] },
+  content: { widget: "grok_filter_content", label: "filterContent", tip: "filterContentTip",
+             keys: ["all", "sfw", "nsfw"] },
 };
 const optionKey = (key) => `opt_${key}`;
 const presetGroup = (p) => (p.builtin ? p.group || "tools" : "own");
 const presetTask = (p) => (p.name.startsWith("Generation ▸") ? "generation"
   : p.name.startsWith("Caption ▸") ? "caption" : "other");
+// "sfw" / "nsfw" from the system prompt's own content section (as forge_node does)
+const CONTENT_HEADING = /^## Content: (SFW|NSFW)\b/m;
+const textContent = (text) => (CONTENT_HEADING.exec(String(text ?? ""))?.[1] ?? "").toLowerCase();
+const presetContent = (p) => p.content || textContent(p.system_prompt);
 
-// Up to 1.1.0 "Generation ▸ X" was called "Idea ▸ X": a loaded workflow shows the
-// new name. Only the label changes - the values in the node's fields stay.
+// Up to 1.1.0 "Generation ▸ X" was called "Idea ▸ X", and presets split into
+// "· SFW" / "· NSFW" in 1.7.0 had no suffix before (their old name now means the SFW
+// one): a loaded workflow shows the new name. Only the label changes - the values
+// in the node's fields stay.
 const LEGACY = ["Idea ▸ ", "Generation ▸ "];
 function renameLegacyPreset(node, list) {
   const w = widget(node, "preset");
-  if (!w || typeof w.value !== "string" || !w.value.startsWith(LEGACY[0])) return;
-  const renamed = LEGACY[1] + w.value.slice(LEGACY[0].length);
-  if (list.some((p) => p.name === renamed)) w.value = renamed;
+  if (!w || typeof w.value !== "string" || list.some((p) => p.name === w.value)) return;
+  const name = w.value.startsWith(LEGACY[0]) ? LEGACY[1] + w.value.slice(LEGACY[0].length) : w.value;
+  const renamed = list.find((p) => p.name === name || (p.renamed_from || []).includes(name));
+  if (renamed) w.value = renamed.name;
 }
 
 function filterValue(node, which) {
@@ -291,8 +301,10 @@ function filterValue(node, which) {
 function presetChoices(node, list) {
   const group = filterValue(node, "group");
   const task = filterValue(node, "task");
+  const content = filterValue(node, "content");
   const names = list
-    .filter((p) => (group === "all" || presetGroup(p) === group) && (task === "all" || presetTask(p) === task))
+    .filter((p) => (group === "all" || presetGroup(p) === group) && (task === "all" || presetTask(p) === task)
+      && (content === "all" || presetContent(p) === content))
     .map((p) => p.name);
   const current = widget(node, "preset")?.value;
   return current === undefined || names.includes(current) ? names : [current, ...names];
@@ -803,7 +815,7 @@ async function openLibrary(node, startKind = "person") {
 // One selection box holds the whole library: the system prompts of the built-in
 // presets, of your own presets and your saved system prompts (★, kept in
 // ComfyUI/user/grok_prompt_forge/system_prompts.json). Choosing one puts its label
-// and text into the node. Two filter boxes narrow the list. All of this is display
+// and text into the node. Three filter boxes narrow the list. All of this is display
 // only: the choice and the filters live in node.properties, the node sends only
 // label, text and mode. "Save as..." asks for a name of your own (built-in presets
 // are never overwritten), "Delete" removes only your own saved prompts.
@@ -814,6 +826,8 @@ const SYS_FILTERS = {
            keys: ["all", "image", "edit", "video", "tools", "own", "saved"] },
   task: { widget: "grok_sys_filter_task", label: "filterTask", tip: "sysFilterTaskTip",
           keys: ["all", "generation", "caption"] },
+  content: { widget: "grok_sys_filter_content", label: "filterContent", tip: "sysFilterContentTip",
+             keys: ["all", "sfw", "nsfw"] },
 };
 const cleanLabel = (label) => String(label ?? "").trim().replace(/^(★\s*)+/, "").trim();
 
@@ -833,14 +847,15 @@ function loadSavedPrompts(force = false) {
   return savedPromptsPromise;
 }
 
-// [{ choice, label, text, group, task }] - your saved prompts first, then all presets
+// [{ choice, label, text, group, task, content }] - your saved prompts first, then all presets
 async function systemEntries() {
   const [list, saved] = await Promise.all([loadPresets(), loadSavedPrompts()]);
   return [
     ...Object.entries(saved).map(([label, text]) => ({
-      choice: MARK + label, label, text, group: "saved", task: "any" })),
+      choice: MARK + label, label, text, group: "saved", task: "any", content: textContent(text) })),
     ...list.filter((p) => p.system_prompt).map((p) => ({
-      choice: p.name, label: p.name, text: p.system_prompt, group: presetGroup(p), task: presetTask(p) })),
+      choice: p.name, label: p.name, text: p.system_prompt, group: presetGroup(p), task: presetTask(p),
+      content: presetContent(p) })),
   ];
 }
 
@@ -855,9 +870,11 @@ async function refreshSystemChoices(node) {
   const entries = await systemEntries();
   const group = sysFilterValue(node, "group");
   const task = sysFilterValue(node, "task");
+  const content = sysFilterValue(node, "content");
   const choices = entries
     .filter((e) => (group === "all" || e.group === group)
-      && (task === "all" || e.task === task || e.task === "any"))
+      && (task === "all" || e.task === task || e.task === "any")
+      && (content === "all" || e.content === content))
     .map((e) => e.choice);
   node._grokSysEntries = entries;
   const current = node.properties?.systemChoice;

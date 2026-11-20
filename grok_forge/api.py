@@ -78,9 +78,22 @@ def resolve_api_key(api_key_widget: str, api_key_file: str, log="[Grok]",
     )
 
 
+# A label in front of the result: "Prompt:", "**Final prompt:**", "Video prompt (English):" ...
+PROMPT_LABEL = re.compile(
+    r"^[\s*_#>]*(?:final\s+|english\s+|video\s+|image\s+|optimi[sz]ed\s+)*prompt"
+    r"(?:\s*\([^)\n]{0,20}\))?[\s*_]*:[\s*_]*(?=\S)", re.IGNORECASE)
+FENCE = re.compile(r"```[^\n]*\n(.*?)\n?```", re.DOTALL)
+
+
 def strip_wrapping(text: str) -> str:
-    """Remove accidental markdown fences / surrounding quotes from the model output."""
+    """Keep only the final result: remove a "Prompt:" label, text around a fenced
+    block (settings, tips), markdown fences and surrounding quotes."""
     t = text.strip()
+    blocks = FENCE.findall(t)
+    if blocks and not t.startswith("```"):
+        # e.g. "**Prompt:**\n```\n...\n```\n\n**Settings:** ..." - the block is the result
+        t = max(blocks, key=len).strip()
+    t = PROMPT_LABEL.sub("", t, count=1).strip()
     if t.startswith("```"):
         lines = t.splitlines()
         if lines and lines[0].startswith("```"):

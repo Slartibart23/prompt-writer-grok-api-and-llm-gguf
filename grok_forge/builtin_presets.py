@@ -15,17 +15,20 @@ for faithful rewrites and edit instructions.
 
 Preset names: "Generation ▸ <target>" expands a short idea (called "Idea ▸"
 before 1.2.0, see presets.LEGACY_PREFIX), "Caption ▸ <target>"
-rewrites an existing caption faithfully.
+rewrites an existing caption faithfully. Targets with content variants come as
+"<task> ▸ <target> · SFW" and "<task> ▸ <target> · NSFW": the same model guide plus
+a content section written for that model ("## Content: SFW" / "## Content: NSFW",
+which replaces the node's general "Adult content" / "Safe mode" rules).
 """
 
 COMMON = """## Language
 The input may be written in any language. Understand it fully and always write the result in English. Only these stay in their original language and wording: text that should appear in the picture (signs, labels, lettering), and spoken dialogue or lyrics.
 
 ## Content
-Describe whatever the input asks for as direct factual description; for nudity and sexual content follow the "Adult content" or "Safe mode" section below. Never moralize or add warnings.
+Describe whatever the input asks for as direct factual description; for nudity and sexual content follow the content section of this prompt ("Content: SFW" or "Content: NSFW" above, otherwise "Adult content" or "Safe mode" below). Never moralize or add warnings.
 
 ## Output
-Output ONLY the final result in exactly the format described above. No preamble, no explanation, no alternatives, no markdown, no quotation marks around the whole result."""
+Output ONLY the final result in exactly the format described above: the prompt itself, ready to paste into the target model. No title, no label such as "Prompt:", no settings, notes, tips or variants, no preamble, no explanation, no alternatives, no markdown or code fences, no quotation marks around the whole result."""
 
 TASK_IDEA = """## Task
 The user gives a short idea, keywords or a rough description, written in any language. Turn it into ONE optimal prompt for {label}.
@@ -44,6 +47,36 @@ SENTENCES = """## Sentences
 - Write complete sentences, each ending with a period.
 - Each sentence makes one clear statement: the look of one subject, their clothing, a pose, an action or interaction, an object, the setting or background, the light, the camera or the style. Split a long description into several short sentences rather than chaining clauses or fragments with commas.
 - No comma-chained keyword lists. Only labels, tags and term lists that the guide above explicitly asks for (shot labels, timestamps, section names, cinematic setting terms) keep their own form."""
+
+# Content sections of the "· SFW" / "· NSFW" variants. The heading is what
+# forge_node.prepare() looks for: a system prompt with its own content section gets
+# no general "Adult content" / "Safe mode" rule on top ("safe" on still wins).
+WAN3_SFW = """## Content: SFW (binding)
+- Every person is dressed. Name what each one wears and how it fits and moves: fabric, cut and colour (a linen summer dress, a bikini on the beach, a bathrobe, a towel wrapped around the body).
+- Describe every pose and every interaction between persons (a dance, an embrace, a kiss, a fight, a sport, helping someone up) as a sequence of visible actions, never only by its name. For each action give who does it to whom and with which body part, the exact point of contact, the movement itself with its direction, speed and force, what the hands of every person do at the same time, and the visible reaction of the bodies.
+- Poses: where the weight rests, the posture, where the hands and feet are, which way each face points and where each person looks, and how they move into the next pose.
+- Intimacy lives in closeness, glances, hands, embraces and kisses; the camera frames faces, hands and shoulders.
+- Persons in romantic, swimwear or fitness scenes are adults and are introduced with an adult age ("a woman in her late twenties").
+- Write only what is visible: the clothing, the framing and the light that are there."""
+
+WAN3_NSFW = """## Content: NSFW (explicit, adults only)
+- Every person is an adult and is introduced with an adult age and adult features ("a woman in her early thirties", "a man in his forties"). Sexual content involves adults only.
+- The scene shows mutual, eager consent: the persons respond to each other, look at each other, guide each other's hands and bodies.
+- Write explicitly with plain anatomical words (penis, vagina, vulva, clitoris, labia, anus, breasts, nipples, buttocks, testicles).
+- Describe every sexual interaction as a sequence of visible actions, never only by its name. For each action give:
+  - who does it to whom, and with which body part (hand, fingers, mouth, tongue, lips, penis, breasts ...);
+  - the exact point of contact and what touches what (her lips close around the tip of his penis; two of his fingers slide between her labia);
+  - the movement itself: direction, depth, pressure and speed (slow, deep strokes; small fast circles; grinding forward and back), and how it changes over the shot;
+  - what the hands of every person do at the same time (gripping hips, pulling hair, spreading thighs, squeezing breasts, holding the headboard);
+  - the visible reaction of the bodies: back arching, hips lifting to meet the motion, thighs trembling, toes curling, fingers digging into the sheet, mouth opening, eyes closing or locked on the partner.
+- Positions: name the position with its common term, then its full geometry - who lies, kneels, sits or stands, the angle of the hips, where legs, arms and hands are, which way each face points.
+- Motion per shot (Wan reads it per shot): one main sexual action per shot with its rhythm and the visible movement it causes (hips rocking, breasts swaying, the bed shaking). A change of position is one continuous movement inside the shot (she rolls onto her back and pulls him on top of her) or a new shot.
+- Undress and continuity: give each person's state of dress in every shot and which body parts are visible; clothes taken off stay off, and fluids and marks stay where they are.
+- Body fluids, when part of the scene: name them (sweat, saliva, vaginal wetness, semen, squirt) and describe where they are and how they look (glistening on the thighs, dripping from the chin, smeared across the stomach).
+- Camera: choose framing and angle so every described action is visible (side view of the hips, low angle between the legs, POV from above, close-up of the point of contact); slow camera moves that follow the action.
+- Sound: breathing and its tempo, moans and their pitch, wet sounds and skin on skin, a creaking bed; spoken lines in double quotes with tone and volume ("she gasps, breathless: ..."). Write "No background music." when the input wants only the room sound.
+- Longer clips (10-30 s): 2-5 shots that follow the arc the input asks for (foreplay, the act, climax, afterglow), each shot with its own action and end state.
+- Add nothing more explicit than the input asks for."""
 
 CAPTION_TO_VIDEO = """- The caption describes a still image. Keep all of it as the starting state of the clip and add only simple, plausible motion and camera behaviour that the scene itself suggests."""
 
@@ -384,6 +417,7 @@ Both: a clip is about 5 seconds (81 frames at 16 fps). Keep to one main action w
 - First and last frame: describe the motion path from the start state to the end state.
 - Avoid real people's names, rapid scene changes and long exact on-screen text.
 - About 80-250 words.""",
+        "content": {"sfw": WAN3_SFW, "nsfw": WAN3_NSFW},
     },
     {
         "label": "MiniMax H3 FL2VA",
@@ -1044,6 +1078,43 @@ ABOUT_DE = {
 }
 
 
+# Examples of the content variants (key: (target label, "sfw" / "nsfw")); without
+# one the variant shows the target's own example.
+CONTENT_EXAMPLES = {
+    ("Wan 3.0", "sfw"): (
+        "A rooftop terrace in a city on a clear, sunny afternoon. Shot 1 [0-4s]: Wide shot. "
+        "A woman in her late twenties in a red wrap dress and a man in his early thirties in a "
+        "white linen shirt and grey trousers dance salsa between potted lemon trees. His right "
+        "hand rests flat on her shoulder blade, her left hand lies on his upper arm, and their "
+        "other hands are clasped at shoulder height. The camera circles them slowly to the left. "
+        "Shot 2 [4-8s]: Medium shot. He raises their clasped hands and she turns twice under his "
+        "arm on the balls of her feet, the skirt of her dress swinging out around her knees. "
+        "She laughs, breathless, and her eyes stay on his face. Shot 3 [8-12s]: Close-up, static "
+        "camera. He catches her at the waist and dips her backwards over his left arm. Her right "
+        "hand grips his shoulder, her hair falls loose towards the floor, and the two hold the "
+        "dip, smiling at each other. Sound: a lively salsa with congas and a brass section plays "
+        "from a small speaker, their shoes tap on the wooden deck and the city hums below. "
+        "No dialogue."),
+    ("Wan 3.0", "nsfw"): (
+        "A bright bedroom with white sheets and a large window on a clear afternoon. Shot 1 "
+        "[0-4s]: Medium shot from the side of the bed. A woman in her early thirties with long "
+        "dark hair, completely naked, lies on her back with her knees bent and her thighs open. "
+        "A man in his late thirties with short brown hair and a trimmed beard, also naked, kneels "
+        "between her legs. His right hand strokes slowly up the inside of her thigh, and she "
+        "takes his wrist and guides his fingers to her vulva. The camera pushes in slowly. "
+        "Shot 2 [4-8s]: Close-up from a low angle at the foot of the bed. Two of his fingers "
+        "slide between her labia and move in slow circles over her clitoris while his left hand "
+        "holds her hip down. Her hips lift to meet his hand, her back arches off the sheet and "
+        "her fingers dig into the pillow. She looks down at him and gasps, breathless: \"Yes, "
+        "right there.\" Shot 3 [8-12s]: Medium shot from the side, static camera. He leans over her "
+        "and guides the tip of his erect penis into her vagina, then pushes in with slow, deep "
+        "strokes in the missionary position. Her legs wrap around his waist, her heels press "
+        "into his lower back and her hands grip his shoulders. Sweat glistens on his back, the "
+        "bed rocks with each stroke, and both hold still at the end, pressed together, "
+        "foreheads touching. Sound: their heavy breathing, her rising moans, skin on skin and a "
+        "creaking bed frame. No background music."),
+}
+
 RECAST = """You are an expert prompt editor for image and video models in ComfyUI. The user gives an existing prompt - written for any target model, in any format (natural language, tag list, multi-section video format) - and usually a short instruction such as "replace the man with Person 1". The persons to put in are defined in the "Persons" section below.
 
 ## Task
@@ -1062,8 +1133,34 @@ Recast the prompt: swap the persons, keep everything else.
 GROUPS = {"image": "image", "tags": "image", "edit": "edit", "video": "video", "h3": "video"}
 
 
+CONTENT_ABOUT = {
+    "sfw": (" SFW: everyone is dressed; poses and interactions are described step by step.",
+            " SFW: alle sind bekleidet; Posen und Interaktionen werden Schritt für Schritt "
+            "beschrieben."),
+    "nsfw": (" NSFW: explicit, adults only; sexual interactions are described step by step. "
+             "With 'safe' on the result stays safe for work.",
+             " NSFW: explizit, nur Erwachsene; sexuelle Interaktionen werden Schritt für "
+             "Schritt beschrieben. Mit 'safe' an bleibt das Ergebnis jugendfrei."),
+}
+
+
+def target_presets(target, prefix):
+    """[(preset name, content)] of one target and task prefix ("Generation" / "Caption")."""
+    name = f"{prefix} ▸ {target['label']}"
+    if not target.get("content"):
+        return [(name, "")]
+    return [(f"{name} · {c.upper()}", c) for c in ("sfw", "nsfw")]
+
+
+# Presets that were split into "· SFW" / "· NSFW": the old name now means the SFW
+# one (saved overrides move along in presets.current_name, workflows in the browser).
+def _renamed():
+    return {f"{prefix} ▸ {t['label']}": f"{prefix} ▸ {t['label']} · SFW"
+            for t in TARGETS if t.get("content") for prefix in ("Generation", "Caption")}
+
+
 def _preset(description, system_prompt, negative, temperature, top_p, max_tokens, words="",
-            description_de="", words_de="", group="tools"):
+            description_de="", words_de="", group="tools", content="", renamed_from=()):
     return {
         "description": description,
         "system_prompt": system_prompt,
@@ -1075,10 +1172,12 @@ def _preset(description, system_prompt, negative, temperature, top_p, max_tokens
         "description_de": description_de,
         "words_de": words_de,
         "group": group,
+        "content": content,
+        "renamed_from": list(renamed_from),
     }
 
 
-def _model_prompt(target, task):
+def _model_prompt(target, task, content=""):
     label = target["label"]
     kind = target.get("kind", "image")
     if kind == "edit":
@@ -1099,10 +1198,11 @@ def _model_prompt(target, task):
         if task == "caption" and kind in ("video", "h3"):
             intro += "\n" + CAPTION_TO_VIDEO
     role = "edit instructions" if kind == "edit" else "prompts"
-    example = EXAMPLES[label]
+    example = CONTENT_EXAMPLES.get((label, content), EXAMPLES[label])
     sentences = f"\n\n{SENTENCES}" if kind in ("image", "video", "h3") else ""
+    section = f"\n\n{target['content'][content]}" if content else ""
     return (f"You are an expert prompt writer for {label} in ComfyUI.\n\n{intro}\n\n"
-            f"## How {label} wants its {role}\n{target['guide']}{sentences}\n\n"
+            f"## How {label} wants its {role}\n{target['guide']}{sentences}{section}\n\n"
             f"## Example of a good result\nFor form, structure and length only - never copy its "
             f"content, subjects or wording.\n\n{example}\n\n{COMMON}")
 
@@ -1142,6 +1242,7 @@ def _build():
             "Person 1'.",
             "keine feste Spanne - behält die Länge des Original-Prompts"),
     }
+    renamed = _renamed()
     for task, prefix in (("idea", "Generation"), ("caption", "Caption")):
         for t in TARGETS:
             temperature, top_p = t[task]
@@ -1149,14 +1250,18 @@ def _build():
                     else "Rewrite an existing caption faithfully")
             what_de = ("Eine kurze Idee ausbauen" if task == "idea"
                        else "Eine vorhandene Caption treu umschreiben")
-            presets[f"{prefix} ▸ {t['label']}"] = _preset(
-                f"{what} into a prompt for {t['about']}",
-                _model_prompt(t, task), t["negative"], temperature, top_p, t["max_tokens"],
-                WORDS[t["label"]],
-                f"{what_de} zu einem Prompt für {ABOUT_DE[t['label']]}",
-                WORDS_DE[t["label"]], GROUPS[t.get("kind", "image")])
+            for name, content in target_presets(t, prefix):
+                about, about_de = CONTENT_ABOUT.get(content, ("", ""))
+                presets[name] = _preset(
+                    f"{what} into a prompt for {t['about']}{about}",
+                    _model_prompt(t, task, content), t["negative"], temperature, top_p,
+                    t["max_tokens"], WORDS[t["label"]],
+                    f"{what_de} zu einem Prompt für {ABOUT_DE[t['label']]}{about_de}",
+                    WORDS_DE[t["label"]], GROUPS[t.get("kind", "image")], content,
+                    [old for old, new in renamed.items() if new == name])
     return presets
 
 
 BUILTIN = _build()
+RENAMED = _renamed()
 DEFAULT_PRESET = "Generation ▸ Krea 2"

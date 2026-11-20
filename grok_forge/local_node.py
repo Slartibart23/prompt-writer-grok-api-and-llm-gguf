@@ -6,6 +6,7 @@ work exactly as on Prompt Writer · Grok API; only the model fields differ. The 
 and its vision projector are downloaded on the first run."""
 
 from . import local_models
+from .api import strip_wrapping
 from .forge_node import (GrokPromptForge, _selected, archive_result, log_counts, prepare,
                          user_content)
 
@@ -112,8 +113,8 @@ class LocalPromptForgeGGUF:
                     if unload_after_run:
                         local_models.LOADED.unload()
             choice = response["choices"][0]
-            result = local_models.split_thinking(
-                (choice.get("message") or {}).get("content"), thinking, choice.get("finish_reason"))
+            result = strip_wrapping(local_models.split_thinking(
+                (choice.get("message") or {}).get("content"), thinking, choice.get("finish_reason")))
             if not result:
                 raise RuntimeError(f"{LOG} the model returned empty text.")
             usage = response.get("usage") or {}

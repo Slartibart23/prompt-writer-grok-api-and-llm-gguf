@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.7.0 — 2026-11-20
+
+- **SFW and NSFW presets for Wan 3.0:** "Generation ▸ Wan 3.0 · SFW", "Generation ▸ Wan 3.0 · NSFW" and the same two for "Caption ▸". Each adds a content section written for Wan 3.0 to the model guide, with an example of its own. SFW: everyone is dressed, poses and interactions are described step by step. NSFW: explicit, adults only, every sexual interaction described step by step (who, which body part, point of contact, movement, hands, reaction of the bodies), positions with their full geometry. 62 built-in presets in all.
+- The content section replaces the general "Adult content" / "Safe mode" rules for these presets; `safe` on still wins over an NSFW preset.
+- "Generation ▸ Wan 3.0" and "Caption ▸ Wan 3.0" are now the "· SFW" presets: saved workflows and saved overrides move over by themselves.
+- **Filter: content** (All / SFW / NSFW) on the writer nodes and on Prompt Writer · System Prompt Library.
+- **Only the final prompt:** a new binding last rule asks for the result alone, also with your own and the library's system prompts. The node removes a leading label such as "Prompt:" and keeps only the code block when a model wraps the prompt with settings or tips. Prompt Writer · LLM GGUF now cleans its output the same way as Grok API.
+
 ## 1.6.0 — 2026-11-19
 
 - **Prompt Writer · System Prompt Library** (formerly *System Prompt*) holds the whole system prompt library: the system prompts of all built-in presets, of your own presets and your saved system prompts (★). Choose one in the new **System prompt** box, narrowed by **Filter: type** and **Filter: task**; it fills `label` and `text`. The choice and the filters are display only and kept in the workflow.

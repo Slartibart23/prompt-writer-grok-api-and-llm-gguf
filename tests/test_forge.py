@@ -120,17 +120,21 @@ class BuiltinPresetTests(unittest.TestCase):
         for t in builtin_presets.TARGETS:
             prose = t.get("kind", "image") in ("image", "video", "h3")
             for task in ("Generation", "Caption"):
-                system = builtin_presets.BUILTIN[f"{task} ▸ {t['label']}"]["system_prompt"]
-                self.assertEqual("## Sentences" in system, prose, t["label"])
+                for name, _ in builtin_presets.target_presets(t, task):
+                    system = builtin_presets.BUILTIN[name]["system_prompt"]
+                    self.assertEqual("## Sentences" in system, prose, name)
             if prose and t.get("kind") != "h3":
                 # the example must follow the rule it is shown with
                 example = builtin_presets.EXAMPLES[t["label"]]
                 self.assertRegex(example.rstrip(), r'[.!?]"?\)?$', t["label"])
+        for key, example in builtin_presets.CONTENT_EXAMPLES.items():
+            self.assertRegex(example.rstrip(), r'[.!?]"?\)?$', key)
         self.assertIn("120-250 words", builtin_presets.BUILTIN["Generation ▸ Krea 2"]["system_prompt"])
 
     def test_examples_use_natural_daylight(self):
         # the default light is clear daylight: no example may teach dramatic light
-        text = json.dumps(builtin_presets.EXAMPLES).lower()
+        text = json.dumps([builtin_presets.EXAMPLES,
+                           list(builtin_presets.CONTENT_EXAMPLES.values())]).lower()
         for word in ("neon", "lantern", "sunset", "dusk", "golden hour", "candle", "lamplight"):
             self.assertNotIn(word, text)
 
@@ -140,7 +144,7 @@ class BuiltinPresetTests(unittest.TestCase):
             self.assertEqual(builtin_presets.BUILTIN[f"Generation ▸ {target}"]["negative_prompt"], "")
 
     def test_seedream_5_5_follows_the_byteplus_tutorial(self):
-        self.assertEqual(len(builtin_presets.BUILTIN), 60)
+        self.assertEqual(len(builtin_presets.BUILTIN), 62)
         system = builtin_presets.BUILTIN["Generation ▸ Seedream 5.5"]["system_prompt"]
         for phrase in ("up to 10 reference images", "Set a transparent background.", "Image 1"):
             self.assertIn(phrase, system)
@@ -167,6 +171,17 @@ class StripWrappingTests(unittest.TestCase):
         self.assertEqual(api.strip_wrapping('"hello"'), "hello")
         self.assertEqual(api.strip_wrapping("1girl, solo, garden\n."), "1girl, solo, garden")
         self.assertEqual(api.strip_wrapping("A cat.\n\nA dog."), "A cat.\n\nA dog.")
+
+    def test_only_the_final_prompt_is_kept(self):
+        wrapped = ("**Prompt:**\n```\nA cat sits on a wall.\n```\n\n**Venice settings:**\n"
+                   "- Model: wan-3-0\n\n**Variant tip:** use 9:16.")
+        self.assertEqual(api.strip_wrapping(wrapped), "A cat sits on a wall.")
+        self.assertEqual(api.strip_wrapping("Prompt: A dog runs."), "A dog runs.")
+        self.assertEqual(api.strip_wrapping("**Final video prompt (English):** A dog runs."),
+                         "A dog runs.")
+        # a field label of a real format and the word "prompt" inside the text stay
+        h3 = "integrated_multimodal_description: [Shot 1] A prompt card lies on the desk."
+        self.assertEqual(api.strip_wrapping(h3), h3)
 
 
 class PresetStoreTests(unittest.TestCase):
@@ -200,6 +215,18 @@ class PresetStoreTests(unittest.TestCase):
         self.assertEqual(presets.names().count(name), 1)
         presets.delete(name)
         self.assertEqual(presets.get(name)["system_prompt"], original)
+
+    def test_split_presets_keep_old_names_as_sfw(self):
+        self.assertEqual(presets.current_name("Generation ▸ Wan 3.0"), "Generation ▸ Wan 3.0 · SFW")
+        self.assertEqual(presets.current_name("Caption ▸ Wan 3.0"), "Caption ▸ Wan 3.0 · SFW")
+        self.assertEqual(presets.current_name("Idea ▸ Wan 3.0"), "Generation ▸ Wan 3.0 · SFW")
+        with open(os.path.join(api.user_dir(), "presets.json"), "w", encoding="utf-8") as f:
+            json.dump({"version": 1, "presets": {"Generation ▸ Wan 3.0": {"temperature": 0.3}}}, f)
+        self.assertEqual(presets.get("Generation ▸ Wan 3.0 · SFW")["temperature"], 0.3)
+        self.assertIsNone(presets.get("Generation ▸ Wan 3.0"))
+        # the browser renames old workflows with this list
+        self.assertEqual(presets.get("Generation ▸ Wan 3.0 · SFW")["renamed_from"],
+                         ["Generation ▸ Wan 3.0"])
 
     def test_values_saved_under_the_old_idea_name_carry_over(self):
         with open(os.path.join(api.user_dir(), "presets.json"), "w", encoding="utf-8") as f:
@@ -399,6 +426,40 @@ class RulesAndSystemPromptTests(unittest.TestCase):
         self.assertIn("only implied", safe)
         self.assertNotIn("## Adult content", safe)
         self.assertIn("All persons in intimate scenes are adults", safe)
+
+    def test_content_variants_bring_their_own_rules(self):
+        sfw = builtin_presets.BUILTIN["Generation ▸ Wan 3.0 · SFW"]
+        nsfw = builtin_presets.BUILTIN["Generation ▸ Wan 3.0 · NSFW"]
+        self.assertEqual((sfw["content"], nsfw["content"]), ("sfw", "nsfw"))
+        self.assertIn("## Content: SFW", sfw["system_prompt"])
+        self.assertIn("## Content: NSFW", nsfw["system_prompt"])
+        self.assertIn("never only by its name", nsfw["system_prompt"])
+        self.assertIn("the visible reaction of the bodies", nsfw["system_prompt"])
+        self.assertIn("Caption ▸ Wan 3.0 · NSFW", builtin_presets.BUILTIN)
+        self.assertNotIn("Generation ▸ Wan 3.0", builtin_presets.BUILTIN)
+        self.assertEqual(builtin_presets.BUILTIN["Generation ▸ Krea 2"]["content"], "")
+        # each variant shows its own example
+        self.assertIn("salsa", sfw["system_prompt"])
+        self.assertIn("missionary", nsfw["system_prompt"])
+        self.assertNotIn("salsa", nsfw["system_prompt"])
+
+        explicit = self.system_of(system_prompt=nsfw["system_prompt"])
+        self.assertNotIn("## Adult content", explicit)
+        self.assertNotIn("## Safe mode", explicit)
+        safe = self.system_of(system_prompt=nsfw["system_prompt"], safe=True)
+        self.assertIn("## Safe mode", safe)  # safe on still wins
+        self.assertIn('overrides the "Content: NSFW" section', safe)
+        for on in (False, True):
+            dressed = self.system_of(system_prompt=sfw["system_prompt"], safe=on)
+            self.assertNotIn("## Adult content", dressed)
+            self.assertNotIn("## Safe mode", dressed)
+
+    def test_final_answer_rule_is_always_last(self):
+        for kw in ({}, {"system_prompt": builtin_presets.BUILTIN["Generation ▸ Wan 3.0 · NSFW"][
+                "system_prompt"]}, {"min_words": 50, "max_words": 90}):
+            system = self.system_of(**kw)
+            self.assertTrue(system.rstrip().endswith(forge_node.FINAL_RULE), kw)
+        self.assertIn('label such as "Prompt:"', builtin_presets.COMMON)
 
     def test_system_input_appends_or_replaces(self):
         own = {"label": "Mine", "text": "ALWAYS MENTION THE CAT", "mode": "append"}

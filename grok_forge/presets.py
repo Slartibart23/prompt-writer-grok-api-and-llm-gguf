@@ -10,7 +10,7 @@ import os
 import threading
 
 from .api import user_dir
-from .builtin_presets import BUILTIN, DEFAULT_PRESET
+from .builtin_presets import BUILTIN, DEFAULT_PRESET, RENAMED
 
 FIELDS = {
     "description": str,
@@ -22,8 +22,10 @@ FIELDS = {
 }
 LIMITS = {"temperature": (0.0, 2.0), "top_p": (0.05, 1.0), "max_tokens": (256, 32768)}
 MAX_NAME = 80
-# Up to 1.1.0 the "Generation ▸" presets were called "Idea ▸": saved values under
-# an old name now belong to the new one (the browser renames it in workflows).
+# Up to 1.1.0 the "Generation ▸" presets were called "Idea ▸", and up to 1.6.0 the
+# presets now split into "· SFW" / "· NSFW" had no suffix (builtin_presets.RENAMED):
+# saved values under an old name now belong to the new one (the browser renames it
+# in workflows).
 LEGACY_PREFIX = ("Idea ▸ ", "Generation ▸ ")
 
 _lock = threading.Lock()
@@ -31,9 +33,10 @@ _lock = threading.Lock()
 
 def current_name(name):
     old, new = LEGACY_PREFIX
-    if name.startswith(old) and new + name[len(old):] in BUILTIN:
-        return new + name[len(old):]
-    return name
+    renamed = new + name[len(old):]
+    if name.startswith(old) and (renamed in BUILTIN or renamed in RENAMED):
+        name = renamed
+    return RENAMED.get(name, name)
 
 
 def _path():

@@ -4,6 +4,7 @@ prompt and the sampling settings; everything stays editable on the node and can
 be saved as a preset of your own (see web/grok_prompt_forge.js)."""
 
 import json
+import re
 
 from . import archive as prompt_archive
 from . import library, models, presets
@@ -75,7 +76,9 @@ SAFE_TOOLTIP = (
     "On: sexual content is only implied - nudity without explicit detail, no explicit sex "
     "acts, no body fluids. Use it for API models that filter adult content (Seedream, "
     "Seedance, GPT Image, Nano Banana, Grok Imagine, Flux 3, Kling, Veo) or whenever the "
-    "result must stay safe for work.")
+    "result must stay safe for work.\n"
+    "Presets ending in '· SFW' or '· NSFW' bring their own content rules for that model; "
+    "'safe' on still wins over a '· NSFW' preset.")
 SYSTEM_INPUT_TOOLTIP = (
     "Optional: connect 'Prompt Writer · System Prompt Library' to choose the system prompt "
     "there - from the built-in presets, your own presets or your saved system prompts. Mode "
@@ -105,6 +108,15 @@ ADULT_RULE = """## Adult content (applies only when the input asks for nudity or
 - Choose framing and camera angle so the described action is actually visible.
 - Tag models: use the matching explicit Danbooru tags and the explicit rating tag. Video models: describe the movement, its rhythm and the transitions between poses.
 - Add nothing explicit that the input does not ask for."""
+
+# A system prompt with its own content section (the "· SFW" / "· NSFW" presets)
+# gets no general ADULT_RULE / SAFE_RULE; only "safe" on overrides an NSFW section.
+CONTENT_HEADING = re.compile(r"^## Content: (SFW|NSFW)\b", re.MULTILINE)
+SAFE_OVERRIDE = """- This overrides the "Content: NSFW" section above: write the scene safe for work."""
+
+# Last rule of every run, also for your own and the library's system prompts.
+FINAL_RULE = """## Final answer (binding)
+Reply with the final result only: the prompt itself (or the edit instruction or caption), in its own format, exactly as it goes into the target model. If anything above asks for headings, labels, settings, tips, variants or notes around it, leave them out."""
 
 SAFE_RULE = """## Safe mode (binding)
 - Keep every result safe for work. Nudity and sexual content are only implied: tasteful framing, covered or turned-away bodies, no visible genitals, no explicit sex acts, no body fluids.
@@ -523,6 +535,22 @@ def _system_input(value):
     return str(value.get("label") or "").strip(), str(value["text"]).strip(), mode
 
 
+def content_of(system):
+    """"sfw" / "nsfw" when the system prompt has its own content section, else ""."""
+    m = CONTENT_HEADING.search(system or "")
+    return m.group(1).lower() if m else ""
+
+
+def content_rule(system, safe):
+    """How nudity and sexual content are written, unless the system prompt says it itself."""
+    content = content_of(system)
+    if content == "sfw":
+        return ""
+    if content == "nsfw":
+        return f"{SAFE_RULE}\n{SAFE_OVERRIDE}" if safe else ""
+    return SAFE_RULE if safe else ADULT_RULE
+
+
 def prepare(text, negative_prompt, system_prompt, custom_system_prompt, trigger_word,
             image_inputs, slots, image_n_is_person_n, min_words, max_words, log=LOG):
     """Build the Job of one run, or None when there is nothing to do."""
@@ -553,10 +581,12 @@ def prepare(text, negative_prompt, system_prompt, custom_system_prompt, trigger_
              styles_rule(styles),
              LIGHT_RULES[light],
              PHOTO_DEFAULT if light == "daylight" and not styles else "",
-             SAFE_RULE if safe else ADULT_RULE,
-             length_rule(min_words, max_words)]
+             content_rule(system, safe),
+             length_rule(min_words, max_words),
+             FINAL_RULE]
     system = "\n\n".join(part for part in [system.strip(), *rules] if part)
-    extras = {"light": light, "safe": safe, "system_prompt": own[0] if own else ""}
+    extras = {"light": light, "safe": safe, "system_prompt": own[0] if own else "",
+              "content": content_of(system)}
     return Job(text, negative, images, persons, styles, system, extras)
 
 

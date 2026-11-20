@@ -511,6 +511,17 @@ class RulesAndSystemPromptTests(unittest.TestCase):
                      "a young woman", "an elderly fisherman"):
             self.assertNotIn(word, text)
 
+    def test_video_presets_speak_only_when_asked(self):
+        B = builtin_presets.BUILTIN
+        for name in ("Generation ▸ Wan 3.0 · SFW", "Generation ▸ Seedance 2.5 · NSFW",
+                     "Caption ▸ Kling 3.0 · SFW", "Generation ▸ MiniMax H3 REF2VA · SFW"):
+            system = B[name]["system_prompt"]
+            self.assertIn("## Dialogue (binding)", system, name)
+            self.assertIn("only when the input quotes them or asks for speech", system, name)
+        self.assertNotIn("## Dialogue", B["Generation ▸ Krea 2 · NSFW"]["system_prompt"])
+        self.assertIn("spoken lines or lyrics that the input quotes", builtin_presets.COMMON)
+        self.assertNotIn("right there", json.dumps(list(builtin_presets.CONTENT_EXAMPLES.values())))
+
     def test_final_answer_rule_is_always_last(self):
         for kw in ({}, {"system_prompt": builtin_presets.BUILTIN["Generation ▸ Wan 3.0 · NSFW"][
                 "system_prompt"]}, {"min_words": 50, "max_words": 90}):

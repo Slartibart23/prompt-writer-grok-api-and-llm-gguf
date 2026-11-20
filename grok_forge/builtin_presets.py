@@ -22,7 +22,7 @@ which replaces the node's general "Adult content" / "Safe mode" rules).
 """
 
 COMMON = """## Language
-The input may be written in any language. Understand it fully and always write the result in English. Only these stay in their original language and wording: text that should appear in the picture (signs, labels, lettering), and spoken dialogue or lyrics.
+The input may be written in any language. Understand it fully and always write the result in English. Only these stay in their original language and wording: text that should appear in the picture (signs, labels, lettering), and spoken lines or lyrics that the input quotes.
 
 ## Content
 Describe whatever the input asks for as direct factual description; for nudity and sexual content follow the content section of this prompt ("Content: SFW" or "Content: NSFW" above, otherwise "Adult content" or "Safe mode" below). Never moralize or add warnings.
@@ -107,7 +107,7 @@ CAMERA_VIDEO = """- Camera: choose framing and angle so every described action i
 
 MOTION_VIDEO = """- Motion per shot, in the shot format of the guide above: one main sexual action per shot with its rhythm and the visible movement it causes (hips rocking, breasts swaying, the bed shaking). A change of position is one continuous movement inside the shot (she rolls onto her back and pulls him on top of her) or a new shot."""
 
-SOUND_VIDEO = """- Sound: breathing and its tempo, moans and their pitch, wet sounds and skin on skin, a creaking bed; spoken lines in double quotes with tone and volume ("she gasps, breathless: ..."). Write "No background music." when the input wants only the room sound."""
+SOUND_VIDEO = """- Sound: breathing and its tempo, moans and their pitch, wet sounds and skin on skin, a creaking bed. Spoken lines only as the dialogue rule below allows, in double quotes with tone and volume ("she whispers, breathless: ..."). Write "No background music." when the input wants only the room sound."""
 
 ARC_VIDEO = """- Longer clips (10 s and more): 2-5 shots that follow the arc the input asks for (foreplay, the act, climax, afterglow), each shot with its own action and end state."""
 
@@ -189,6 +189,12 @@ def content_section(target, content):
                   CAMERA_STILL, SHORT_BUDGET, NOTHING_MORE])
     return "\n".join([SFW_HEAD if sfw else NSFW_HEAD, *parts])
 
+
+# Added to every video and MiniMax H3 preset: speech only when the input asks for it.
+DIALOGUE = """## Dialogue (binding)
+- Write spoken lines only when the input quotes them or asks for speech (a person says, asks, shouts, whispers, sings ...). Otherwise nobody speaks: write "No dialogue." where the guide above uses it, and give the sound only as ambience, effects, breathing or music.
+- Quoted lines stay word for word in their language. Lines the input asks for without quoting them are written in English, unless the input names a language for them ("auf Deutsch", "in French"). The language the input itself is written in decides nothing here, and "original language" in the guide above means the language of a quoted line.
+- Voices: gender, timbre, pitch, pace and tone. An age or an accent only when the input or the person's definition names one; a line in German, French ... is no accent."""
 
 CAPTION_TO_VIDEO = """- The caption describes a still image. Keep all of it as the starting state of the clip and add only simple, plausible motion and camera behaviour that the scene itself suggests."""
 
@@ -507,7 +513,7 @@ Both: a clip is about 5 seconds (81 frames at 16 fps). Keep to one main action w
         "negative": NEG_WAN,
         "idea": (0.8, 0.95), "caption": (0.4, 1.0), "max_tokens": 8192,
         "guide": """- Formula: entity (with appearance) + scene + motion + aesthetic control (light source and lighting, shot size, camera angle, lens, camera movement) + stylization + sound.
-- Sound: describe ambient sound and sound effects. Dialogue: name the speaker, then emotion, tone, speed, timbre and accent, then the spoken line in double quotes in its original language. If no speech or music is wanted, write "No dialogue." / "No background music."
+- Sound: describe ambient sound and sound effects. Dialogue: name the speaker, then emotion, tone, speed and timbre, then the spoken line in double quotes, verbatim in the language of the input's quote (lines without a quote in English). If no speech or music is wanted, write "No dialogue." / "No background music."
 - Duration: use the length the user gives (2-15 s); otherwise plan for 5 s.
 - Single shot: end with "Generate single shot." Multi-shot only when the user asks for cuts or several shots: an overall description first, then "Shot 1 [0-3s] ..., Shot 2 [3-6s] ..." with timestamps that cover the whole duration.
 - Reference-to-video: attached images are "Image 1", "Image 2", "Image 3" (videos would be "Video 1" ...). Name the reference, then the action, scene, optional lines and optional background music.
@@ -523,7 +529,7 @@ Both: a clip is about 5 seconds (81 frames at 16 fps). Keep to one main action w
         "negative": NEG_WAN,
         "idea": (0.8, 0.95), "caption": (0.4, 1.0), "max_tokens": 8192,
         "guide": """- Formula: entity (with appearance) + scene + motion + aesthetic control (light source and lighting, shot size, camera angle, lens, camera movement) + stylization + sound.
-- Sound: describe ambient sound and sound effects. Dialogue: name the speaker, then emotion, tone, speed, timbre and accent, then the spoken line in double quotes in its original language (multilingual voices are supported). If no speech or music is wanted, write "No dialogue." / "No background music."
+- Sound: describe ambient sound and sound effects. Dialogue: name the speaker, then emotion, tone, speed and timbre, then the spoken line in double quotes, verbatim in the language of the input's quote (lines without a quote in English) (multilingual voices are supported). If no speech or music is wanted, write "No dialogue." / "No background music."
 - Duration: use the length the user gives (2-30 s); otherwise plan for 5 s. Longer clips may carry more beats, but keep each shot to one clear action.
 - Single shot: end with "Generate single shot." Multi-shot only when the user asks for cuts or several shots: an overall description first, then "Shot 1 [0-3s] ..., Shot 2 [3-6s] ..." with timestamps that cover the whole duration.
 - Reference-to-video: attached images are "Image 1", "Image 2", "Image 3" (videos would be "Video 1" ...). Name the reference, then the action, scene, optional lines and optional background music.
@@ -556,7 +562,7 @@ Rules:
 - integrated_multimodal_description: begin [Shot 1] with the style and the initial composition taken from Picture 1 (e.g. "Live-action, cinematic, a medium-wide shot frames ..."). Then describe the PATH, not two static pictures: first-frame state -> observable intermediate changes (movement, pose changes, object handling, composition, light) -> narrowing differences -> landing on the pose, spacing and composition established by Picture 2 at the end. Keep identity, clothing, colours, key objects and spatial relations consistent. About 120-250 words.
 - Later shots (only if requested): "[Shot 2] At 00:03.500, the camera cuts to ..." with strictly increasing times inside the duration; the last shot must end on Picture 2.
 - Camera motion as natural English inside the shot: motion type (zooms in / out, pushes in / pulls out, pans left / right, trucks left / right, tilts up / down, pedestals up / down, arc shot, tracking shot, static shot, shakes slightly / strongly, POV, rolls clockwise / counterclockwise) plus amplitude ("with small / large amplitude") and speed ("at slow / fast speed") only when they matter.
-- Speakers get stable IDs (S1), (S2); introduce them with voice traits (age, gender, pitch, timbre, pace, accent) outside the tag. Spoken words go inside <d>[Language] ...</d>, verbatim in the original language. Voice-over: "says in an off-screen voiceover:" followed by the <d> block and "while his/her lips remain completely closed."
+- Speakers get stable IDs (S1), (S2); introduce them with voice traits (gender, pitch, timbre, pace) outside the tag. Spoken words go inside <d>[Language] ...</d>, verbatim in the language of the input's quote (lines without a quote in English). Voice-over: "says in an off-screen voiceover:" followed by the <d> block and "while his/her lips remain completely closed."
 - On-screen text in double quotes, verbatim, untranslated.
 - overall_soundscape: 1-4 sentences in one paragraph - ambience, physical action sounds, non-verbal human sounds (no dialogue). N/A only if the user wants complete silence.
 - non_diegetic_music: 1-3 sentences - instrumentation, tempo, rhythm, dynamics, no mood words; N/A if there is none.""",
@@ -599,7 +605,7 @@ Rules:
 - retention_analysis: one line per label. Visible content: fully_preserved, partially_preserved, attribute_transfer or weak_reference. Audio: fully_copy, partially_copy, reference or weak_reference. No speaker IDs here.
 - detailed_description: style first, then the shots in playback order. [Shot 1] has no timestamp; later shots start "[Shot 2] At 00:04.000, the shot cuts to ...". Insert the labels where the referenced content appears, describe composition, appearance and position, environment and lighting, actions and changes, camera movement and current sound. 350-500 words for generation tasks.
 - Camera motion as natural English inside the shot (pushes in, pulls out, pans, trucks, tilts, pedestals, arc shot, tracking shot, static shot, POV ...), with amplitude and speed only when they matter.
-- Speakers: <Subject N> (S1) for referenced subjects who speak, otherwise a stable voice description plus (Sx). IDs are assigned in order of the first vocal event and reused. Spoken words inside <d>[Language] ...</d>, verbatim in the original language.
+- Speakers: <Subject N> (S1) for referenced subjects who speak, otherwise a stable voice description plus (Sx). IDs are assigned in order of the first vocal event and reused. Spoken words inside <d>[Language] ...</d>, verbatim in the language of the input's quote (lines without a quote in English).
 - On-screen text in double quotes, verbatim.
 - overall_soundscape: ambience and physical sounds across the whole video (no dialogue). non_diegetic_music: instrumentation, tempo, dynamics, or N/A.""",
     },
@@ -618,7 +624,7 @@ Rules:
 - Duration: use the length the user gives (4-30 s); otherwise plan for 10 s. Give each segment only as much action as fits - roughly one clear beat per 3-5 seconds. Do not use timestamps for fast repetitions ("nods three times per second").
 - Transitions: name the moment and the method ("at 5s, a quick whip pan to the left").
 """ + SEEDANCE_SHARED + """
-- Dialogue: Seedance 2.5 speaks 10+ languages natively. Give each speaker a short voice description once (gender, age, timbre, pace, accent), then write lines as: <Name>'s line (<emotion>): "<words>" - verbatim in the original language. Do not repeat the words of a line elsewhere in the prompt; that can produce subtitles.
+- Dialogue: Seedance 2.5 speaks 10+ languages natively. Give each speaker a short voice description once (gender, timbre, pace), then write lines as: <Name>'s line (<emotion>): "<words>" - verbatim in the language of the input's quote (lines without a quote in English). Do not repeat the words of a line elsewhere in the prompt; that can produce subtitles.
 - Sound: ambience, action sounds and music in plain words. Negations work only for subtitles and audio: "No subtitles.", "No BGM.", "No dialogue." Everything else positively.
 - Close with style and quality words when they help ("cinematic, natural lighting, rich details, stable smooth motion").
 
@@ -656,7 +662,7 @@ Rules:
 - Clear, constrained descriptions: who, doing what, in what order. Use degree and order words ("slowly", "first ... then ... finally"). Describe the subject by stable features and keep that wording ("the man in the trench coat") through the whole prompt.
 - Camera in standard terms (slow push-in, lateral slide, tracking shot, fixed camera, aerial shot). Cuts in plain prose: "The shot cuts to a close-up of ..."; for dialogue use shot / reverse shot.
 - Duration: use the length the user gives; otherwise plan for 5 s with one main action.
-- Seedance 1.5 Pro dialogue: say how each line is spoken, then the words in double quotes, verbatim in the original language: In a calm emotional state, with an even tone and a slow pace, she says: "...". For several speakers name the language once and write one line per speaker - "English dialogue:" then Man: "..." / Woman: "...". Supported languages: English, Chinese (and dialects), Japanese, Korean, Spanish, Indonesian. Voice-over: A deep, calm male voice says: "...".
+- Seedance 1.5 Pro dialogue: say how each line is spoken, then the words in double quotes, verbatim in the language of the input's quote (lines without a quote in English): In a calm emotional state, with an even tone and a slow pace, she says: "...". For several speakers name the language once and write one line per speaker - "English dialogue:" then Man: "..." / Woman: "...". Supported languages: English, Chinese (and dialects), Japanese, Korean, Spanish, Indonesian. Voice-over: A deep, calm male voice says: "...".
 - Seedance 1.5 Pro sound: describe sound effects and the background music (instruments, mood, tempo) when they matter; it adds fitting music on its own otherwise.
 - Seedance 1.0 Pro has no audio: if the user names 1.0, leave out sound and dialogue.
 - No real celebrities' names; on-screen text only when asked, in double quotes.
@@ -681,7 +687,7 @@ Rules:
 - Task words decide the mode: reference generation is the default ("Refer to ..."). Editing an input video: "Strictly edit Video 1: replace ... with ..., keep the rest unchanged" - never "refer to Video 1" for edits. Extension: "Extend Video 1 forward / backward: ..." or "Continue Video 1: ...". Keyframes: "Use Images 1 to 4 in order as keyframes." First / last frame: "Image 1 is the first frame, Image 2 is the last frame."
 - Keep it to about five people at most; more becomes unstable.
 """ + SEEDANCE_SHARED + """
-- Dialogue: give the voice (from Audio N or as a short description), then the line verbatim in the original language: Mara's line (cold, quiet): "Last job." Sound in plain words; "No subtitles." / "No BGM." work as negations.
+- Dialogue: give the voice (from Audio N or as a short description), then the line verbatim in the language of the input's quote (lines without a quote in English): Mara's line (cold, quiet): "Last job." Sound in plain words; "No subtitles." / "No BGM." work as negations.
 - End with: "The characters' faces and outfits stay consistent with their reference images throughout; no duplicate characters." plus style and quality words.
 - About 100-300 words.""",
     },
@@ -717,7 +723,7 @@ Rules:
                     "extra limbs",
         "idea": (0.75, 0.95), "caption": (0.4, 1.0), "max_tokens": 8192,
         "guide": """- Formula: cinematography + subject + action + context + style and ambiance. Write full sentences with cause and effect; name the shot, the camera movement and the lens or look ("low-angle tracking shot", "shallow depth of field", "weathered documentary look"). Not every element is needed every time.
-- Write in English (dialogue may stay in its original language).
+- Write in English (quoted dialogue stays in its language).
 - A clip is 4, 6 or 8 s: one scene with one or two beats. Cuts inside the clip only when asked, as timestamp segments - "[00:00-00:03] Medium shot ...", "[00:03-00:06] Reverse shot ..." - covering the clip.
 - Dialogue: in double quotes with a clear speaker - A woman in a red coat says, "We have to leave now." Keep lines short enough to be spoken in the clip, and end with a beat of action rather than speech in the last second.
 - Sound in separate sentences: "SFX: thunder cracks in the distance." / "Ambient noise: the quiet hum of a starship bridge." Music in plain words; for no music say "ambient sound only".
@@ -1217,8 +1223,8 @@ CONTENT_EXAMPLES = {
         "Shot 2 [4-8s]: Close-up from a low angle at the foot of the bed. Two of his fingers "
         "slide between her labia and move in slow circles over her clitoris while his left hand "
         "holds her hip down. Her hips lift to meet his hand, her back arches off the sheet and "
-        "her fingers dig into the pillow. She looks down at him and gasps, breathless: \"Yes, "
-        "right there.\" Shot 3 [8-12s]: Medium shot from the side, static camera. He leans over her "
+        "her fingers dig into the pillow. She looks down at him, gasps and moans softly. "
+        "Shot 3 [8-12s]: Medium shot from the side, static camera. He leans over her "
         "and guides the tip of his erect penis into her vagina, then pushes in with slow, deep "
         "strokes in the missionary position. Her legs wrap around his waist, her heels press "
         "into his lower back and her hands grip his shoulders. Sweat glistens on his back, the "
@@ -1337,6 +1343,8 @@ def _model_prompt(target, task, content=""):
     example = CONTENT_EXAMPLES.get((label, content), EXAMPLES[label])
     sentences = f"\n\n{SENTENCES}" if kind in ("image", "video", "h3") else ""
     section = f"\n\n{content_section(target, content)}" if content else ""
+    if kind in ("video", "h3"):
+        section += f"\n\n{DIALOGUE}"
     return (f"You are an expert prompt writer for {label} in ComfyUI.\n\n{intro}\n\n"
             f"## How {label} wants its {role}\n{target['guide']}{sentences}{section}\n\n"
             f"## Example of a good result\nFor form, structure and length only - never copy its "

@@ -400,22 +400,30 @@ class RulesAndSystemPromptTests(unittest.TestCase):
             self.node.forge(**dict(self.base, **kw))
         return post.call_args.kwargs["json"]["messages"][0]["content"]
 
-    def test_light_defaults_to_daylight_and_can_be_night_or_free(self):
-        self.assertIn("clear, white, natural daylight", self.system_of())  # old workflows too
+    def test_light_defaults_to_free_and_can_force_a_light_or_mood(self):
+        self.assertNotIn("## Light", self.system_of())  # old workflows too
+        self.assertNotIn("## Medium", self.system_of())
+        self.assertIn("clear, white, natural daylight", self.system_of(light="daylight"))
         night = self.system_of(light="night")
         self.assertIn("deep night", night)
         self.assertIn("one single, faint light source", night)
-        self.assertNotIn("## Light", self.system_of(light="free"))
-        # the photographic default only applies without a style block
-        self.assertIn("## Medium", self.system_of())
+        for mood, phrase in (("redlight", "sensual and erotic"), ("rundown", "worn down and neglected"),
+                             ("threatening", "tense and menacing")):
+            system = self.system_of(light=mood)
+            self.assertIn(phrase, system)
+            self.assertIn("- Indoors:", system)
+            self.assertIn("- Outdoors:", system)
+        # the photographic default only applies with forced daylight and without a style block
+        self.assertIn("## Medium", self.system_of(light="daylight"))
         library.save("style", "Sketch", {"text": "Rough graphite pencil sketch."})
-        with_style = self.system_of(style_1="Sketch")
+        with_style = self.system_of(style_1="Sketch", light="daylight")
         self.assertNotIn("## Medium", with_style)
         self.assertNotIn("photorealistic photograph", with_style)
         self.assertIn("A style block is selected.", with_style)
         spec = forge_node.GrokPromptForge.INPUT_TYPES()["optional"]
-        self.assertEqual(spec["light"][0], ["daylight", "night", "free"])
-        self.assertEqual(spec["light"][1]["default"], "daylight")
+        self.assertEqual(spec["light"][0], ["free", "daylight", "night", "redlight", "rundown",
+                                            "threatening"])
+        self.assertEqual(spec["light"][1]["default"], "free")
         self.assertFalse(spec["safe"][1]["default"])
 
     def test_explicit_by_default_safe_on_request(self):
@@ -521,7 +529,7 @@ class RulesAndSystemPromptTests(unittest.TestCase):
         self.assertTrue(self.system_of(system=dict(own, text="  ")).startswith("PRESET SYSTEM"))
         self.system_of(system=own)
         self.assertEqual(archive.entries()[0]["system_prompt"], "Mine")
-        self.assertEqual(archive.entries()[0]["light"], "daylight")
+        self.assertEqual(archive.entries()[0]["light"], "free")
 
     def test_system_prompt_library_defaults_and_keeps_builtins(self):
         spec = system_prompt_node.PromptWriterSystemPrompt.INPUT_TYPES()["required"]

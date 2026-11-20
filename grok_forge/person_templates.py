@@ -99,7 +99,8 @@ _GROUP_GENDERS = {"Group_of_men": "m", "Group_of_women": "f"}
 # A style says what the picture is and how it was made (painted, drawn, computer-
 # generated ...) - never what it is not: image models are pulled towards every word
 # in a prompt, negated or not, so "not realistic" would bring realism back. The
-# light is set separately on the writer node (light: daylight / night / free).
+# light is set separately on the writer node (light: free / daylight / night / redlight /
+# rundown / threatening).
 _STYLES = {
     "Natural daylight":
         "Natural photograph in clear, white, neutral daylight. The light falls evenly from "

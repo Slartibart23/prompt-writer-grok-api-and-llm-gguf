@@ -60,16 +60,25 @@ ARCHIVE_TOOLTIP = (
 BINDING_RULE = """## The user's input is binding
 Every explicit wish or instruction in the user's input must be carried out in the result - subjects, details, actions, style, wording, text to render, things to leave out, counts. If it conflicts with the guidance above, the user's input wins. Only the output format and the English-output rule stay as described above."""
 
-LIGHTS = ["daylight", "night", "free"]
+# "free" first: the default (since 1.7.0) - the other options force a light or mood.
+LIGHTS = ["free", "daylight", "night", "redlight", "rundown", "threatening"]
 LIGHT_TOOLTIP = (
-    "The light of the scene, unless your text says otherwise (your text always wins).\n"
+    "Forces a light or mood on the scene, unless your text says otherwise (your text always "
+    "wins).\n"
+    "free (default): no rule; the preset, a style block or your text decides.\n"
     "daylight: clear, white, natural daylight with soft shadows and true colours - no "
-    "dramatic lighting, no golden hour, no neon, no colour grading.\n"
+    "dramatic lighting, no golden hour, no neon, no colour grading. Without a style or a "
+    "medium in your text the picture is a natural photograph.\n"
     "night: deep night; the scene is very dark and lit only by one faint light source "
     "(moonlight, or a candle, a phone screen ... if your text names one).\n"
-    "free: no rule about light; the preset, a style block or your text decides.\n"
-    "This only sets the light, not the medium: with a style such as Cartoon the picture "
-    "stays a cartoon.")
+    "redlight: sensual, erotic red light - indoors a room glowing from red lamps on skin, "
+    "satin and velvet; outdoors a red-light street at night with red windows and neon.\n"
+    "rundown: a worn-down, neglected place in dim, dirty light - indoors peeling walls and a "
+    "bare bulb; outdoors crumbling facades, graffiti and an overcast sky.\n"
+    "threatening: a tense, menacing scene - indoors deep shadows and one hard light; "
+    "outdoors an empty place at dusk or night with fog and harsh streetlight.\n"
+    "Indoors or outdoors follows the place in your text. This only sets the light and mood, "
+    "not the medium: with a style such as Cartoon the picture stays a cartoon.")
 SAFE_TOOLTIP = (
     "Off (default): sexual and nude content is written explicitly and precisely - poses, "
     "actions, who touches whom where, states of undress and body fluids.\n"
@@ -94,6 +103,28 @@ Light the scene with clear, white, natural daylight: bright and even, with soft 
     "night": """## Light (binding unless the user's input or the style block names other light)
 It is deep night and the scene is very dark. Most of the frame falls into black shadow. The persons and key objects are grazed by one single, faint light source only - weak moonlight, or the small light source the user's input names (a candle, a phone screen, a lamp). Keep away from neon, glow, a bright sky and colour grading. Write the light in the prompt only as the light that is there - never name the kinds of light that are left out. This rule sets only the light, never the medium.""",
     "free": "",
+    "redlight": """## Light and mood: red light (binding unless the user's input or the style block names other light)
+The scene is bathed in red light, and the mood is sensual and erotic.
+- Indoors: the room glows deep red from red bulbs, red-shaded lamps or a red neon tube. The red light wraps the skin in a warm glow with glossy highlights on lips, shoulders and curves, and the shadows fall into dark crimson and black. Velvet, satin, silk and lace catch the light.
+- Outdoors: a red-light street at night. Windows and doorways glow red, red neon signs hang above them, and the wet pavement mirrors the red light.
+- Take indoors or outdoors from the place in the input; indoors when it names none.
+- Video with sound: a slow, muffled bass beat in the background.
+Write the light in the prompt only as the light that is there. This rule sets only the light and the mood, never the medium.""",
+    "rundown": """## Light and mood: rundown (binding unless the user's input or the style block names other light)
+The place is worn down and neglected, and the light is dim and dirty.
+- Indoors: peeling wallpaper, water-stained walls, cracked tiles, worn and sagging furniture, dust on every surface. A single bare bulb or a flickering fluorescent tube casts a sickly yellow-green light with hard, grimy shadows.
+- Outdoors: crumbling facades, graffiti, boarded-up windows, rusted fences, litter and weeds growing through cracked asphalt under a flat, overcast grey sky.
+- Take indoors or outdoors from the place in the input; indoors when it names none. Keep the persons, actions and objects of the input.
+- Video with sound: dripping water, a buzzing tube, distant traffic.
+Write the place and the light in the prompt only as they are. This rule sets only the condition of the place, the light and the mood, never the medium.""",
+    "threatening": """## Light and mood: threatening (binding unless the user's input or the style block names other light)
+The scene feels tense and menacing.
+- Indoors: deep shadows fill the corners. One hard light source from low or from behind throws long, distorted shadows across the walls, a doorway or corridor opens into darkness, and the space feels narrow and closed in.
+- Outdoors: an empty street or a deserted place at dusk or night under low, heavy clouds. Fog drifts between the buildings, and one harsh streetlight or backlight turns figures into dark silhouettes.
+- Camera: low angles and tight framing; in video slow, creeping camera moves.
+- Take indoors or outdoors from the place in the input; indoors when it names none.
+- Video with sound: a low drone, distant thunder, echoing footsteps.
+Write the light in the prompt only as the light that is there. This rule sets only the light and the mood, never the medium.""",
 }
 # Only with light "daylight" and no style block: the default medium.
 PHOTO_DEFAULT = """## Medium
@@ -402,7 +433,7 @@ class GrokPromptForge:
         optional["persons"] = ("PW_PERSONS", {"tooltip": PERSONS_INPUT_TOOLTIP})
         # Added in 1.5.0.
         optional["system"] = ("PW_SYSTEM", {"tooltip": SYSTEM_INPUT_TOOLTIP})
-        optional["light"] = (LIGHTS, {"default": "daylight", "tooltip": LIGHT_TOOLTIP})
+        optional["light"] = (LIGHTS, {"default": "free", "tooltip": LIGHT_TOOLTIP})
         optional["safe"] = ("BOOLEAN", {"default": False, "tooltip": SAFE_TOOLTIP})
         # Added in 1.6.0: two more persons, without image inputs of their own.
         for n in range(FIRST_PERSON_SLOTS + 1, PERSON_SLOTS + 1):
@@ -574,7 +605,7 @@ def prepare(text, negative_prompt, system_prompt, custom_system_prompt, trigger_
         system = f"{system.strip()}\n\n## Additional instructions (binding)\n{own[1]}"
     system = system.replace("{trigger}", (trigger_word or "").strip() or NO_TRIGGER)
     # light and safe come from widgets added in 1.5.0; older callers get the defaults
-    light = slots.get("light") if slots.get("light") in LIGHTS else "daylight"
+    light = slots.get("light") if slots.get("light") in LIGHTS else "free"
     safe = bool(slots.get("safe", False))
     rules = [BINDING_RULE,
              persons_rule(persons, {n for n, _ in images}, image_n_is_person_n),

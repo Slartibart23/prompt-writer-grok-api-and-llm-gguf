@@ -7,6 +7,7 @@
 - Persons are written as "an adult woman" / "an adult man"; an age appears only when the input or a selected person states one, word for word. The examples no longer invent ages or show children.
 - The content section replaces the general "Adult content" / "Safe mode" rules for these presets; `safe` on still wins over an NSFW preset.
 - Presets without the suffix (e.g. "Generation ▸ Krea 2", "Caption ▸ Wan 3.0") are now the "· SFW" presets: saved workflows and saved overrides move over by themselves. The default preset is "Generation ▸ Krea 2 · SFW".
+- **`light` defaults to free:** no light rule unless you force one. Saved workflows keep their value. New moods: **redlight** (sensual, erotic red light; indoors red lamps on skin, satin and velvet, outdoors a red-light street at night), **rundown** (a worn-down, neglected place in dim, dirty light) and **threatening** (a tense, menacing scene with deep shadows and one hard light, or an empty foggy place at dusk or night). Each covers indoors and outdoors, follows the place in your text and adds matching background sounds for video models with sound.
 - **Filter: content** (All / SFW / NSFW) on the writer nodes and on Prompt Writer · System Prompt Library.
 - **Only the final prompt:** a new binding last rule asks for the result alone, also with your own and the library's system prompts. The node removes a leading label such as "Prompt:" and keeps only the code block when a model wraps the prompt with settings or tips. Prompt Writer · LLM GGUF now cleans its output the same way as Grok API.
 

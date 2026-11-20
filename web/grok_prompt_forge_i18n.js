@@ -119,16 +119,26 @@ export const NODE_TEXT_DE = {
     "wählen - aus den mitgelieferten Auswahlen, deinen eigenen Auswahlen oder deinen gespeicherten " +
     "Systemprompts. Modus 'replace' nimmt ihn statt des Feldes Systemprompt (das dann gesperrt " +
     "ist), Modus 'append' hängt ihn als zusätzliche verbindliche Anweisungen an." },
-  light: { label: "Licht", tooltip:
-    "Das Licht der Szene, sofern dein Text nichts anderes sagt (dein Text hat immer Vorrang).\n" +
+  light: { label: "Licht / Stimmung", tooltip:
+    "Erzwingt ein Licht oder eine Stimmung, sofern dein Text nichts anderes sagt (dein Text hat " +
+    "immer Vorrang).\n" +
+    "free (Standard): keine Regel; Auswahl, Stil-Baustein oder dein Text bestimmen.\n" +
     "daylight: klares, weißes, natürliches Tageslicht mit weichen Schatten und echten Farben - " +
-    "keine dramatische Beleuchtung, keine goldene Stunde, kein Neon, kein Color Grading.\n" +
+    "keine dramatische Beleuchtung, keine goldene Stunde, kein Neon, kein Color Grading. Ohne " +
+    "Stil und ohne Medium in deinem Text wird es ein natürliches Foto.\n" +
     "night: tiefe Nacht; die Szene ist sehr dunkel und nur von einer einzigen schwachen " +
     "Lichtquelle beleuchtet (Mondlicht, oder eine Kerze, ein Handydisplay ..., wenn dein Text " +
     "eine nennt).\n" +
-    "free: keine Lichtregel; Auswahl, Stil-Baustein oder dein Text bestimmen das Licht.\n" +
-    "Das legt nur das Licht fest, nicht das Medium: mit einem Stil wie Cartoon bleibt das Bild " +
-    "ein Cartoon." },
+    "redlight: sinnliches, erotisches Rotlicht - drinnen ein Raum im Schein roter Lampen auf " +
+    "Haut, Satin und Samt; draußen eine Rotlichtstraße bei Nacht mit roten Fenstern und Neon.\n" +
+    "rundown: ein heruntergekommener, verwahrloster Ort in trübem, schmutzigem Licht - drinnen " +
+    "abblätternde Wände und eine nackte Glühbirne; draußen bröckelnde Fassaden, Graffiti und " +
+    "bedeckter Himmel.\n" +
+    "threatening: eine angespannte, bedrohliche Szene - drinnen tiefe Schatten und ein hartes " +
+    "Licht; draußen ein leerer Ort in der Dämmerung oder Nacht mit Nebel und grellem " +
+    "Straßenlicht.\n" +
+    "Drinnen oder draußen richtet sich nach dem Ort in deinem Text. Das legt nur Licht und " +
+    "Stimmung fest, nicht das Medium: mit einem Stil wie Cartoon bleibt das Bild ein Cartoon." },
   safe: { label: "safe", tooltip:
     "Aus (Standard): Sexuelles und Nacktheit werden explizit und präzise beschrieben - Posen, " +
     "Handlungen, wer wen wo berührt, Kleidungszustand und Körperflüssigkeiten.\n" +

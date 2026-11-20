@@ -65,8 +65,10 @@ class LocalPromptForgeGGUF:
         optional["max_side"] = (max_side[0], dict(max_side[1], default=1024))
         optional.update(LOCAL_OPTIONS)
         # added later (image_4 in 1.2.0, persons in 1.3.0, system / light / safe in
-        # 1.5.0, person_5 / person_6 in 1.6.0): after everything else, in that order
-        for later in ("image_4", "persons", "system", "light", "safe", "person_5", "person_6"):
+        # 1.5.0, person_5 / person_6 in 1.6.0, variation in 1.7.0): after everything else,
+        # in that order
+        for later in ("image_4", "persons", "system", "light", "safe", "person_5", "person_6",
+                      "variation"):
             optional[later] = optional.pop(later)
         return {"required": required, "optional": optional}
 
@@ -88,7 +90,7 @@ class LocalPromptForgeGGUF:
               image_4=None, **slots):
         job = prepare(text, negative_prompt, system_prompt, custom_system_prompt, trigger_word,
                       (image_1, image_2, image_3, image_4), slots, image_n_is_person_n,
-                      min_words, max_words, log=LOG)
+                      min_words, max_words, log=LOG, seed=seed, preset=preset)
         if job is None:
             return ("", negative_prompt or "")
 

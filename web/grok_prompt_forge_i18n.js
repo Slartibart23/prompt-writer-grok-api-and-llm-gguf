@@ -150,6 +150,15 @@ export const NODE_TEXT_DE = {
     "'safe' an hat auch vor einer '· NSFW'-Auswahl Vorrang." },
   person_5: { label: "Person 5", tooltip: PERSON_DE(5) + LOCK_DE + NOIMG_DE(5) },
   person_6: { label: "Person 6", tooltip: PERSON_DE(6) + LOCK_DE + NOIMG_DE(6) },
+  variation: { label: "Variation", tooltip:
+    "An (Standard): Mit dem Seed des Laufs wählt der Node eine Pose, eine Interaktion, einen " +
+    "Kamerawinkel, einen Bildausschnitt, einen Ort und (bei Video) eine Kamerabewegung; der " +
+    "Writer nimmt sie überall dort, wo dein Text, die Personen und die Bilder etwas offen " +
+    "lassen. Ein Sprachmodell allein wählt jedes Mal dieselbe 'zufällige' Pose; so gibt ein " +
+    "neuer Seed eine neue Szene und derselbe Seed dieselbe. SFW-Listen als Standard, " +
+    "NSFW-Listen mit einer '· NSFW'-Auswahl (und 'safe' aus). Nicht bei 'Caption >'-, Edit- " +
+    "und Recast-Auswahlen.\n" +
+    "Aus: keine Variation, wie vor 1.7.0." },
   trigger_word: { label: "Trigger-Wort", tooltip:
     "Nur für 'Caption > LoRA training caption': der Trigger des LoRAs für das Hauptmotiv " +
     "(ersetzt {trigger} im Systemprompt). Leer lassen für Captions ohne Trigger." },

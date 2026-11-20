@@ -46,7 +46,7 @@ _install_stubs()
 PACK_MODULE = _load_pack()
 from grokpack.grok_forge import api, archive, builtin_presets, forge_node, library, models, presets  # noqa: E402
 from grokpack.grok_forge import local_models, local_node, person_templates, persons_node  # noqa: E402
-from grokpack.grok_forge import system_prompt_node, system_prompts  # noqa: E402
+from grokpack.grok_forge import system_prompt_node, system_prompts, variation  # noqa: E402
 
 
 def tearDownModule():
@@ -370,7 +370,8 @@ class ForgeNodeTests(unittest.TestCase):
         self.assertEqual(order[len(v310):], ["person_1", "person_2", "person_3", "person_4",
                                              "image_n_is_person_n", "style_1", "style_2",
                                              "archive", "image_4", "persons", "system",
-                                             "light", "safe", "person_5", "person_6"])
+                                             "light", "safe", "person_5", "person_6",
+                                             "variation"])
         self.assertTrue(forge_node.GrokPromptForge.VALIDATE_INPUTS(
             "unknown", "unknown", person_1="Nobody", person_6="Gone too", style_2="Gone"))
         # persons 5 and 6 have no image input of their own
@@ -521,6 +522,41 @@ class RulesAndSystemPromptTests(unittest.TestCase):
         self.assertNotIn("## Dialogue", B["Generation ▸ Krea 2 · NSFW"]["system_prompt"])
         self.assertIn("spoken lines or lyrics that the input quotes", builtin_presets.COMMON)
         self.assertNotIn("right there", json.dumps(list(builtin_presets.CONTENT_EXAMPLES.values())))
+
+    def test_variation_follows_the_seed_and_the_content(self):
+        nsfw = builtin_presets.BUILTIN["Generation ▸ Wan 3.0 · NSFW"]
+        run = lambda **kw: self.system_of(**dict(dict(preset=builtin_presets.DEFAULT_PRESET,
+                                                      variation=True, seed=7), **kw))
+        first = run()
+        self.assertIn("## Variation for this run", first)
+        self.assertEqual(first, run())  # same seed, same variation
+        variations = {run(seed=n).split("## Variation")[1] for n in range(1, 9)}
+        self.assertGreater(len(variations), 4)  # new seeds, new scenes
+        self.assertNotIn("## Variation", run(variation=False))
+        self.assertNotIn("## Variation", self.system_of())  # old workflows: off
+        # NSFW lists only with an NSFW preset and safe off; video gets a camera move
+        explicit = run(preset="Generation ▸ Wan 3.0 · NSFW", system_prompt=nsfw["system_prompt"])
+        pick = lambda text: text.split("Interaction of two or more persons: ")[1].split(".\n")[0]
+        self.assertIn(pick(explicit) + ".", "\n".join(i + "." for i in variation.INTERACTIONS["nsfw"]))
+        self.assertIn("- Camera movement:", explicit)
+        tame = run(preset="Generation ▸ Wan 3.0 · NSFW", system_prompt=nsfw["system_prompt"], safe=True)
+        self.assertIn(pick(tame) + ".", "\n".join(i + "." for i in variation.INTERACTIONS["sfw"]))
+        # faithful presets get none
+        for preset in ("Caption ▸ Krea 2 · SFW", "Generation ▸ Seedream Edit · NSFW",
+                       "Recast ▸ Swap persons · NSFW", "Caption ▸ LoRA training caption"):
+            self.assertNotIn("## Variation", run(preset=preset), preset)
+
+    def test_bodies_rule_in_every_family(self):
+        B = builtin_presets.BUILTIN
+        for name, phrase in (("Generation ▸ Krea 2 · SFW", "anatomically correct, with well-formed hands"),
+                             ("Generation ▸ Krea 2 · NSFW", "anatomically correct, with well-formed hands"),
+                             ("Generation ▸ SDXL · NSFW", '"anatomically correct, well-formed hands"'),
+                             ("Generation ▸ Wan 2.2 · NSFW", "keep natural proportions throughout the motion"),
+                             ("Generation ▸ Qwen-Image-Edit 2.1 · SFW", "keep the body proportions and hands natural"),
+                             ("Generation ▸ Pony · NSFW", "a placement tag for every hand and leg")):
+            self.assertIn(phrase, B[name]["system_prompt"], name)
+        self.assertIn("assign each limb to its person", B["Generation ▸ Seedance 2.5 · SFW"]["system_prompt"])
+        self.assertNotIn("- Bodies:", B["Caption ▸ Describe image · NSFW"]["system_prompt"])
 
     def test_final_answer_rule_is_always_last(self):
         for kw in ({}, {"system_prompt": builtin_presets.BUILTIN["Generation ▸ Wan 3.0 · NSFW"][
@@ -995,8 +1031,8 @@ class LocalModelTests(unittest.TestCase):
         for new in ("thinking", "unload_after_run", "context_length", "gpu_layers", "top_k"):
             self.assertIn(new, spec["optional"])
         # image_4 (1.2.0) comes after the local options, so their saved values keep their place
-        self.assertEqual(names[-12:], [*local_node.LOCAL_OPTIONS, "image_4", "persons", "system",
-                                       "light", "safe", "person_5", "person_6"])
+        self.assertEqual(names[-13:], [*local_node.LOCAL_OPTIONS, "image_4", "persons", "system",
+                                       "light", "safe", "person_5", "person_6", "variation"])
         self.assertEqual(spec["required"]["model"][0], local_models.model_labels())
         self.assertTrue(local_node.LocalPromptForgeGGUF.VALIDATE_INPUTS("x", "y", person_1="z"))
 

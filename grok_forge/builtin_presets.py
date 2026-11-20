@@ -131,6 +131,20 @@ TAGS_NSFW = """- All characters are adults. Use no tag that marks a minor or a c
   - body fluids (sweat, saliva, pussy juice, cum, cum in pussy, cum on body, squirting);
   - framing that shows the act (from side, from below, pov, close-up)."""
 
+# Anatomy: undecided hands and limbs are what image and video models get wrong, so
+# every limb gets a place and an owner, plus one closing phrase in the model's form.
+BODIES = """- Bodies: give every hand, arm and leg of every person a clear place or action (resting on a thigh, gripping the headboard, wrapped around a waist) and assign each limb to its person ("her left hand", "his right knee"). Choose poses a human body can really take, and say how the weight rests and where the bodies support each other."""
+
+BODIES_STILL = """- Close the description of the persons with a sentence like: "Their bodies are natural and anatomically correct, with well-formed hands." """.rstrip()
+
+BODIES_SDXL = """- Add the phrase "anatomically correct, well-formed hands" right after the persons."""
+
+BODIES_VIDEO = """- Close the description of the persons with a sentence like: "Their bodies and hands keep natural proportions throughout the motion." """.rstrip()
+
+BODIES_EDIT = """- End the instruction with "keep the body proportions and hands natural"."""
+
+BODIES_TAGS = """- Bodies: a placement tag for every hand and leg (hand on own thigh, arms around neck, legs wrapped around waist, leg up, hands on another's hips), so no limb is left undecided."""
+
 RATING = {
     "Illustrious": ("- Rating: the tag general, or sensitive for swimwear, lingerie or a revealing outfit.",
                     "- Rating: the tags nsfw, explicit (questionable for nudity without sexual acts)."),
@@ -173,20 +187,25 @@ def content_section(target, content):
     sfw = content == "sfw"
     if kind == "tags" and label in RATING:
         rating = RATING[label][0 if sfw else 1]
-        parts = [rating, TAGS_PERSONS, TAGS_SFW] if sfw else [rating, TAGS_PERSONS, TAGS_NSFW, NOTHING_MORE]
+        parts = ([rating, TAGS_PERSONS, TAGS_SFW, BODIES_TAGS] if sfw else
+                 [rating, TAGS_PERSONS, TAGS_NSFW, BODIES_TAGS, NOTHING_MORE])
     elif kind == "edit":
-        parts = [PERSONS_SFW, EDIT_SFW] if sfw else [PERSONS_NSFW, EDIT_NSFW, NOTHING_MORE]
+        parts = ([PERSONS_SFW, EDIT_SFW, BODIES, BODIES_EDIT] if sfw else
+                 [PERSONS_NSFW, EDIT_NSFW, BODIES, BODIES_EDIT, NOTHING_MORE])
     elif kind in ("video", "h3"):
         sound = [SOUND_VIDEO] if target.get("sound", True) else []
         fields = [H3_FIELDS] if kind == "h3" else []
-        parts = ([DRESSED, STEPS_SFW_VIDEO, INTIMACY_SFW, PERSONS_SFW, VISIBLE_SFW] if sfw else
-                 [PERSONS_NSFW, CONSENT, ANATOMY, STEPS_VIDEO, POSITIONS, MOTION_VIDEO, UNDRESS_VIDEO,
-                  FLUIDS, CAMERA_VIDEO, *sound, ARC_VIDEO, NOTHING_MORE])
+        parts = ([DRESSED, STEPS_SFW_VIDEO, BODIES, BODIES_VIDEO, INTIMACY_SFW, PERSONS_SFW,
+                  VISIBLE_SFW] if sfw else
+                 [PERSONS_NSFW, CONSENT, ANATOMY, STEPS_VIDEO, POSITIONS, BODIES, BODIES_VIDEO,
+                  MOTION_VIDEO, UNDRESS_VIDEO, FLUIDS, CAMERA_VIDEO, *sound, ARC_VIDEO, NOTHING_MORE])
         parts += fields
     else:  # prose image models, and SDXL with its short comma phrases
-        parts = ([DRESSED, STEPS_SFW_STILL, INTIMACY_SFW, PERSONS_SFW, VISIBLE_SFW] if sfw else
-                 [PERSONS_NSFW, CONSENT, ANATOMY, STEPS_STILL, POSITIONS, UNDRESS_STILL, FLUIDS,
-                  CAMERA_STILL, SHORT_BUDGET, NOTHING_MORE])
+        closing = BODIES_SDXL if label == "SDXL" else BODIES_STILL
+        parts = ([DRESSED, STEPS_SFW_STILL, BODIES, closing, INTIMACY_SFW, PERSONS_SFW, VISIBLE_SFW]
+                 if sfw else
+                 [PERSONS_NSFW, CONSENT, ANATOMY, STEPS_STILL, POSITIONS, BODIES, closing,
+                  UNDRESS_STILL, FLUIDS, CAMERA_STILL, SHORT_BUDGET, NOTHING_MORE])
     return "\n".join([SFW_HEAD if sfw else NSFW_HEAD, *parts])
 
 

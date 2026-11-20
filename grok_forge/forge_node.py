@@ -7,7 +7,7 @@ import json
 import re
 
 from . import archive as prompt_archive
-from . import library, models, presets
+from . import library, models, presets, variation
 from .api import (DEFAULT_BASE_URL, DEFAULT_KEY_FILE, DEFAULT_MODEL, apply_sampling_params,
                   chat, image_to_data_uri, resolve_api_key)
 from .builtin_presets import BUILTIN, DEFAULT_PRESET
@@ -88,6 +88,14 @@ SAFE_TOOLTIP = (
     "result must stay safe for work.\n"
     "Presets ending in '· SFW' or '· NSFW' bring their own content rules for that model; "
     "'safe' on still wins over a '· NSFW' preset.")
+VARIATION_TOOLTIP = (
+    "On (default): with the run's seed the node picks a pose, an interaction, a camera "
+    "angle, a framing, a place and (for video) a camera move, and the writer uses them "
+    "wherever your text, the persons and the images leave something open. A language model "
+    "alone picks the same 'random' pose every time; with this, a new seed gives a new scene "
+    "and the same seed the same one. SFW lists by default, NSFW lists with a '· NSFW' "
+    "preset (and 'safe' off). Not used for 'Caption >', edit and recast presets.\n"
+    "Off: no variation, as before 1.7.0.")
 SYSTEM_INPUT_TOOLTIP = (
     "Optional: connect 'Prompt Writer · System Prompt Library' to choose the system prompt "
     "there - from the built-in presets, your own presets or your saved system prompts. Mode "
@@ -438,6 +446,8 @@ class GrokPromptForge:
         # Added in 1.6.0: two more persons, without image inputs of their own.
         for n in range(FIRST_PERSON_SLOTS + 1, PERSON_SLOTS + 1):
             optional[f"person_{n}"] = person_input(person_names, n, PERSON_LOCK_NOTE)
+        # Added in 1.7.0.
+        optional["variation"] = ("BOOLEAN", {"default": True, "tooltip": VARIATION_TOOLTIP})
         return {
             "required": {
                 "preset": (presets.names(), {"default": DEFAULT_PRESET, "tooltip":
@@ -516,7 +526,7 @@ class GrokPromptForge:
               archive=True, image_4=None, **slots):
         job = prepare(text, negative_prompt, system_prompt, custom_system_prompt, trigger_word,
                       (image_1, image_2, image_3, image_4), slots, image_n_is_person_n,
-                      min_words, max_words)
+                      min_words, max_words, seed=seed, preset=preset)
         if job is None:
             return ("", negative_prompt or "")
 
@@ -582,8 +592,22 @@ def content_rule(system, safe):
     return SAFE_RULE if safe else ADULT_RULE
 
 
+def variation_rule(system, preset, seed, safe, on):
+    """The seed's "## Variation" section, or "" (off, or a faithful caption / edit / recast)."""
+    if not on:
+        return ""
+    name = presets.current_name(preset or "")
+    builtin = BUILTIN.get(name)
+    if name.startswith(("Caption ▸", "Recast ▸")) or (builtin and builtin.get("group") == "edit"):
+        return ""
+    content = "sfw" if safe else content_of(system)
+    video = bool(builtin and builtin.get("group") == "video")
+    return variation.section(seed, content, video)
+
+
 def prepare(text, negative_prompt, system_prompt, custom_system_prompt, trigger_word,
-            image_inputs, slots, image_n_is_person_n, min_words, max_words, log=LOG):
+            image_inputs, slots, image_n_is_person_n, min_words, max_words, log=LOG,
+            seed=0, preset=""):
     """Build the Job of one run, or None when there is nothing to do."""
     text = text or ""
     negative = negative_prompt or ""
@@ -613,6 +637,7 @@ def prepare(text, negative_prompt, system_prompt, custom_system_prompt, trigger_
              LIGHT_RULES[light],
              PHOTO_DEFAULT if light == "daylight" and not styles else "",
              content_rule(system, safe),
+             variation_rule(system, preset, seed, safe, slots.get("variation", False)),
              length_rule(min_words, max_words),
              FINAL_RULE]
     system = "\n\n".join(part for part in [system.strip(), *rules] if part)

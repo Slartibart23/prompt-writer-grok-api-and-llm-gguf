@@ -516,7 +516,7 @@ function lockPersons(node) {
 // Plain DOM modal in ComfyUI's colours. It sits below ComfyUI's own dialogs
 // (z-index 1000), so confirm boxes and toasts appear on top of it.
 const NONE = "(none)";
-const RECAST = "Recast ▸ Swap persons"; // built-in preset name, see builtin_presets.py
+const RECAST = "Recast ▸ Swap persons"; // built-in preset, with " · SFW" / " · NSFW" (builtin_presets.py)
 
 function el(tag, props = {}, ...children) {
   const e = document.createElement(tag);
@@ -1094,8 +1094,12 @@ async function openArchive(node) {
 
   const use = async (entry, recast) => {
     if (recast) {
-      widget(node, "preset").value = RECAST;
-      await applyPreset(node, RECAST);
+      // the SFW recast while the node is on an SFW preset, otherwise the NSFW one,
+      // which keeps every explicit detail of the archived prompt
+      const current = (await loadPresets()).find((p) => p.name === widget(node, "preset")?.value);
+      const name = `${RECAST} · ${current && presetContent(current) === "sfw" ? "SFW" : "NSFW"}`;
+      widget(node, "preset").value = name;
+      await applyPreset(node, name);
       if (entry.negative_prompt) setValue(node, "negative_prompt", entry.negative_prompt);
     }
     setValue(node, "text", entry.prompt);

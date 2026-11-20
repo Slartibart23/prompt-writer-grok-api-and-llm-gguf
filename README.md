@@ -13,7 +13,7 @@ Both nodes share everything else:
 
 - **Presets per target model:** each target model has its own task preset with a matching system prompt, standard negative prompt and sampling settings. This covers local models (Krea 2, Qwen-Image, Z-Image, FLUX, SDXL family, Wan, MiniMax H3) and API models (Seedream, Seedance, GPT Image, Nano Banana, Grok Imagine, Flux 3, Kling, Veo).
 - **Preset filters:** three boxes above the preset list narrow it by type (image, edit, video, captions & tools, your own), task (Generation, Caption) and content (SFW, NSFW).
-- **SFW and NSFW presets:** Wan 3.0 comes as "· SFW" and "· NSFW" presets with content rules written for that model; poses and interactions are described step by step, not only named.
+- **SFW and NSFW presets:** every model comes as "· SFW" and "· NSFW" presets (the strictly filtered API models as "· SFW" only), with content rules written for that kind of model; poses and interactions are described step by step, not only named.
 - **Only the final prompt:** the result is the prompt itself, ready to paste. Labels such as "Prompt:", settings, tips and text around a code block are removed.
 - **Your own persons and style blocks:** pick them from a local library and they appear in every prompt, with every action clearly assigned by name.
 - **Prompt archive:** every result can be found and reused later.
@@ -32,7 +32,7 @@ Both nodes share everything else:
 
 ![The preset list filtered to video models and generation](docs/images/preset_filter.png)
 
-*With "Filter: type" on Video and "Filter: task" on Generation, the preset list shows only the twelve video generation presets. The search field at the top of the list narrows it further as you type.*
+*With "Filter: type" on Video and "Filter: task" on Generation, the preset list shows only the video generation presets (in this screenshot from 1.6.0 still without the "· SFW" / "· NSFW" suffix). The search field at the top of the list narrows it further as you type.*
 
 ![Prompt Writer · Persons connected to the persons input of Prompt Writer · Grok API](docs/images/persons_node.png)
 
@@ -81,7 +81,7 @@ All nodes are in the node menu under **Prompt Writer**.
 
 | Node | Purpose |
 |---|---|
-| **Prompt Writer · Grok API** | Prompt writing, caption rewriting and image captioning through the xAI Grok API. It has four optional image inputs, a custom system prompt input and 62 built-in task presets. You can save your own presets, pick up to six persons and two style blocks from your library, and reload results from the archive. Outputs `prompt` and `negative_prompt`. |
+| **Prompt Writer · Grok API** | Prompt writing, caption rewriting and image captioning through the xAI Grok API. It has four optional image inputs, a custom system prompt input and 108 built-in task presets. You can save your own presets, pick up to six persons and two style blocks from your library, and reload results from the archive. Outputs `prompt` and `negative_prompt`. |
 | **Prompt Writer · LLM GGUF** | The same with a local, uncensored **Qwen3.8-27B** (huihui abliterated or HauhauCS Aggressive, several sizes) instead of the API. The chosen model and its vision projector are downloaded on the first run. Needs llama-cpp-python with CUDA: see **[docs/LOCAL_GGUF.md](docs/LOCAL_GGUF.md)** for the installation and which model fits your GPU. |
 | **Prompt Writer · Persons** | Chooses up to six persons (or groups) from your library outside the writer nodes. Connect its `persons` output to the `persons` input of one or more writer nodes, e.g. one cast for an image and a video writer. While it is connected, the writer's own `person_1` … `person_6` are locked. |
 | **Prompt Writer · System Prompt Library** | The whole system prompt library in one node: the system prompts of all built-in presets, of your own presets and your saved system prompts (★). Choose one in **System prompt**, narrowed by **Filter: type** (image, edit, video, captions & tools, my presets, ★ my system prompts), **Filter: task** (Generation, Caption) and **Filter: content** (SFW, NSFW); it fills `label` and `text`. **📝 Open editor...** edits the text in a large window with a word, character and line count. **💾 Save as...** saves it under a name of your own in `ComfyUI/user/grok_prompt_forge/system_prompts.json` (not in the workflow); built-in presets are never overwritten. **🗑 Delete my prompt** removes only your own saved prompts. Mode `replace` (default) uses the text instead of the writer's `system_prompt`, which is then greyed out and read-only; mode `append` adds it as extra binding instructions. Connect its output to the `system` input of a writer node; the preset, negative prompt and sampling stay on the writer. |
@@ -184,14 +184,28 @@ For Illustrious, Pony and SDXL they follow the model cards plus established comm
 
 ### SFW and NSFW presets
 
-Wan 3.0 comes as four presets: "Generation ▸ Wan 3.0 · SFW", "Generation ▸ Wan 3.0 · NSFW" and the same two for "Caption ▸". Both use the Wan 3.0 model guide and add a content section written for Wan, with an example of its own:
+Every preset except "Custom system prompt" comes as "· SFW" and "· NSFW", for example "Generation ▸ Krea 2 · SFW" and "Generation ▸ Krea 2 · NSFW". Both use the same model guide and add a content section written for that kind of model:
 
-- **· SFW:** every person is dressed, with what each one wears and how it fits and moves. Every pose and every interaction (a dance, an embrace, a kiss, a fight, a sport) is described as a sequence of visible actions: who does it to whom with which body part, the point of contact, the movement with its direction, speed and force, what all hands do and how the bodies react. Persons in romantic, swimwear or fitness scenes are adults ("an adult woman").
-- **· NSFW:** explicit, adults only, and with visible mutual consent. Every sexual interaction is described step by step, never only by its name: who does what to whom with which body part, the exact point of contact, the movement with direction, depth, pressure and speed, what the hands do and the visible reaction of the bodies. Positions get their common term and their full geometry; each shot has one main action with its rhythm, the state of undress stays consistent, the camera shows the action and the sound has breathing, moans and spoken lines.
+- **· SFW:** every person is dressed, with what each one wears and how it fits. Every pose and every interaction (a dance, an embrace, a kiss, a fight, a sport) is described precisely, never only by its name: who touches whom with which body part, the point of contact, the movement, what the hands do and how the bodies react.
+- **· NSFW:** explicit, adults only, with visible mutual consent and plain anatomical words. Every sexual interaction is described step by step, never only by its name: who does what to whom with which body part, the exact point of contact, the movement with direction, depth, pressure and speed, what all hands do and the visible reaction of the bodies. Positions get their common term and their full geometry, the state of undress and body fluids are named, and the framing shows the action.
 
-In both, persons are written as "an adult woman" or "an adult man". An age appears only when your input or a selected person states one ("young", "aged", "in her forties", "35 years old"), word for word and still with "adult" ("a young adult woman"); no age is invented.
+The section takes the form of the model:
 
-The content section replaces the general *Adult content* and *Safe mode* rules below. `safe` on still wins: with an NSFW preset it keeps the result safe for work. Workflows and saved overrides that used "Generation ▸ Wan 3.0" or "Caption ▸ Wan 3.0" now use the "· SFW" preset. More models get SFW and NSFW presets in later versions.
+| Models | SFW / NSFW section |
+|---|---|
+| Krea 2, Qwen-Image 2.1, Z-Image, FLUX, Flux 3, Seedream, GPT Image, Nano Banana, Grok Imagine Image, SDXL | A still picture: the interaction as one visible moment. With a short length (Seedream, SDXL) the persons, the action and the point of contact come first. |
+| Illustrious, Pony | Danbooru tags: the rating tag (general / sensitive, rating_safe; explicit, rating_explicit), several precise tags for pose, contact, hands, reaction, undress and fluids, and no tag that marks a minor. Age tags only as the input states them. |
+| Qwen-Image-Edit 2.1, Seedream Edit | Edit instructions: what is taken off or changed, the resulting pose and contact, and the identity of every person kept. |
+| Wan 2.2, Wan 2.7, Wan 3.0, Seedance, Kling 3.0, Veo 3.1, Grok Imagine Video | A sequence per shot, in the model's shot format, with rhythm, continuity of undress and, except for the silent Wan 2.2, the sound. |
+| MiniMax H3 FL2VA, REF2VA | Like the video models, written into the descriptive fields of the H3 format. |
+| Caption ▸ LoRA training caption, Caption ▸ Describe image | SFW: nudity and sex only in neutral words. NSFW: explicit and precise, only for persons who are clearly adults, and only what the image shows. |
+| Recast ▸ Swap persons | SFW: explicit parts of the original are rewritten safe for work. NSFW: every explicit detail stays, adapted to the anatomy of the new persons. |
+
+GPT Image, Nano Banana, Grok Imagine Image, Kling 3.0 and Veo 3.1 come as "· SFW" only, and Grok Imagine Video has "· NSFW" only for captions: their APIs refuse explicit content. The other API models (Seedream, Seedance, Flux 3, Wan 3.0, MiniMax H3) have both, but their provider may still filter.
+
+In every section persons are written as "an adult woman" or "an adult man" (outside romantic, swimwear or fitness scenes simply "a woman", "a man" in SFW). An age appears only when your input or a selected person states one ("young", "aged", "in her forties", "35 years old"), word for word and in NSFW still with "adult" ("a young adult woman"); no age is invented. Wan 3.0 also has an example of its own for each variant.
+
+The content section replaces the general *Adult content* and *Safe mode* rules below. `safe` on still wins: with an NSFW preset it keeps the result safe for work. Workflows and saved overrides that used a preset without the suffix (for example "Generation ▸ Krea 2") now use its "· SFW" preset; the values in the node stay as they were. Both writer nodes, Grok API and LLM GGUF, use the same presets and rules.
 
 Every target that is written as prose (all image and video models except the tag models Illustrious, Pony and SDXL and the edit instructions) also gets a **sentence rule**: complete sentences that each end with a period, each making one clear statement about a subject's look, clothing, pose, action, the setting, the light, the camera or the style. Long descriptions are split into several short sentences instead of comma-chained fragments. Fixed labels that a model needs, such as shot labels, timestamps or section names, keep their form. "Caption ▸ Describe image" and "Caption ▸ LoRA training caption" follow the same rule.
 
@@ -240,7 +254,7 @@ Every target guide also ends with **an example of a good result**. It is marked 
 - **Export / Import** in the dialog moves the library between installs. On import you choose whether names that already exist are replaced or kept.
 - **Archive:** with `archive` on, every result is appended to `ComfyUI/user/grok_prompt_forge/archive.jsonl` together with its input, preset, persons and settings. **📜 Load from archive...** searches it:
   - *Use as text* puts an archived prompt into `text`.
-  - *Recast* also selects the preset **"Recast ▸ Swap persons"** and the archived negative prompt.
+  - *Recast* also selects the preset **"Recast ▸ Swap persons"** (· SFW while the node is on an SFW preset, otherwise · NSFW, which keeps every explicit detail) and the archived negative prompt.
 
   Then pick the new person(s) and add an instruction such as "replace the man with Person 1". The action, background, lighting, camera, style and format stay as they are; only the person changes, including pronouns and gendered details.
 

@@ -48,35 +48,147 @@ SENTENCES = """## Sentences
 - Each sentence makes one clear statement: the look of one subject, their clothing, a pose, an action or interaction, an object, the setting or background, the light, the camera or the style. Split a long description into several short sentences rather than chaining clauses or fragments with commas.
 - No comma-chained keyword lists. Only labels, tags and term lists that the guide above explicitly asks for (shot labels, timestamps, section names, cinematic setting terms) keep their own form."""
 
-# Content sections of the "· SFW" / "· NSFW" variants. The heading is what
-# forge_node.prepare() looks for: a system prompt with its own content section gets
-# no general "Adult content" / "Safe mode" rule on top ("safe" on still wins).
-WAN3_SFW = """## Content: SFW (binding)
-- Every person is dressed. Name what each one wears and how it fits and moves: fabric, cut and colour (a linen summer dress, a bikini on the beach, a bathrobe, a towel wrapped around the body).
-- Describe every pose and every interaction between persons (a dance, an embrace, a kiss, a fight, a sport, helping someone up) as a sequence of visible actions, never only by its name. For each action give who does it to whom and with which body part, the exact point of contact, the movement itself with its direction, speed and force, what the hands of every person do at the same time, and the visible reaction of the bodies.
-- Poses: where the weight rests, the posture, where the hands and feet are, which way each face points and where each person looks, and how they move into the next pose.
-- Intimacy lives in closeness, glances, hands, embraces and kisses; the camera frames faces, hands and shoulders.
-- Persons in romantic, swimwear or fitness scenes are adults and are written as "an adult woman", "an adult man". Give an age only as the input or a selected person states it ("young", "aged", "in her forties", "35 years old"), word for word; invent no ages.
-- Write only what is visible: the clothing, the framing and the light that are there."""
+# Content sections of the "· SFW" / "· NSFW" variants, written per model family
+# (content_section below). The heading is what forge_node.prepare() looks for: a
+# system prompt with its own content section gets no general "Adult content" /
+# "Safe mode" rule on top ("safe" on still wins).
+SFW_HEAD = "## Content: SFW (binding)"
+NSFW_HEAD = "## Content: NSFW (explicit, adults only)"
 
-WAN3_NSFW = """## Content: NSFW (explicit, adults only)
-- Every person is an adult and is written as "an adult woman", "an adult man". Give an age only as the input or a selected person states it ("young", "aged", "in her forties", "35 years old"), word for word, and keep "adult" with it ("a young adult woman"); invent no ages. Sexual content involves adults only.
-- The scene shows mutual, eager consent: the persons respond to each other, look at each other, guide each other's hands and bodies.
-- Write explicitly with plain anatomical words (penis, vagina, vulva, clitoris, labia, anus, breasts, nipples, buttocks, testicles).
-- Describe every sexual interaction as a sequence of visible actions, never only by its name. For each action give:
+PERSONS_SFW = """- Persons are written as "a woman", "a man"; in romantic, swimwear, lingerie or fitness scenes as "an adult woman", "an adult man". Give an age only as the input or a selected person states it ("young", "aged", "in her forties", "35 years old"), word for word; invent no ages."""
+
+PERSONS_NSFW = """- Every person is an adult and is written as "an adult woman", "an adult man". Give an age only as the input or a selected person states it ("young", "aged", "in her forties", "35 years old"), word for word, and keep "adult" with it ("a young adult woman"); invent no ages. Sexual content involves adults only."""
+
+DRESSED = """- Every person is dressed. Name what each one wears and how it fits and moves: fabric, cut and colour (a linen summer dress, a bikini on the beach, a bathrobe, a towel wrapped around the body)."""
+
+INTIMACY_SFW = """- Intimacy lives in closeness, glances, hands, embraces and kisses; the camera frames faces, hands and shoulders."""
+
+VISIBLE_SFW = """- Write only what is visible: the clothing, the framing and the light that are there."""
+
+CONSENT = """- The scene shows mutual, eager consent: the persons respond to each other, look at each other, guide each other's hands and bodies."""
+
+ANATOMY = """- Write explicitly with plain anatomical words (penis, vagina, vulva, clitoris, labia, anus, breasts, nipples, buttocks, testicles)."""
+
+POSITIONS = """- Positions: name the position with its common term, then its full geometry - who lies, kneels, sits or stands, the angle of the hips, where legs, arms and hands are, which way each face points."""
+
+FLUIDS = """- Body fluids, when part of the scene: name them (sweat, saliva, vaginal wetness, semen, squirt) and describe where they are and how they look (glistening on the thighs, dripping from the chin, smeared across the stomach)."""
+
+NOTHING_MORE = """- Add nothing more explicit than the input asks for."""
+
+# moving pictures: the interaction as a sequence, per shot
+STEPS_VIDEO = """- Describe every sexual interaction as a sequence of visible actions, never only by its name. For each action give:
   - who does it to whom, and with which body part (hand, fingers, mouth, tongue, lips, penis, breasts ...);
   - the exact point of contact and what touches what (her lips close around the tip of his penis; two of his fingers slide between her labia);
   - the movement itself: direction, depth, pressure and speed (slow, deep strokes; small fast circles; grinding forward and back), and how it changes over the shot;
   - what the hands of every person do at the same time (gripping hips, pulling hair, spreading thighs, squeezing breasts, holding the headboard);
-  - the visible reaction of the bodies: back arching, hips lifting to meet the motion, thighs trembling, toes curling, fingers digging into the sheet, mouth opening, eyes closing or locked on the partner.
-- Positions: name the position with its common term, then its full geometry - who lies, kneels, sits or stands, the angle of the hips, where legs, arms and hands are, which way each face points.
-- Motion per shot (Wan reads it per shot): one main sexual action per shot with its rhythm and the visible movement it causes (hips rocking, breasts swaying, the bed shaking). A change of position is one continuous movement inside the shot (she rolls onto her back and pulls him on top of her) or a new shot.
-- Undress and continuity: give each person's state of dress in every shot and which body parts are visible; clothes taken off stay off, and fluids and marks stay where they are.
-- Body fluids, when part of the scene: name them (sweat, saliva, vaginal wetness, semen, squirt) and describe where they are and how they look (glistening on the thighs, dripping from the chin, smeared across the stomach).
-- Camera: choose framing and angle so every described action is visible (side view of the hips, low angle between the legs, POV from above, close-up of the point of contact); slow camera moves that follow the action.
-- Sound: breathing and its tempo, moans and their pitch, wet sounds and skin on skin, a creaking bed; spoken lines in double quotes with tone and volume ("she gasps, breathless: ..."). Write "No background music." when the input wants only the room sound.
-- Longer clips (10-30 s): 2-5 shots that follow the arc the input asks for (foreplay, the act, climax, afterglow), each shot with its own action and end state.
-- Add nothing more explicit than the input asks for."""
+  - the visible reaction of the bodies: back arching, hips lifting to meet the motion, thighs trembling, toes curling, fingers digging into the sheet, mouth opening, eyes closing or locked on the partner."""
+
+# still pictures: the interaction as one frozen moment
+STEPS_STILL = """- Describe every sexual interaction as one visible moment of the action, never only by its name. For it give:
+  - who does it to whom, and with which body part (hand, fingers, mouth, tongue, lips, penis, breasts ...);
+  - the exact point of contact and what touches or enters what (her lips close around the tip of his penis; two of his fingers slide between her labia);
+  - the state of the movement in this moment: how deep, how pressed, which way the bodies lean and push;
+  - what the hands of every person do (gripping hips, pulling hair, spreading thighs, squeezing breasts, holding the headboard);
+  - the visible reaction of the bodies: back arched, hips raised against the partner, thighs tensed, toes curled, fingers digging into the sheet, flushed skin, mouth open, eyes closed or locked on the partner."""
+
+STEPS_SFW_VIDEO = """- Describe every pose and every interaction between persons (a dance, an embrace, a kiss, a fight, a sport, helping someone up) as a sequence of visible actions, never only by its name. For each action give who does it to whom and with which body part, the exact point of contact, the movement itself with its direction, speed and force, what the hands of every person do at the same time, and the visible reaction of the bodies.
+- Poses: where the weight rests, the posture, where the hands and feet are, which way each face points and where each person looks, and how they move into the next pose."""
+
+STEPS_SFW_STILL = """- Describe every pose and every interaction between persons (an embrace, a kiss, a dance figure, a fight, a sport, helping someone up) as one frozen, visible moment, never only by its name: who touches whom with which body part, the exact point of contact, which way the movement goes, and the visible tension or reaction of the bodies.
+- Poses: where the weight rests, the posture, where the hands and feet are, which way each face points and where each person looks."""
+
+UNDRESS_STILL = """- Undress: give each person's state of dress - which garments are worn, open, pulled aside or taken off - and which body parts are visible."""
+
+UNDRESS_VIDEO = """- Undress and continuity: give each person's state of dress in every shot and which body parts are visible; clothes taken off stay off, and fluids and marks stay where they are."""
+
+CAMERA_STILL = """- Composition: choose framing and camera angle so every described detail is visible (side view of the hips, low angle between the legs, POV from above, close-up of the point of contact)."""
+
+CAMERA_VIDEO = """- Camera: choose framing and angle so every described action is visible (side view of the hips, low angle between the legs, POV from above, close-up of the point of contact); slow camera moves that follow the action."""
+
+MOTION_VIDEO = """- Motion per shot, in the shot format of the guide above: one main sexual action per shot with its rhythm and the visible movement it causes (hips rocking, breasts swaying, the bed shaking). A change of position is one continuous movement inside the shot (she rolls onto her back and pulls him on top of her) or a new shot."""
+
+SOUND_VIDEO = """- Sound: breathing and its tempo, moans and their pitch, wet sounds and skin on skin, a creaking bed; spoken lines in double quotes with tone and volume ("she gasps, breathless: ..."). Write "No background music." when the input wants only the room sound."""
+
+ARC_VIDEO = """- Longer clips (10 s and more): 2-5 shots that follow the arc the input asks for (foreplay, the act, climax, afterglow), each shot with its own action and end state."""
+
+SHORT_BUDGET = """- When the guide above sets a short length, give the persons, the action and the point of contact priority over setting and background."""
+
+H3_FIELDS = """- Put these details into the descriptive fields of the format above; the field structure and all other fields stay exactly as described."""
+
+TAGS_PERSONS = """- Age: use no age tags, unless the input or a selected person states an age; then use the closest adult tag (mature female, mature male, old woman, old man)."""
+
+TAGS_SFW = """- Every character is dressed: a clothing tag for every garment, with colour (white shirt, red dress, black bikini), and how it sits (open jacket, sleeves rolled up).
+- Poses and interactions as several precise tags, never only one generic tag: the pose (standing, sitting, kneeling, lying, on back, on side), the contact (holding hands, hand on another's shoulder, hug from behind, kiss, carrying), where the hands are (hands on hips, arms up, hand on own chest), the gaze (looking at another, looking at viewer) and the expression (smile, blush, open mouth)."""
+
+TAGS_NSFW = """- All characters are adults. Use no tag that marks a minor or a childlike body or setting (loli, shota, child, toddler, teenage, school uniform, elementary school, middle school, high school).
+- Write the sexual content with explicit Danbooru tags, never only one general tag such as "sex":
+  - participants and pairing (1girl, 1boy, hetero, yuri, yaoi, multiple boys, group sex);
+  - the act and the position (vaginal, anal, fellatio, cunnilingus, paizuri, handjob, fingering, missionary, cowgirl position, reverse cowgirl position, doggystyle, sex from behind, standing sex, spooning, legs up, spread legs);
+  - the point of contact (penis, pussy, insertion, testicles, grabbing another's breast, hand on another's hip, hand on another's head, leg lock);
+  - the hands of every character (grabbing another's hip, holding another's wrist, grabbing sheet, hand on own breast);
+  - the visible reaction (arched back, trembling, curled toes, open mouth, tongue out, closed eyes, rolling eyes, blush, heavy breathing, sweat);
+  - the state of undress and the visible body parts (nude, completely nude, clothes pull, shirt lift, panties aside, nipples, pussy, penis, anus);
+  - body fluids (sweat, saliva, pussy juice, cum, cum in pussy, cum on body, squirting);
+  - framing that shows the act (from side, from below, pov, close-up)."""
+
+RATING = {
+    "Illustrious": ("- Rating: the tag general, or sensitive for swimwear, lingerie or a revealing outfit.",
+                    "- Rating: the tags nsfw, explicit (questionable for nudity without sexual acts)."),
+    "Pony": ("- Rating: rating_safe.",
+             "- Rating: rating_explicit (rating_questionable for nudity without sexual acts). The short sentences after the rating name who does what to whom; the booru tags follow."),
+}
+
+EDIT_SFW = """- Every person in the result is dressed. A change of clothing names the garment, its fabric, colour and fit.
+- A change of pose or interaction names the final visible pose: where the weight rests, the posture, where hands and feet are, which way each face points, where each person looks and where the persons touch.
+- Keep the identity of every person: face, hair, body shape and skin stay as in the input image."""
+
+EDIT_NSFW = """- Undressing: name each garment that is taken off, opened or pulled aside, and the body parts that are then visible, with plain anatomical words (breasts, nipples, vulva, penis, buttocks).
+- A new pose or sexual interaction is described as the resulting visible moment, never only by its name: who touches whom with which body part, the exact point of contact and what touches or enters what, the position with its common term and full geometry, what the hands do, and the visible reaction of the bodies.
+- Body fluids, when asked for: name them and say where they are and how they look.
+- Keep the identity of every person: face, hair, body shape and skin stay as in the input image; everything the instruction leaves out stays unchanged."""
+
+CAPTION_SFW = """- Keep the caption safe for work: describe nudity and sexual content only in neutral, non-explicit words (nude, intimate embrace, lying together).
+- Describe clothing precisely: garment, fabric, colour and fit.
+- Describe poses and interactions as the visible moment: who touches whom with which body part, where the weight rests, where hands and feet are, which way each face points.
+- Persons are "a woman", "a man"; describe visible signs of age (grey hair, wrinkles) instead of guessing an age."""
+
+CAPTION_NSFW = """- Describe nudity and sexual content explicitly and precisely with plain anatomical words (penis, vagina, vulva, clitoris, labia, anus, breasts, nipples, buttocks, testicles), and only for persons who are clearly adults; for anyone else describe only clothing and non-sexual facts.
+- Persons are "an adult woman", "an adult man"; describe visible signs of age (grey hair, wrinkles) instead of guessing an age.
+- Describe every sexual interaction that is visible as the moment it shows, never only by its name: who does what to whom with which body part, the exact point of contact and what touches or enters what, the position with its common term and its geometry, what the hands do, and the visible reaction of the bodies.
+- Give each person's state of dress and which body parts are visible; name visible body fluids and where they are.
+- Describe only what the image or the raw caption shows; add nothing."""
+
+RECAST_SFW = """- The result is safe for work: if the original prompt contains nudity or sexual content, rewrite those parts in safe form (dressed persons, intimacy through closeness, glances, embraces and kisses); everything else stays as described above.
+- The new persons are written as the original wrote its persons, without invented ages; a stated age comes from the new person's definition."""
+
+RECAST_NSFW = """- Keep every explicit detail of the original exactly: acts, positions, points of contact, anatomical words, body fluids and states of undress.
+- Adapt the anatomy, gendered body parts and pronouns to each new person (a man replaced by a woman gets her anatomy in every explicit detail).
+- All persons are adults; a stated age comes from the new person's definition, otherwise "an adult woman", "an adult man"; invent no ages."""
+
+
+def content_section(target, content):
+    """The content section of a "· SFW" / "· NSFW" variant, in the form of the model family."""
+    kind = target.get("kind", "image")
+    label = target["label"]
+    sfw = content == "sfw"
+    if kind == "tags" and label in RATING:
+        rating = RATING[label][0 if sfw else 1]
+        parts = [rating, TAGS_PERSONS, TAGS_SFW] if sfw else [rating, TAGS_PERSONS, TAGS_NSFW, NOTHING_MORE]
+    elif kind == "edit":
+        parts = [PERSONS_SFW, EDIT_SFW] if sfw else [PERSONS_NSFW, EDIT_NSFW, NOTHING_MORE]
+    elif kind in ("video", "h3"):
+        sound = [SOUND_VIDEO] if target.get("sound", True) else []
+        fields = [H3_FIELDS] if kind == "h3" else []
+        parts = ([DRESSED, STEPS_SFW_VIDEO, INTIMACY_SFW, PERSONS_SFW, VISIBLE_SFW] if sfw else
+                 [PERSONS_NSFW, CONSENT, ANATOMY, STEPS_VIDEO, POSITIONS, MOTION_VIDEO, UNDRESS_VIDEO,
+                  FLUIDS, CAMERA_VIDEO, *sound, ARC_VIDEO, NOTHING_MORE])
+        parts += fields
+    else:  # prose image models, and SDXL with its short comma phrases
+        parts = ([DRESSED, STEPS_SFW_STILL, INTIMACY_SFW, PERSONS_SFW, VISIBLE_SFW] if sfw else
+                 [PERSONS_NSFW, CONSENT, ANATOMY, STEPS_STILL, POSITIONS, UNDRESS_STILL, FLUIDS,
+                  CAMERA_STILL, SHORT_BUDGET, NOTHING_MORE])
+    return "\n".join([SFW_HEAD if sfw else NSFW_HEAD, *parts])
+
 
 CAPTION_TO_VIDEO = """- The caption describes a still image. Keep all of it as the starting state of the clip and add only simple, plausible motion and camera behaviour that the scene itself suggests."""
 
@@ -361,6 +473,7 @@ TARGETS = [
     {
         "label": "Wan 2.2",
         "kind": "video",
+        "sound": False,  # silent clips: the NSFW section leaves out the sound
         "about": "Wan 2.2 text-to-video and image-to-video (umT5, 512 tokens; ~5 s clips). "
                  "For image-to-video connect the start frame to image_1. The negative prompt "
                  "is the official one; with Lightning LoRAs at CFG 1 it is ignored.",
@@ -417,7 +530,6 @@ Both: a clip is about 5 seconds (81 frames at 16 fps). Keep to one main action w
 - First and last frame: describe the motion path from the start state to the end state.
 - Avoid real people's names, rapid scene changes and long exact on-screen text.
 - About 80-250 words.""",
-        "content": {"sfw": WAN3_SFW, "nsfw": WAN3_NSFW},
     },
     {
         "label": "MiniMax H3 FL2VA",
@@ -660,7 +772,7 @@ Only when a trigger token is given: remove hair colour, texture and length, eye 
 
 ## General refinement
 - Unambiguous attribution in interaction scenes: WHO does WHAT to WHOM. Fix vague pronouns.
-- Describe nudity and sexual content as the "Adult content" or "Safe mode" section below says; never moralize.
+- Describe nudity and sexual content as the content section of this prompt says ("Content: SFW" or "Content: NSFW", otherwise "Adult content" or "Safe mode"); never moralize.
 - Strip mood language, aesthetic judgments, image-quality remarks and meta phrases ("this image shows").
 - Plain natural-language sentences, each ending with a period and each making one clear statement (an action, a pose, the clothing, the setting ...). Split long chains of clauses into several sentences. Keep the raw caption's level of detail for everything in the KEEP list.
 
@@ -673,7 +785,7 @@ DESCRIBE_IMAGE = """You are an image captioner. Describe image 1 (and any furthe
 - Include camera framing (shot type, angle, vantage height) and concrete lighting (source, direction, quality, colour).
 - Transcribe visible text verbatim in double quotes.
 - Write complete sentences, each ending with a period. Each sentence makes one clear statement (the look of one person, their clothing, a pose, an action, the setting, the light, the framing); split long chains of clauses into several sentences.
-- Describe nudity and sexual content as the "Adult content" or "Safe mode" section below says; never moralize.
+- Describe nudity and sexual content as the content section of this prompt says ("Content: SFW" or "Content: NSFW", otherwise "Adult content" or "Safe mode"); never moralize.
 - Omit mood, atmosphere, aesthetic judgments, image quality and meta phrases ("this image shows").
 - If the user adds instructions (focus, length, style, a question about the image), follow them; they may be written in any language - the answer is always English.
 
@@ -717,7 +829,7 @@ WORDS = {
 # follow a concrete example far more reliably than rules alone.
 EXAMPLES = {
     "Krea 2": (
-        "A young woman with straight black hair sits at a small round café table by a large "
+        "A woman with straight black hair sits at a small round café table by a large "
         "window. She wears a light grey collared shirt with a loosened black tie. She rests her "
         "chin on her right hand and looks straight into the camera with an intense, calm gaze. A "
         "white porcelain cup of black coffee stands in front of her, and a thin curl of steam "
@@ -734,7 +846,7 @@ EXAMPLES = {
         "the frame, a weathered wooden sign hangs from an iron bracket and reads "
         "\"BÄCKEREI SONNE\" in bold cream-coloured serif letters. On the left, a tall shop "
         "window shows three tiers of golden bread loaves on pale beech shelves. In the "
-        "centre, a middle-aged baker in a flour-dusted white apron stands in the open "
+        "centre, a baker in a flour-dusted white apron stands in the open "
         "doorway, holding a wicker basket of crusty rolls against her hip. On the right, a "
         "black bicycle with a wooden crate on its rear rack leans against the wall. At the "
         "bottom, dry grey cobblestones show fine cracks and tufts of moss between them. "
@@ -747,7 +859,7 @@ EXAMPLES = {
         "matching its cut, colour, zips and stitching exactly, and let it fall naturally over her "
         "shoulders; keep her face, hairstyle, pose, the lighting and the background unchanged."),
     "Z-Image": (
-        "A young woman in a red silk hanfu with intricate golden phoenix embroidery stands "
+        "A woman in a red silk hanfu with intricate golden phoenix embroidery stands "
         "on a stone bridge in a park on a clear day. Her black hair is pinned into a high "
         "bun with a gold hairpin, and a small red flower pattern is painted on her "
         "forehead. She holds a round paper fan in her right hand and looks calmly to the "
@@ -767,15 +879,15 @@ EXAMPLES = {
         "day, forest, sunlight, natural lighting, depth of field"),
     "Pony": (
         "score_9, score_8_up, score_7_up, score_6_up, score_5_up, score_4_up, source_anime, "
-        "rating_safe, a girl with short pink hair in a yellow raincoat jumps over a puddle on a "
+        "rating_safe, a woman with short pink hair in a yellow raincoat jumps over a puddle on a "
         "rainy city street, smiling, 1girl, solo, yellow raincoat, rubber boots, jumping, puddle, "
         "rain, city street, dynamic pose, full body"),
     "SDXL": (
-        "photograph of an elderly fisherman mending a net on a wooden pier in the morning, "
+        "photograph of a fisherman mending a net on a wooden pier in the morning, "
         "weathered skin, grey wool sweater, coils of rope at his feet, clear natural "
         "daylight, calm harbor, 85mm lens, shallow depth of field, film grain"),
     "Wan 2.2": (
-        "Text-to-video:\nDay time, Daylight, Soft lighting, Medium shot. A young surfer "
+        "Text-to-video:\nDay time, Daylight, Soft lighting, Medium shot. A surfer "
         "with wet sun-bleached hair and a black wetsuit carries a white surfboard across "
         "the sand towards the waves. Her stride quickens into a jog as the foam washes "
         "over her ankles. She lifts the board, steps into the water and paddles out while "
@@ -786,8 +898,8 @@ EXAMPLES = {
         "pushes in slowly."),
     "Wan 2.7": (
         "A small roadside diner with red vinyl booths and a long chrome counter on a "
-        "bright afternoon. A tired waitress in her fifties with grey hair pinned up "
-        "refills the coffee of a young man in a denim jacket who sits alone at the "
+        "bright afternoon. A tired waitress with grey hair pinned up "
+        "refills the coffee of a man in a denim jacket who sits alone at the "
         "counter. She leans on the counter and says, in a warm, slow, slightly raspy voice "
         "with a southern accent: \"Long day, honey?\" He looks up, smiles wearily and "
         "nods. Clear daylight falls through the large front windows and lights the room "
@@ -798,8 +910,8 @@ EXAMPLES = {
         "A rooftop garden in a city on a clear, sunny afternoon. Shot 1 [0-4s]: Wide shot. "
         "A man in a white shirt waters tomato plants while the skyline stands bright under "
         "a pale blue sky behind him. The camera trucks slowly to the right. Shot 2 [4-8s]: "
-        "Close-up. His daughter, about ten, runs in holding a ripe tomato. She says, "
-        "excited and quick, in a bright child's voice: \"Look, the first one!\" Shot 3 "
+        "Close-up. His wife runs in holding a ripe tomato. She says, "
+        "excited and quick, in a bright voice: \"Look, the first one!\" Shot 3 "
         "[8-12s]: Medium shot, static camera. He kneels, takes the tomato and laughs. "
         "Sound: traffic hums in the distance, water splashes on the leaves and birds sing. "
         "A soft acoustic guitar plays in the background."),
@@ -851,7 +963,7 @@ EXAMPLES = {
         "At the bottom, \"12-14 July · Harbour Stage\" is written in small white capitals."),
     "Seedream 4.5 / 4.0": (
         "A tiny ramen stall in a narrow alley at lunchtime, seen from the street at eye "
-        "level. An elderly cook in a white headband ladles broth into a red bowl while two "
+        "level. A cook in a white headband ladles broth into a red bowl while two "
         "office workers in loosened ties sit on stools at the counter. Steam rises past a "
         "paper sign that reads \"RAMEN\". Clear daylight falls into the alley and lights "
         "the counter evenly, and a cat sleeps on a crate by the door. It is a realistic "
@@ -872,7 +984,7 @@ EXAMPLES = {
         "Exact text, verbatim, no extra characters.\n"
         "Constraints: No watermark, no other text and no logos."),
     "Nano Banana": (
-        "Create a photorealistic close-up of an elderly watchmaker at his cluttered "
+        "Create a photorealistic close-up of a watchmaker at his cluttered "
         "workbench by a large window, leaning over an open pocket watch with a jeweller's "
         "loupe in his right eye and fine tweezers lifting a tiny brass gear. Clear, white "
         "daylight from the window falls evenly across his hands and the scattered springs, "
@@ -918,13 +1030,13 @@ EXAMPLES = {
         "evenly. She says softly, \"You came back.\" Wind, distant traffic and the hum of "
         "the city."),
     "Seedance 2.5": (
-        "An old fisherman teaches his granddaughter to tie a knot on a windy harbour pier "
+        "A fisherman teaches his grown-up daughter to tie a knot on a windy harbour pier "
         "on a clear morning, filmed as a realistic coastal drama in handheld medium "
-        "shots.\n0s-4s: Medium shot. The fisherman, in his seventies with a grey beard and "
+        "shots.\n0s-4s: Medium shot. The fisherman, with a grey beard and "
         "a yellow oilskin jacket, sits on an upturned crate and slowly loops a thick rope "
-        "around his fingers; the girl, about eight, in a red raincoat, leans in to watch. "
+        "around his fingers; his daughter, in a red raincoat, leans in to watch. "
         "Gulls cry and waves slap against the pilings.\n4s-8s: Close-up of their hands. "
-        "The girl copies the loop, pulls too hard and the rope slips; she laughs. The "
+        "The daughter copies the loop, pulls too hard and the rope slips; she laughs. The "
         "fisherman's line (warm, amused, low raspy voice): \"Gently. The sea is never in a "
         "hurry.\"\n8s-12s: The camera pulls back slowly to a wide shot as she holds up a "
         "finished knot and he nods, smiling, fishing boats rocking in the blue water "
@@ -932,10 +1044,10 @@ EXAMPLES = {
         "natural, the daylight is clear and even, and the details are rich. Only wind and "
         "harbour sounds are heard, no BGM. No subtitles."),
     "Seedance 2.0": (
-        "A young barista in a black apron prepares a latte for an elderly regular in a small "
+        "A barista in a black apron prepares a latte for a regular in a small "
         "sunlit café. Shot 1: Medium shot, fixed camera. She slowly pours steamed milk into the "
         "cup, tilting it gently as a leaf pattern forms; morning light falls across the counter. "
-        "<the hiss of the steam wand> Shot 2: Cut to a medium close-up of the old man in a tweed "
+        "<the hiss of the steam wand> Shot 2: Cut to a medium close-up of the man in a tweed "
         "cap. He leans forward, his eyes crinkling, and says in a warm, slow voice {You remembered "
         "the cinnamon}. Shot 3: Close-up of the barista; the camera pushes in slowly as she lowers "
         "her eyes, the corners of her mouth rising, and slides the cup towards him. (soft acoustic "
@@ -943,8 +1055,8 @@ EXAMPLES = {
         "and rich details. Faces stay stable without deformation, and the motion is natural and "
         "smooth. No subtitles, no text, no watermark, no logo."),
     "Seedance 1.5 / 1.0 Pro": (
-        "In a cramped vintage record shop on a rainy afternoon, a tall man in his forties with a "
-        "grey scarf slowly flips through a crate of records while the young owner with short pink "
+        "In a cramped vintage record shop on a rainy afternoon, a tall man with a "
+        "grey scarf slowly flips through a crate of records while the owner with short pink "
         "hair watches from the counter. The camera makes a slow lateral slide along the shelves. "
         "The man pulls out a record, holds it up and says, surprised and delighted, at a quick "
         "pace: \"I've been looking for this one for twenty years!\" The owner smiles and replies "
@@ -1133,6 +1245,20 @@ Recast the prompt: swap the persons, keep everything else.
 GROUPS = {"image": "image", "tags": "image", "edit": "edit", "video": "video", "h3": "video"}
 
 
+# The variants of each target and task (the owner's choice of 2026-11-20): the API
+# models with a strict filter get only "· SFW" for generation.
+SFW_ONLY = {"GPT Image", "Nano Banana", "Grok Imagine Image", "Kling 3.0", "Veo 3.1"}
+CONTENT_TASKS = {"Grok Imagine Video": {"idea": ("sfw",), "caption": ("sfw", "nsfw")}}
+TASK_OF = {"Generation": "idea", "Caption": "caption"}
+
+
+def variants(target, task):
+    """("sfw", "nsfw") or ("sfw",) for one target and task ("idea" / "caption")."""
+    if target["label"] in CONTENT_TASKS:
+        return CONTENT_TASKS[target["label"]][task]
+    return ("sfw",) if target["label"] in SFW_ONLY else ("sfw", "nsfw")
+
+
 CONTENT_ABOUT = {
     "sfw": (" SFW: everyone is dressed; poses and interactions are described step by step.",
             " SFW: alle sind bekleidet; Posen und Interaktionen werden Schritt für Schritt "
@@ -1147,16 +1273,26 @@ CONTENT_ABOUT = {
 def target_presets(target, prefix):
     """[(preset name, content)] of one target and task prefix ("Generation" / "Caption")."""
     name = f"{prefix} ▸ {target['label']}"
-    if not target.get("content"):
-        return [(name, "")]
-    return [(f"{name} · {c.upper()}", c) for c in ("sfw", "nsfw")]
+    return [(f"{name} · {c.upper()}", c) for c in variants(target, TASK_OF[prefix])]
 
 
-# Presets that were split into "· SFW" / "· NSFW": the old name now means the SFW
-# one (saved overrides move along in presets.current_name, workflows in the browser).
+TOOLS = ("Caption ▸ LoRA training caption", "Caption ▸ Describe image", "Recast ▸ Swap persons")
+
+
+# Presets that were split into "· SFW" / "· NSFW" in 1.7.0: the old name now means the
+# SFW one (saved overrides move along in presets.current_name, workflows in the browser).
 def _renamed():
-    return {f"{prefix} ▸ {t['label']}": f"{prefix} ▸ {t['label']} · SFW"
-            for t in TARGETS if t.get("content") for prefix in ("Generation", "Caption")}
+    renamed = {f"{prefix} ▸ {t['label']}": f"{prefix} ▸ {t['label']} · SFW"
+               for t in TARGETS for prefix in ("Generation", "Caption")}
+    renamed.update({name: f"{name} · SFW" for name in TOOLS})
+    return renamed
+
+
+def _with_content(system, content, sfw, nsfw):
+    """A tool's system prompt with its content section in front of the output rules."""
+    section = "\n".join([SFW_HEAD if content == "sfw" else NSFW_HEAD,
+                         *(sfw if content == "sfw" else nsfw)])
+    return f"{system.rstrip()}\n\n{section}"
 
 
 def _preset(description, system_prompt, negative, temperature, top_p, max_tokens, words="",
@@ -1200,7 +1336,7 @@ def _model_prompt(target, task, content=""):
     role = "edit instructions" if kind == "edit" else "prompts"
     example = CONTENT_EXAMPLES.get((label, content), EXAMPLES[label])
     sentences = f"\n\n{SENTENCES}" if kind in ("image", "video", "h3") else ""
-    section = f"\n\n{target['content'][content]}" if content else ""
+    section = f"\n\n{content_section(target, content)}" if content else ""
     return (f"You are an expert prompt writer for {label} in ComfyUI.\n\n{intro}\n\n"
             f"## How {label} wants its {role}\n{target['guide']}{sentences}{section}\n\n"
             f"## Example of a good result\nFor form, structure and length only - never copy its "
@@ -1216,6 +1352,8 @@ def _build():
             "Eigenen Systemprompt schreiben (oder custom_system_prompt anschließen). Leer = "
             "nur die eigenen Regeln des Nodes werden gesendet (Eingabe ist verbindlich, "
             "optionale Wortzahl)."),
+    }
+    tools = {
         "Caption ▸ LoRA training caption": _preset(
             "Refine a raw caption (e.g. JoyCaption) into a LoRA training caption. Put the "
             "trigger token into trigger_word (or leave it empty for none).",
@@ -1243,6 +1381,17 @@ def _build():
             "keine feste Spanne - behält die Länge des Original-Prompts"),
     }
     renamed = _renamed()
+    sections = {"Recast ▸ Swap persons": ([RECAST_SFW], [RECAST_NSFW])}
+    for name, base in tools.items():
+        sfw, nsfw = sections.get(name, ([CAPTION_SFW], [CAPTION_NSFW]))
+        for content in ("sfw", "nsfw"):
+            about, about_de = CONTENT_ABOUT[content]
+            new = f"{name} · {content.upper()}"
+            presets[new] = dict(base, system_prompt=_with_content(base["system_prompt"], content, sfw, nsfw),
+                                description=base["description"] + about,
+                                description_de=base["description_de"] + about_de,
+                                content=content,
+                                renamed_from=[old for old, n in renamed.items() if n == new])
     for task, prefix in (("idea", "Generation"), ("caption", "Caption")):
         for t in TARGETS:
             temperature, top_p = t[task]
@@ -1264,4 +1413,4 @@ def _build():
 
 BUILTIN = _build()
 RENAMED = _renamed()
-DEFAULT_PRESET = "Generation ▸ Krea 2"
+DEFAULT_PRESET = "Generation ▸ Krea 2 · SFW"

@@ -101,17 +101,19 @@ class BuiltinPresetTests(unittest.TestCase):
                        "Seedance 1.5 / 1.0 Pro", "Seedance Reference", "GPT Image", "Nano Banana",
                        "Grok Imagine Image", "Flux 3", "Kling 3.0", "Veo 3.1",
                        "Grok Imagine Video"):
-            self.assertIn(f"Generation ▸ {target}", names)
-            self.assertIn(f"Caption ▸ {target}", names)
-        self.assertIn("Caption ▸ LoRA training caption", names)
-        self.assertIn("Caption ▸ Describe image", names)
+            self.assertIn(f"Generation ▸ {target} · SFW", names)
+            self.assertIn(f"Caption ▸ {target} · SFW", names)
+        for tool in ("Caption ▸ LoRA training caption", "Caption ▸ Describe image",
+                     "Recast ▸ Swap persons"):
+            self.assertIn(f"{tool} · SFW", names)
+            self.assertIn(f"{tool} · NSFW", names)
 
     def test_every_preset_has_a_filter_group(self):
         groups = {p["group"] for p in builtin_presets.BUILTIN.values()}
         self.assertEqual(groups, {"image", "edit", "video", "tools"})
-        self.assertEqual(builtin_presets.BUILTIN["Generation ▸ Seedream Edit"]["group"], "edit")
-        self.assertEqual(builtin_presets.BUILTIN["Caption ▸ Kling 3.0"]["group"], "video")
-        self.assertEqual(builtin_presets.BUILTIN["Caption ▸ Describe image"]["group"], "tools")
+        self.assertEqual(builtin_presets.BUILTIN["Generation ▸ Seedream Edit · SFW"]["group"], "edit")
+        self.assertEqual(builtin_presets.BUILTIN["Caption ▸ Kling 3.0 · SFW"]["group"], "video")
+        self.assertEqual(builtin_presets.BUILTIN["Caption ▸ Describe image · NSFW"]["group"], "tools")
         # the group reaches the browser, also for a saved override of a built-in preset
         user = presets.all_presets()
         self.assertTrue(all(p["group"] for p in user if p["builtin"]))
@@ -129,7 +131,7 @@ class BuiltinPresetTests(unittest.TestCase):
                 self.assertRegex(example.rstrip(), r'[.!?]"?\)?$', t["label"])
         for key, example in builtin_presets.CONTENT_EXAMPLES.items():
             self.assertRegex(example.rstrip(), r'[.!?]"?\)?$', key)
-        self.assertIn("120-250 words", builtin_presets.BUILTIN["Generation ▸ Krea 2"]["system_prompt"])
+        self.assertIn("120-250 words", builtin_presets.BUILTIN["Generation ▸ Krea 2 · SFW"]["system_prompt"])
 
     def test_examples_use_natural_daylight(self):
         # the default light is clear daylight: no example may teach dramatic light
@@ -141,15 +143,15 @@ class BuiltinPresetTests(unittest.TestCase):
     def test_api_models_without_negative_prompt(self):
         for target in ("Seedream 5.5", "Seedream 5.0", "Seedance 2.5", "GPT Image", "Nano Banana",
                        "Flux 3", "Grok Imagine Video"):
-            self.assertEqual(builtin_presets.BUILTIN[f"Generation ▸ {target}"]["negative_prompt"], "")
+            self.assertEqual(builtin_presets.BUILTIN[f"Generation ▸ {target} · SFW"]["negative_prompt"], "")
 
     def test_seedream_5_5_follows_the_byteplus_tutorial(self):
-        self.assertEqual(len(builtin_presets.BUILTIN), 62)
-        system = builtin_presets.BUILTIN["Generation ▸ Seedream 5.5"]["system_prompt"]
+        self.assertEqual(len(builtin_presets.BUILTIN), 108)
+        system = builtin_presets.BUILTIN["Generation ▸ Seedream 5.5 · NSFW"]["system_prompt"]
         for phrase in ("up to 10 reference images", "Set a transparent background.", "Image 1"):
             self.assertIn(phrase, system)
-        self.assertEqual(builtin_presets.BUILTIN["Generation ▸ Seedream 5.5"]["group"], "image")
-        edit = builtin_presets.BUILTIN["Generation ▸ Seedream Edit"]["system_prompt"]
+        self.assertEqual(builtin_presets.BUILTIN["Generation ▸ Seedream 5.5 · SFW"]["group"], "image")
+        edit = builtin_presets.BUILTIN["Generation ▸ Seedream Edit · SFW"]["system_prompt"]
         self.assertIn("Seedream 5.5 (multi-turn editing)", edit)
         self.assertIn("Preserve the identity", edit)
 
@@ -235,13 +237,14 @@ class PresetStoreTests(unittest.TestCase):
                 "Idea ▸ Krea 2": {"system_prompt": "old krea"},
                 "Generation ▸ Krea 2": {"system_prompt": "new krea"},
                 "Idea ▸ my own": {"system_prompt": "mine"}}}, f)
-        self.assertEqual(presets.get("Generation ▸ FLUX")["system_prompt"], "old flux")
-        self.assertTrue(presets.get("Generation ▸ FLUX")["overridden"])
-        self.assertEqual(presets.get("Generation ▸ Krea 2")["system_prompt"], "new krea")
+        # "Idea ▸ FLUX" and "Generation ▸ FLUX" both became "Generation ▸ FLUX · SFW" (1.7.0)
+        self.assertEqual(presets.get("Generation ▸ FLUX · SFW")["system_prompt"], "old flux")
+        self.assertTrue(presets.get("Generation ▸ FLUX · SFW")["overridden"])
+        self.assertEqual(presets.get("Generation ▸ Krea 2 · SFW")["system_prompt"], "new krea")
         self.assertIsNone(presets.get("Idea ▸ FLUX"))
         self.assertEqual(presets.get("Idea ▸ my own")["system_prompt"], "mine")  # own name kept
-        self.assertTrue(presets.delete("Generation ▸ FLUX"))  # also removes the old entry
-        self.assertFalse(presets.get("Generation ▸ FLUX")["overridden"])
+        self.assertTrue(presets.delete("Generation ▸ FLUX · SFW"))  # also removes the old entry
+        self.assertFalse(presets.get("Generation ▸ FLUX · SFW")["overridden"])
 
     def test_empty_name_rejected(self):
         with self.assertRaises(ValueError):
@@ -444,7 +447,7 @@ class RulesAndSystemPromptTests(unittest.TestCase):
             self.assertNotRegex(example, r"\b(twenties|thirties|forties)\b")
         self.assertIn("Caption ▸ Wan 3.0 · NSFW", builtin_presets.BUILTIN)
         self.assertNotIn("Generation ▸ Wan 3.0", builtin_presets.BUILTIN)
-        self.assertEqual(builtin_presets.BUILTIN["Generation ▸ Krea 2"]["content"], "")
+        self.assertEqual(builtin_presets.BUILTIN["Custom system prompt"]["content"], "")
         # each variant shows its own example
         self.assertIn("salsa", sfw["system_prompt"])
         self.assertIn("missionary", nsfw["system_prompt"])
@@ -460,6 +463,45 @@ class RulesAndSystemPromptTests(unittest.TestCase):
             dressed = self.system_of(system_prompt=sfw["system_prompt"], safe=on)
             self.assertNotIn("## Adult content", dressed)
             self.assertNotIn("## Safe mode", dressed)
+
+    def test_every_family_has_its_own_sfw_and_nsfw_section(self):
+        B = builtin_presets.BUILTIN
+        section = lambda name: B[name]["system_prompt"].split("## Content: ", 1)[1].split("## Example")[0]
+        # every preset except "Custom system prompt" is a content variant
+        self.assertEqual({p["content"] for n, p in B.items() if n != "Custom system prompt"}, {"sfw", "nsfw"})
+        # the strictly filtered API models are SFW only; Grok Imagine Video captions have both
+        for label in builtin_presets.SFW_ONLY:
+            self.assertNotIn(f"Generation ▸ {label} · NSFW", B)
+            self.assertNotIn(f"Caption ▸ {label} · NSFW", B)
+        self.assertNotIn("Generation ▸ Grok Imagine Video · NSFW", B)
+        self.assertIn("Caption ▸ Grok Imagine Video · NSFW", B)
+        # tag models: rating and explicit Danbooru tags, no tag that marks a minor
+        pony = section("Generation ▸ Pony · NSFW")
+        self.assertIn("rating_explicit", pony)
+        self.assertIn("loli, shota, child", pony)
+        self.assertIn("rating_safe", section("Generation ▸ Pony · SFW"))
+        self.assertIn("nsfw, explicit", section("Caption ▸ Illustrious · NSFW"))
+        # still images describe one moment, videos a sequence with sound (Wan 2.2 is silent)
+        self.assertIn("one visible moment", section("Generation ▸ Krea 2 · NSFW"))
+        self.assertIn("sequence of visible actions", section("Generation ▸ Seedance 2.5 · NSFW"))
+        self.assertIn("- Sound:", section("Generation ▸ Wan 2.7 · NSFW"))
+        self.assertNotIn("- Sound:", section("Generation ▸ Wan 2.2 · NSFW"))
+        self.assertIn("descriptive fields of the format", section("Generation ▸ MiniMax H3 FL2VA · NSFW"))
+        self.assertIn("Undressing", section("Generation ▸ Qwen-Image-Edit 2.1 · NSFW"))
+        # tools
+        self.assertIn("only for persons who are clearly adults",
+                      section("Caption ▸ LoRA training caption · NSFW"))
+        self.assertIn("Adapt the anatomy", section("Recast ▸ Swap persons · NSFW"))
+        self.assertIn("safe for work", section("Caption ▸ Describe image · SFW"))
+        for name, p in B.items():
+            if p["content"] == "nsfw" and p["group"] != "tools" and "Pony" not in name \
+                    and "Illustrious" not in name:
+                self.assertIn('"an adult woman"', p["system_prompt"], name)
+        # the examples invent no ages and show no children
+        text = json.dumps(builtin_presets.EXAMPLES).lower()
+        for word in ("about eight", "about ten", "granddaughter", "in his forties", "in her fifties",
+                     "a young woman", "an elderly fisherman"):
+            self.assertNotIn(word, text)
 
     def test_final_answer_rule_is_always_last(self):
         for kw in ({}, {"system_prompt": builtin_presets.BUILTIN["Generation ▸ Wan 3.0 · NSFW"][
@@ -487,7 +529,7 @@ class RulesAndSystemPromptTests(unittest.TestCase):
         self.assertEqual(list(spec), ["label", "text", "mode", "save"])
         self.assertEqual(spec["mode"][1]["default"], "replace")
         self.assertIn("append", spec["mode"][0])
-        builtin = "Generation ▸ Krea 2"
+        builtin = "Generation ▸ Krea 2 · SFW"
         with self.assertRaises(ValueError):
             system_prompts.save(builtin, "mine now")
         node = system_prompt_node.PromptWriterSystemPrompt()
@@ -759,7 +801,7 @@ class PersonRuleTests(unittest.TestCase):
         self.assertIn("Person 2:\n- Name: Alice", system)
 
     def test_recast_preset(self):
-        p = builtin_presets.BUILTIN["Recast ▸ Swap persons"]
+        p = builtin_presets.BUILTIN["Recast ▸ Swap persons · NSFW"]
         self.assertIn("Persons", p["system_prompt"])
         self.assertLessEqual(p["temperature"], 0.3)
 
@@ -829,8 +871,8 @@ class LocalModelTests(unittest.TestCase):
             open(os.path.join(d, name), "wb").close()
 
     def run_node(self, **kw):
-        p = presets.get("Generation ▸ FLUX")
-        args = dict(preset="Generation ▸ FLUX", text="ein Fuchs im Wald", system_prompt=p["system_prompt"],
+        p = presets.get("Generation ▸ FLUX · NSFW")
+        args = dict(preset="Generation ▸ FLUX · NSFW", text="ein Fuchs im Wald", system_prompt=p["system_prompt"],
                     negative_prompt="", model=self.entry["label"], temperature=0.7, top_p=0.95,
                     max_tokens=8192, fallback_to_input=False)
         args.update(kw)

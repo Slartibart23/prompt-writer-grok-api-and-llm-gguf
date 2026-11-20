@@ -2,7 +2,7 @@
 
 ## 1.7.0 — 2026-11-20
 
-- **SFW and NSFW presets for Wan 3.0:** "Generation ▸ Wan 3.0 · SFW", "Generation ▸ Wan 3.0 · NSFW" and the same two for "Caption ▸". Each adds a content section written for Wan 3.0 to the model guide, with an example of its own. SFW: everyone is dressed, poses and interactions are described step by step. NSFW: explicit, adults only, every sexual interaction described step by step (who, which body part, point of contact, movement, hands, reaction of the bodies), positions with their full geometry. 62 built-in presets in all.
+- **SFW and NSFW presets for Wan 3.0:** "Generation ▸ Wan 3.0 · SFW", "Generation ▸ Wan 3.0 · NSFW" and the same two for "Caption ▸". Each adds a content section written for Wan 3.0 to the model guide, with an example of its own. SFW: everyone is dressed, poses and interactions are described step by step. NSFW: explicit, adults only, every sexual interaction described step by step (who, which body part, point of contact, movement, hands, reaction of the bodies), positions with their full geometry. Persons are written as "an adult woman" / "an adult man"; an age appears only when the input or a selected person states one, word for word. 62 built-in presets in all.
 - The content section replaces the general "Adult content" / "Safe mode" rules for these presets; `safe` on still wins over an NSFW preset.
 - "Generation ▸ Wan 3.0" and "Caption ▸ Wan 3.0" are now the "· SFW" presets: saved workflows and saved overrides move over by themselves.
 - **Filter: content** (All / SFW / NSFW) on the writer nodes and on Prompt Writer · System Prompt Library.

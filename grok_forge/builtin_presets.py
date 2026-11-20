@@ -56,11 +56,11 @@ WAN3_SFW = """## Content: SFW (binding)
 - Describe every pose and every interaction between persons (a dance, an embrace, a kiss, a fight, a sport, helping someone up) as a sequence of visible actions, never only by its name. For each action give who does it to whom and with which body part, the exact point of contact, the movement itself with its direction, speed and force, what the hands of every person do at the same time, and the visible reaction of the bodies.
 - Poses: where the weight rests, the posture, where the hands and feet are, which way each face points and where each person looks, and how they move into the next pose.
 - Intimacy lives in closeness, glances, hands, embraces and kisses; the camera frames faces, hands and shoulders.
-- Persons in romantic, swimwear or fitness scenes are adults and are introduced with an adult age ("a woman in her late twenties").
+- Persons in romantic, swimwear or fitness scenes are adults and are written as "an adult woman", "an adult man". Give an age only as the input or a selected person states it ("young", "aged", "in her forties", "35 years old"), word for word; invent no ages.
 - Write only what is visible: the clothing, the framing and the light that are there."""
 
 WAN3_NSFW = """## Content: NSFW (explicit, adults only)
-- Every person is an adult and is introduced with an adult age and adult features ("a woman in her early thirties", "a man in his forties"). Sexual content involves adults only.
+- Every person is an adult and is written as "an adult woman", "an adult man". Give an age only as the input or a selected person states it ("young", "aged", "in her forties", "35 years old"), word for word, and keep "adult" with it ("a young adult woman"); invent no ages. Sexual content involves adults only.
 - The scene shows mutual, eager consent: the persons respond to each other, look at each other, guide each other's hands and bodies.
 - Write explicitly with plain anatomical words (penis, vagina, vulva, clitoris, labia, anus, breasts, nipples, buttocks, testicles).
 - Describe every sexual interaction as a sequence of visible actions, never only by its name. For each action give:
@@ -1083,7 +1083,7 @@ ABOUT_DE = {
 CONTENT_EXAMPLES = {
     ("Wan 3.0", "sfw"): (
         "A rooftop terrace in a city on a clear, sunny afternoon. Shot 1 [0-4s]: Wide shot. "
-        "A woman in her late twenties in a red wrap dress and a man in his early thirties in a "
+        "An adult woman in a red wrap dress and an adult man in a "
         "white linen shirt and grey trousers dance salsa between potted lemon trees. His right "
         "hand rests flat on her shoulder blade, her left hand lies on his upper arm, and their "
         "other hands are clasped at shoulder height. The camera circles them slowly to the left. "
@@ -1097,9 +1097,9 @@ CONTENT_EXAMPLES = {
         "No dialogue."),
     ("Wan 3.0", "nsfw"): (
         "A bright bedroom with white sheets and a large window on a clear afternoon. Shot 1 "
-        "[0-4s]: Medium shot from the side of the bed. A woman in her early thirties with long "
+        "[0-4s]: Medium shot from the side of the bed. An adult woman with long "
         "dark hair, completely naked, lies on her back with her knees bent and her thighs open. "
-        "A man in his late thirties with short brown hair and a trimmed beard, also naked, kneels "
+        "An adult man with short brown hair and a trimmed beard, also naked, kneels "
         "between her legs. His right hand strokes slowly up the inside of her thigh, and she "
         "takes his wrist and guides his fingers to her vulva. The camera pushes in slowly. "
         "Shot 2 [4-8s]: Close-up from a low angle at the foot of the bed. Two of his fingers "

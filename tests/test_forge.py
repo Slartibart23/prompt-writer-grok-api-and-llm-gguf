@@ -435,6 +435,13 @@ class RulesAndSystemPromptTests(unittest.TestCase):
         self.assertIn("## Content: NSFW", nsfw["system_prompt"])
         self.assertIn("never only by its name", nsfw["system_prompt"])
         self.assertIn("the visible reaction of the bodies", nsfw["system_prompt"])
+        # "adult" instead of an invented age; an age only as the input states it
+        for variant in (sfw, nsfw):
+            self.assertIn('"an adult woman"', variant["system_prompt"])
+            self.assertIn("invent no ages", variant["system_prompt"])
+        for example in builtin_presets.CONTENT_EXAMPLES.values():
+            self.assertIn("An adult woman", example)
+            self.assertNotRegex(example, r"\b(twenties|thirties|forties)\b")
         self.assertIn("Caption ▸ Wan 3.0 · NSFW", builtin_presets.BUILTIN)
         self.assertNotIn("Generation ▸ Wan 3.0", builtin_presets.BUILTIN)
         self.assertEqual(builtin_presets.BUILTIN["Generation ▸ Krea 2"]["content"], "")
